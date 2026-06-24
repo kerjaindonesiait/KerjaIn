@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { BrandLogo } from "../components/BrandLogo";
 
 const NAV_LINKS = [
   { label: "Cari Pekerjaan", href: "/tasks" },
@@ -37,21 +38,19 @@ export default function Root() {
   const isTasksPage = location.pathname === "/tasks";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F1E8]" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="min-h-screen flex flex-col bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
       {/* NAV */}
       <header className="bg-white border-b border-[#f5eded] sticky top-0 z-50">
-        <div className="flex items-center h-[57px] px-6 max-w-[1400px] mx-auto w-full">
+        <div className="flex items-center h-[72px] px-6 max-w-[1400px] mx-auto w-full">
           {/* Logo */}
           <Link to="/" className="flex items-center mr-5 shrink-0">
-            <svg width="108" height="26" viewBox="0 0 108 26" fill="none">
-              <text x="0" y="20" fontFamily="Manrope,sans-serif" fontWeight="800" fontSize="20" fill="#2E5090" letterSpacing="-0.3">KerjaIn</text>
-            </svg>
+            <BrandLogo imgClassName="h-12" />
           </Link>
 
           {/* Post a job CTA */}
           <Link
             to="/post-job"
-            className="hidden md:flex items-center bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap mr-1"
+            className="hidden md:flex items-center bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap mr-1"
           >
             Post Kerjaan
           </Link>
@@ -63,12 +62,12 @@ export default function Root() {
               return (
                 <div key={item.label} className="relative h-full flex items-center px-3">
                   {active && (
-                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#2E5090] rounded-b" />
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#1D4196] rounded-b" />
                   )}
                   <Link
                     to={item.href}
                     className={`text-[13px] font-semibold whitespace-nowrap transition-colors ${
-                      active ? "text-[#2E5090]" : "text-[#1a3d5c] hover:text-[#2E5090]"
+                      active ? "text-[#1D4196]" : "text-[#294566] hover:text-[#1D4196]"
                     }`}
                   >
                     {item.label}
@@ -80,34 +79,34 @@ export default function Root() {
 
           {/* Right nav */}
           <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto">
-            <Link to="/daftar" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
+            <Link to="/daftar" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
               Daftar
             </Link>
-            <Link to="/masuk" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap">
+            <Link to="/masuk" className="bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap">
               Masuk
             </Link>
           </div>
 
           {/* Mobile hamburger */}
           <button className="md:hidden ml-auto p-2" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={22} className="text-[#1a3d5c]" /> : <Menu size={22} className="text-[#1a3d5c]" />}
+            {mobileOpen ? <X size={22} className="text-[#294566]" /> : <Menu size={22} className="text-[#294566]" />}
           </button>
         </div>
 
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-white border-t border-[#f5eded] px-6 py-4 flex flex-col gap-3">
-            <Link to="/post-job" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
+            <Link to="/post-job" className="bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
               Post Kerjaan
             </Link>
             {NAV_LINKS.map((item) => (
-              <Link key={item.label} to={item.href} className="text-[14px] font-semibold text-[#1a3d5c] py-2 border-b border-[#f0f7f4]" onClick={() => setMobileOpen(false)}>
+              <Link key={item.label} to={item.href} className="text-[14px] font-semibold text-[#294566] py-2 border-b border-[#EEF3FB]" onClick={() => setMobileOpen(false)}>
                 {item.label}
               </Link>
             ))}
             <div className="flex gap-3 pt-2">
-              <Link to="/daftar" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-[#b8d4c8] text-[#1a3d5c] font-semibold text-[13px] py-2 rounded-full hover:border-[#2E5090] hover:text-[#2E5090] transition-all">Daftar</Link>
-              <Link to="/masuk" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-[#2E5090] text-white font-semibold text-[13px] py-2 rounded-full hover:bg-[#1e3d7a] transition-colors">Masuk</Link>
+              <Link to="/daftar" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-[#D8E2F0] text-[#294566] font-semibold text-[13px] py-2 rounded-full hover:border-[#1D4196] hover:text-[#1D4196] transition-all">Daftar</Link>
+              <Link to="/masuk" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-[#1D4196] text-white font-semibold text-[13px] py-2 rounded-full hover:bg-[#173577] transition-colors">Masuk</Link>
             </div>
           </div>
         )}
@@ -120,7 +119,7 @@ export default function Root() {
 
       {/* FOOTER */}
       {!isTasksPage && (
-        <footer className="bg-[#1a2d4a] text-white">
+        <footer className="bg-[#172E4D] text-white">
           {/* Popular locations */}
           <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
             <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">Lokasi Populer di Jakarta</p>
@@ -149,9 +148,7 @@ export default function Root() {
 
           {/* Bottom bar */}
           <div className="border-t border-white/10 px-6 py-6 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <svg width="90" height="22" viewBox="0 0 90 22" fill="none">
-              <text x="0" y="17" fontFamily="Manrope,sans-serif" fontWeight="800" fontSize="17" fill="white" letterSpacing="-0.2">KerjaIn</text>
-            </svg>
+            <BrandLogo variant="dark" imgClassName="h-9" />
             <p className="text-[12px] text-white/40">KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
             <div className="flex gap-4">
               <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">

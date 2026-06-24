@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Wrench, ArrowRight, HardHat, User } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
+import { useAuth } from "../../lib/auth";
+import { api } from "../../lib/api";
+import { BrandLogo } from "../components/BrandLogo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,8 +55,8 @@ function SocialButton({
     google: {
       label: "Lanjutkan dengan Google",
       bg: "bg-white hover:bg-gray-50",
-      border: "border border-[#e0d0d0]",
-      text: "text-[#0f2035]",
+      border: "border border-[#D8E2F0]",
+      text: "text-[#172E4D]",
       logo: <GoogleLogo />,
     },
     facebook: {
@@ -65,7 +68,7 @@ function SocialButton({
     },
     apple: {
       label: "Lanjutkan dengan Apple",
-      bg: "bg-[#1a2d4a] hover:bg-black",
+      bg: "bg-[#172E4D] hover:bg-black",
       border: "",
       text: "text-white",
       logo: <AppleLogo />,
@@ -95,8 +98,8 @@ function LoadingScreen({ provider }: { provider: OAuthProvider }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6">
       <div className="relative w-16 h-16">
-        <div className="absolute inset-0 rounded-full border-4 border-[#f0f7f4]" />
-        <div className="absolute inset-0 rounded-full border-4 border-[#2E5090] border-t-transparent animate-spin" />
+        <div className="absolute inset-0 rounded-full border-4 border-[#EEF3FB]" />
+        <div className="absolute inset-0 rounded-full border-4 border-[#1D4196] border-t-transparent animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
           {provider === "google" && <GoogleLogo />}
           {provider === "facebook" && <FacebookLogo />}
@@ -104,8 +107,8 @@ function LoadingScreen({ provider }: { provider: OAuthProvider }) {
         </div>
       </div>
       <div className="text-center">
-        <p className="font-bold text-[16px] text-[#1a2d4a]">Menghubungkan ke {labels[provider]}…</p>
-        <p className="text-[13px] text-[#3d6b5e] mt-1">Mohon tunggu sebentar</p>
+        <p className="font-bold text-[16px] text-[#172E4D]">Menghubungkan ke {labels[provider]}…</p>
+        <p className="text-[13px] text-[#58708D] mt-1">Mohon tunggu sebentar</p>
       </div>
     </div>
   );
@@ -130,28 +133,28 @@ function SuccessScreen({
 
   return (
     <div className="flex flex-col items-center text-center py-8 gap-5">
-      <div className="w-20 h-20 rounded-full bg-[#f0f7f4] border-4 border-[#F59E42] flex items-center justify-center">
-        <CheckCircle size={40} className="text-[#2E5090]" fill="#2E5090" />
+      <div className="w-20 h-20 rounded-full bg-[#EEF3FB] border-4 border-[#FD6665] flex items-center justify-center">
+        <CheckCircle size={40} className="text-[#1D4196]" fill="#1D4196" />
       </div>
       <div>
-        <h2 className="font-black text-[26px] text-[#1a2d4a] mb-1">
+        <h2 className="font-black text-[26px] text-[#172E4D] mb-1">
           {mode === "daftar" ? "Akun berhasil dibuat!" : "Selamat datang kembali!"}
         </h2>
-        <p className="text-[#3d6b5e] text-[15px]">
-          Halo, <span className="font-bold text-[#2E5090]">{displayName}</span> 👋
+        <p className="text-[#58708D] text-[15px]">
+          Halo, <span className="font-bold text-[#1D4196]">{displayName}</span> 👋
         </p>
       </div>
 
       {mode === "daftar" && (
-        <div className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-5 w-full text-left">
-          <p className="font-bold text-[13px] text-[#0f2035] mb-3">Kamu bisa mulai dari sini:</p>
+        <div className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-2xl p-5 w-full text-left">
+          <p className="font-bold text-[13px] text-[#172E4D] mb-3">Kamu bisa mulai dari sini:</p>
           <div className="space-y-2.5">
             {[
               { emoji: "🔧", text: "Post Kerjaan plumbing atau perawatan gratis" },
               { emoji: "👷", text: "Tinjau profil & ulasan tukang terpercaya" },
               { emoji: "🔒", text: "Bayar dengan aman — uang dicairkan setelah selesai" },
             ].map((item) => (
-              <div key={item.emoji} className="flex items-center gap-3 text-[13px] text-[#1a3d5c]">
+              <div key={item.emoji} className="flex items-center gap-3 text-[13px] text-[#294566]">
                 <span className="text-[18px]">{item.emoji}</span>
                 {item.text}
               </div>
@@ -163,13 +166,13 @@ function SuccessScreen({
       <div className="flex flex-col gap-3 w-full">
         <button
           onClick={() => navigate("/post-job")}
-          className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
         >
           Post Kerjaan sekarang <ArrowRight size={16} />
         </button>
         <button
           onClick={() => navigate("/")}
-          className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
+          className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
         >
           Lihat beranda
         </button>
@@ -189,6 +192,7 @@ function EmailForm({
   onSuccess: (name: string, email: string) => void;
   onBack: () => void;
 }) {
+  const { login, register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -201,15 +205,23 @@ function EmailForm({
     email.includes("@") &&
     password.length >= 6;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
     setError("");
     setLoading(true);
-    setTimeout(() => {
+    try {
+      if (mode === "daftar") {
+        await register(email, password, name, "user");
+      } else {
+        await login(email, password);
+      }
+      onSuccess(name || email.split("@")[0], email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Autentikasi gagal");
+    } finally {
       setLoading(false);
-      onSuccess(name, email);
-    }, 1400);
+    }
   };
 
   const strengthColor = password.length === 0
@@ -233,43 +245,43 @@ function EmailForm({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1.5 text-[13px] font-semibold text-[#3d6b5e] hover:text-[#2E5090] transition-colors mb-2"
+        className="flex items-center gap-1.5 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors mb-2"
       >
         <ChevronLeft size={15} /> Kembali ke pilihan login
       </button>
 
-      <h3 className="font-black text-[20px] text-[#1a2d4a] mb-4">
+      <h3 className="font-black text-[20px] text-[#172E4D] mb-4">
         {mode === "daftar" ? "Daftar dengan email" : "Masuk dengan email"}
       </h3>
 
       {mode === "daftar" && (
         <div>
-          <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Nama lengkap</label>
+          <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nama lengkap</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Budi Santoso"
-            className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#2E5090] focus:bg-white transition-all"
+            className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
           />
         </div>
       )}
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Alamat email</label>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Alamat email</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="nama@email.com"
-          className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#2E5090] focus:bg-white transition-all"
+          className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
         />
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-[13px] font-bold text-[#0f2035]">Kata sandi</label>
+          <label className="block text-[13px] font-bold text-[#172E4D]">Kata sandi</label>
           {mode === "masuk" && (
-            <button type="button" className="text-[12px] text-[#2E5090] font-semibold hover:underline">
+            <button type="button" className="text-[12px] text-[#1D4196] font-semibold hover:underline">
               Lupa kata sandi?
             </button>
           )}
@@ -280,25 +292,25 @@ function EmailForm({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={mode === "daftar" ? "Minimal 6 karakter" : "Masukkan kata sandi"}
-            className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 pr-11 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#2E5090] focus:bg-white transition-all"
+            className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 pr-11 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
           />
           <button
             type="button"
             onClick={() => setShowPw((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a9a8f] hover:text-[#2E5090] transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7890AA] hover:text-[#1D4196] transition-colors"
           >
             {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
         {mode === "daftar" && password.length > 0 && (
           <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 h-1.5 rounded-full bg-[#c8dfd8] overflow-hidden">
+            <div className="flex-1 h-1.5 rounded-full bg-[#D8E2F0] overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${strengthColor}`}
                 style={{ width: password.length < 6 ? "30%" : password.length < 10 ? "65%" : "100%" }}
               />
             </div>
-            <span className="text-[11px] font-semibold text-[#3d6b5e] whitespace-nowrap">{strengthLabel}</span>
+            <span className="text-[11px] font-semibold text-[#58708D] whitespace-nowrap">{strengthLabel}</span>
           </div>
         )}
       </div>
@@ -310,11 +322,11 @@ function EmailForm({
       )}
 
       {mode === "daftar" && (
-        <p className="text-[12px] text-[#3d6b5e]">
+        <p className="text-[12px] text-[#58708D]">
           Dengan mendaftar, kamu menyetujui{" "}
-          <span className="text-[#2E5090] font-semibold cursor-pointer hover:underline">Syarat & Ketentuan</span>{" "}
+          <span className="text-[#1D4196] font-semibold cursor-pointer hover:underline">Syarat & Ketentuan</span>{" "}
           dan{" "}
-          <span className="text-[#2E5090] font-semibold cursor-pointer hover:underline">Kebijakan Privasi</span> kami.
+          <span className="text-[#1D4196] font-semibold cursor-pointer hover:underline">Kebijakan Privasi</span> kami.
         </p>
       )}
 
@@ -323,8 +335,8 @@ function EmailForm({
         disabled={!valid || loading}
         className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
           valid && !loading
-            ? "bg-[#2E5090] hover:bg-[#1e3d7a] text-white"
-            : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
+            ? "bg-[#1D4196] hover:bg-[#173577] text-white"
+            : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
         }`}
       >
         {loading ? (
@@ -353,7 +365,12 @@ export default function Auth() {
   const [authProvider, setAuthProvider] = useState<OAuthProvider | "email" | null>(null);
   const [successName, setSuccessName] = useState("");
   const [successEmail, setSuccessEmail] = useState("");
+
   const handleOAuth = (provider: OAuthProvider) => {
+    if (provider === "google") {
+      window.location.href = api.googleAuthUrl();
+      return;
+    }
     setActiveProvider(provider);
     setScreen("loading");
     setTimeout(() => {
@@ -390,20 +407,17 @@ export default function Auth() {
 
   return (
     <div
-      className="min-h-screen bg-[#F5F1E8] flex flex-col"
+      className="min-h-screen bg-[#F7F9FC] flex flex-col"
       style={{ fontFamily: "Manrope, sans-serif" }}
     >
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4 max-w-[520px] mx-auto w-full">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-[#2E5090] flex items-center justify-center">
-            <Wrench size={16} className="text-white" />
-          </div>
-          <span className="font-black text-[18px] text-[#2E5090]">KerjaIn</span>
+        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <BrandLogo imgClassName="h-10" />
         </Link>
         <Link
           to="/"
-          className="text-[13px] font-semibold text-[#3d6b5e] hover:text-[#2E5090] transition-colors flex items-center gap-1"
+          className="text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors flex items-center gap-1"
         >
           <ChevronLeft size={15} /> Kembali
         </Link>
@@ -411,45 +425,45 @@ export default function Auth() {
 
       {/* Card */}
       <div className="flex-1 flex items-start justify-center px-4 py-6">
-        <div className="w-full max-w-[440px] bg-white rounded-3xl border border-[#c8dfd8] shadow-lg overflow-hidden">
+        <div className="w-full max-w-[440px] bg-white rounded-3xl border border-[#D8E2F0] shadow-lg overflow-hidden">
 
           {/* Screen: role picker */}
           {screen === "role" ? (
             <div className="p-8">
-              <h2 className="font-black text-[24px] text-[#1a2d4a] mb-2">Mau daftar sebagai apa?</h2>
-              <p className="text-[#3d6b5e] text-[14px] mb-6">Pilih peran yang sesuai di KerjaIn.</p>
+              <h2 className="font-black text-[24px] text-[#172E4D] mb-2">Mau daftar sebagai apa?</h2>
+              <p className="text-[#58708D] text-[14px] mb-6">Pilih peran yang sesuai di KerjaIn.</p>
               <div className="flex flex-col gap-4">
                 <button
                   onClick={() => setScreen("main")}
-                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-[#c8dfd8] bg-white hover:border-[#2E5090] hover:bg-[#f0f7f4] transition-all text-left group"
+                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-[#D8E2F0] bg-white hover:border-[#1D4196] hover:bg-[#EEF3FB] transition-all text-left group"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-[#f0f7f4] flex items-center justify-center shrink-0 group-hover:bg-[#2E5090]/10">
-                    <User size={28} className="text-[#2E5090]" />
+                  <div className="w-14 h-14 rounded-2xl bg-[#EEF3FB] flex items-center justify-center shrink-0 group-hover:bg-[#1D4196]/10">
+                    <User size={28} className="text-[#1D4196]" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-black text-[16px] text-[#1a2d4a]">Pengguna</p>
-                    <p className="text-[13px] text-[#3d6b5e] mt-0.5">Saya ingin memasang pekerjaan dan mencari tukang</p>
+                    <p className="font-black text-[16px] text-[#172E4D]">Pengguna</p>
+                    <p className="text-[13px] text-[#58708D] mt-0.5">Saya ingin memasang pekerjaan dan mencari tukang</p>
                   </div>
-                  <ChevronRight size={18} className="text-[#7a9a8f] group-hover:text-[#2E5090] shrink-0" />
+                  <ChevronRight size={18} className="text-[#7890AA] group-hover:text-[#1D4196] shrink-0" />
                 </button>
 
                 <Link
                   to="/daftar-tukang"
-                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-[#c8dfd8] bg-white hover:border-[#1a2d4a] hover:bg-[#1a2d4a] transition-all text-left group"
+                  className="flex items-center gap-4 p-5 rounded-2xl border-2 border-[#D8E2F0] bg-white hover:border-[#172E4D] hover:bg-[#172E4D] transition-all text-left group"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-[#c8dfd8] flex items-center justify-center shrink-0 group-hover:bg-white/10">
-                    <HardHat size={28} className="text-[#1a2d4a] group-hover:text-white" />
+                  <div className="w-14 h-14 rounded-2xl bg-[#D8E2F0] flex items-center justify-center shrink-0 group-hover:bg-white/10">
+                    <HardHat size={28} className="text-[#172E4D] group-hover:text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-black text-[16px] text-[#1a2d4a] group-hover:text-white">Tukang / Teknisi</p>
-                    <p className="text-[13px] text-[#3d6b5e] group-hover:text-white/70 mt-0.5">Saya ingin menawarkan jasa plumbing dan perawatan</p>
+                    <p className="font-black text-[16px] text-[#172E4D] group-hover:text-white">Tukang / Teknisi</p>
+                    <p className="text-[13px] text-[#58708D] group-hover:text-white/70 mt-0.5">Saya ingin menawarkan jasa plumbing dan perawatan</p>
                   </div>
-                  <ChevronRight size={18} className="text-[#7a9a8f] group-hover:text-white/70 shrink-0" />
+                  <ChevronRight size={18} className="text-[#7890AA] group-hover:text-white/70 shrink-0" />
                 </Link>
               </div>
-              <p className="text-center text-[12px] text-[#7a9a8f] mt-6">
+              <p className="text-center text-[12px] text-[#7890AA] mt-6">
                 Sudah punya akun?{" "}
-                <button onClick={() => switchMode("masuk")} className="text-[#2E5090] font-bold hover:underline">Masuk</button>
+                <button onClick={() => switchMode("masuk")} className="text-[#1D4196] font-bold hover:underline">Masuk</button>
               </p>
             </div>
           ) : screen === "success" ? (
@@ -477,15 +491,15 @@ export default function Auth() {
             /* Screen: main */
             <>
               {/* Tab toggle */}
-              <div className="flex border-b border-[#c8dfd8]">
+              <div className="flex border-b border-[#D8E2F0]">
                 {(["masuk", "daftar"] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => switchMode(m)}
                     className={`flex-1 py-4 font-bold text-[14px] transition-all ${
                       mode === m
-                        ? "text-[#2E5090] border-b-2 border-[#2E5090]"
-                        : "text-[#7a9a8f] hover:text-[#3d6b5e]"
+                        ? "text-[#1D4196] border-b-2 border-[#1D4196]"
+                        : "text-[#7890AA] hover:text-[#58708D]"
                     }`}
                   >
                     {m === "masuk" ? "Masuk" : "Daftar"}
@@ -496,10 +510,10 @@ export default function Auth() {
               <div className="p-8">
                 {/* Heading */}
                 <div className="mb-6">
-                  <h1 className="font-black text-[24px] text-[#1a2d4a] mb-1">
+                  <h1 className="font-black text-[24px] text-[#172E4D] mb-1">
                     {mode === "masuk" ? "Selamat datang kembali" : "Buat akun gratis"}
                   </h1>
-                  <p className="text-[#3d6b5e] text-[14px]">
+                  <p className="text-[#58708D] text-[14px]">
                     {mode === "masuk"
                       ? "Masuk untuk mengelola pekerjaanmu di Jakarta"
                       : "Buat akun untuk menemukan tukang terpercaya di Jakarta"}
@@ -527,27 +541,27 @@ export default function Auth() {
 
                 {/* Divider */}
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-[#c8dfd8]" />
-                  <span className="text-[12px] font-semibold text-[#7a9a8f]">atau</span>
-                  <div className="flex-1 h-px bg-[#c8dfd8]" />
+                  <div className="flex-1 h-px bg-[#D8E2F0]" />
+                  <span className="text-[12px] font-semibold text-[#7890AA]">atau</span>
+                  <div className="flex-1 h-px bg-[#D8E2F0]" />
                 </div>
 
                 {/* Email button */}
                 <button
                   onClick={() => setScreen("email-form")}
-                  className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
+                  className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
                 >
                   {mode === "masuk" ? "Masuk dengan email" : "Daftar dengan email"}
                 </button>
 
                 {/* Bottom switch */}
-                <p className="text-center text-[13px] text-[#3d6b5e] mt-5">
+                <p className="text-center text-[13px] text-[#58708D] mt-5">
                   {mode === "masuk" ? (
                     <>
                       Belum punya akun?{" "}
                       <button
                         onClick={() => switchMode("daftar")}
-                        className="text-[#2E5090] font-bold hover:underline"
+                        className="text-[#1D4196] font-bold hover:underline"
                       >
                         Daftar gratis
                       </button>
@@ -557,7 +571,7 @@ export default function Auth() {
                       Sudah punya akun?{" "}
                       <button
                         onClick={() => switchMode("masuk")}
-                        className="text-[#2E5090] font-bold hover:underline"
+                        className="text-[#1D4196] font-bold hover:underline"
                       >
                         Masuk
                       </button>
@@ -566,13 +580,13 @@ export default function Auth() {
                 </p>
 
                 {/* Trust badges */}
-                <div className="flex items-center justify-center gap-4 mt-6 pt-5 border-t border-[#c8dfd8]">
+                <div className="flex items-center justify-center gap-4 mt-6 pt-5 border-t border-[#D8E2F0]">
                   {[
                     "🔒 Aman & terenkripsi",
                     "✅ Gratis selamanya",
                     "🚫 Tanpa spam",
                   ].map((badge) => (
-                    <span key={badge} className="text-[11px] text-[#7a9a8f] font-semibold">
+                    <span key={badge} className="text-[11px] text-[#7890AA] font-semibold">
                       {badge}
                     </span>
                   ))}
@@ -585,18 +599,18 @@ export default function Auth() {
         {/* What you get — shown only on main/email screens */}
         {screen !== "success" && (
           <div className="hidden lg:flex flex-col gap-4 ml-8 mt-2 max-w-[280px]">
-            <p className="font-black text-[16px] text-[#1a2d4a]">Dengan KerjaIn, kamu bisa:</p>
+            <p className="font-black text-[16px] text-[#172E4D]">Dengan KerjaIn, kamu bisa:</p>
             {[
               { emoji: "🏠", title: "Post Kerjaan gratis", desc: "Ceritakan masalah dan atur anggaran" },
               { emoji: "⚡", title: "Dapat penawaran cepat", desc: "Tukang Jakarta merespons dalam 15–30 menit" },
               { emoji: "🔒", title: "Bayar dengan aman", desc: "Dana diteruskan setelah pekerjaan selesai" },
               { emoji: "⭐", title: "Tukang terverifikasi", desc: "Profil tukang dicek sebelum menerima pekerjaan" },
             ].map((item) => (
-              <div key={item.emoji} className="flex items-start gap-3 bg-white rounded-2xl border border-[#c8dfd8] p-4">
+              <div key={item.emoji} className="flex items-start gap-3 bg-white rounded-2xl border border-[#D8E2F0] p-4">
                 <span className="text-[24px] shrink-0">{item.emoji}</span>
                 <div>
-                  <p className="font-bold text-[13px] text-[#0f2035]">{item.title}</p>
-                  <p className="text-[12px] text-[#3d6b5e] mt-0.5">{item.desc}</p>
+                  <p className="font-bold text-[13px] text-[#172E4D]">{item.title}</p>
+                  <p className="text-[12px] text-[#58708D] mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}

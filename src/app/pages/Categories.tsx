@@ -131,13 +131,13 @@ function GradientCard({ from, to, children, className = "" }: { from: string; to
 
 function ServiceCard({ name, stat, emoji, from, to, label }: { name: string; stat: string; emoji: string; from: string; to: string; label: string }) {
   return (
-    <Link to="/tasks" className="group flex-shrink-0 w-[200px] rounded-2xl overflow-hidden bg-white border border-[#c8dfd8] hover:shadow-lg transition-all hover:border-transparent">
+    <Link to="/tasks" className="group flex-shrink-0 w-[200px] rounded-2xl overflow-hidden bg-white border border-[#D8E2F0] hover:shadow-lg transition-all hover:border-transparent">
       <GradientCard from={from} to={to} className="h-[110px] flex items-center justify-center group-hover:brightness-95 transition-all">
         <span className="text-[48px]">{emoji}</span>
       </GradientCard>
       <div className="p-4">
-        <p className="font-bold text-[14px] text-[#0f2035] leading-snug mb-0.5">{name}</p>
-        <p className="text-[12px] text-[#3d6b5e]">{stat} {label}</p>
+        <p className="font-bold text-[14px] text-[#172E4D] leading-snug mb-0.5">{name}</p>
+        <p className="text-[12px] text-[#58708D]">{stat} {label}</p>
       </div>
     </Link>
   );
@@ -148,27 +148,27 @@ function CategoryCard({ cat }: { cat: typeof CATEGORY_DETAILS[0] }) {
   const visible = expanded ? cat.subcategories : cat.subcategories.slice(0, 6);
 
   return (
-    <div id={cat.slug} className="bg-white rounded-2xl border border-[#c8dfd8] overflow-hidden">
+    <div id={cat.slug} className="bg-white rounded-2xl border border-[#D8E2F0] overflow-hidden">
       <div className="flex flex-col sm:flex-row">
         <GradientCard from={cat.from} to={cat.to} className="sm:w-[180px] shrink-0 h-[120px] sm:h-auto flex items-center justify-center">
           <span className="text-[56px]">{cat.emoji}</span>
         </GradientCard>
         <div className="flex-1 p-5">
-          <h3 className="font-black text-[17px] text-[#1a2d4a] mb-1.5">
-            <Link to="/tasks" className="hover:text-[#2E5090] transition-colors">{cat.name}</Link>
+          <h3 className="font-black text-[17px] text-[#172E4D] mb-1.5">
+            <Link to="/tasks" className="hover:text-[#1D4196] transition-colors">{cat.name}</Link>
           </h3>
-          <p className="text-[13px] text-[#3d6b5e] mb-4 leading-relaxed">{cat.description}</p>
+          <p className="text-[13px] text-[#58708D] mb-4 leading-relaxed">{cat.description}</p>
           {cat.subcategories.length > 0 && (
             <div>
               <ul className="flex flex-wrap gap-x-5 gap-y-1.5 mb-3">
                 {visible.map((sub) => (
                   <li key={sub}>
-                    <Link to="/tasks" className="text-[13px] text-[#1a3d5c] hover:text-[#2E5090] transition-colors">{sub}</Link>
+                    <Link to="/tasks" className="text-[13px] text-[#294566] hover:text-[#1D4196] transition-colors">{sub}</Link>
                   </li>
                 ))}
               </ul>
               {cat.subcategories.length > 6 && (
-                <button onClick={() => setExpanded(!expanded)} className="text-[12px] font-bold text-[#2E5090] hover:underline flex items-center gap-1">
+                <button onClick={() => setExpanded(!expanded)} className="text-[12px] font-bold text-[#1D4196] hover:underline flex items-center gap-1">
                   {expanded ? "Show less" : `+${cat.subcategories.length - 6} more`}
                   <ChevronRight size={13} className={`transition-transform ${expanded ? "rotate-90" : ""}`} />
                 </button>
@@ -197,10 +197,10 @@ export default function Categories() {
     <div className="bg-white" style={{ fontFamily: "Manrope, sans-serif" }}>
 
       {/* ── HERO ── */}
-      <section className="bg-[#1a2d4a] relative overflow-hidden min-h-[240px]">
+      <section className="bg-[#172E4D] relative overflow-hidden min-h-[240px]">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-60px] right-[-40px] w-[400px] h-[400px] rounded-full bg-[#2E5090]/20 blur-3xl" />
-          <div className="absolute bottom-[-80px] left-[20%] w-[300px] h-[300px] rounded-full bg-[#F59E42]/10 blur-3xl" />
+          <div className="absolute top-[-60px] right-[-40px] w-[400px] h-[400px] rounded-full bg-[#1D4196]/20 blur-3xl" />
+          <div className="absolute bottom-[-80px] left-[20%] w-[300px] h-[300px] rounded-full bg-[#FD6665]/10 blur-3xl" />
         </div>
         <div className="relative max-w-[1400px] mx-auto px-6 pt-10 pb-12">
           <div className="flex items-center gap-1.5 text-white/50 text-[13px] mb-6">
@@ -215,7 +215,7 @@ export default function Categories() {
             From home cleaning to graphic design — connect with trusted local Taskers for anything.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link to="/tasks" className="bg-[#2E5090] text-white font-bold text-[14px] px-7 py-3 rounded-full hover:bg-[#1e3d7a] transition-colors">
+            <Link to="/tasks" className="bg-[#1D4196] text-white font-bold text-[14px] px-7 py-3 rounded-full hover:bg-[#173577] transition-colors">
               Post a task
             </Link>
             <Link to="/tasks" className="bg-white/10 border border-white/30 text-white font-bold text-[14px] px-7 py-3 rounded-full hover:bg-white/20 transition-colors">
@@ -229,10 +229,10 @@ export default function Categories() {
       <section className="py-12 max-w-[1400px] mx-auto px-6">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="font-black text-[26px] text-[#1a2d4a]">Popular services near you</h2>
-            <p className="text-[#3d6b5e] text-[13px] mt-1">Highest task volume in the last 30 days</p>
+            <h2 className="font-black text-[26px] text-[#172E4D]">Popular services near you</h2>
+            <p className="text-[#58708D] text-[13px] mt-1">Highest task volume in the last 30 days</p>
           </div>
-          <Link to="/tasks" className="hidden sm:flex items-center gap-1 text-[#2E5090] font-bold text-[13px] hover:underline whitespace-nowrap">
+          <Link to="/tasks" className="hidden sm:flex items-center gap-1 text-[#1D4196] font-bold text-[13px] hover:underline whitespace-nowrap">
             See more <ChevronRight size={14} />
           </Link>
         </div>
@@ -244,23 +244,23 @@ export default function Categories() {
       </section>
 
       {/* ── TRENDING SERVICES ── */}
-      <section className="py-12 bg-[#F5F1E8]">
+      <section className="py-12 bg-[#F7F9FC]">
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="flex items-end justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <TrendingUp size={20} className="text-[#2E5090]" />
-                <h2 className="font-black text-[26px] text-[#1a2d4a]">Trending services</h2>
+                <TrendingUp size={20} className="text-[#1D4196]" />
+                <h2 className="font-black text-[26px] text-[#172E4D]">Trending services</h2>
               </div>
-              <p className="text-[#3d6b5e] text-[13px]">Biggest growth vs. prior 30-day period</p>
+              <p className="text-[#58708D] text-[13px]">Biggest growth vs. prior 30-day period</p>
             </div>
-            <Link to="/tasks" className="hidden sm:flex items-center gap-1 text-[#2E5090] font-bold text-[13px] hover:underline whitespace-nowrap">
+            <Link to="/tasks" className="hidden sm:flex items-center gap-1 text-[#1D4196] font-bold text-[13px] hover:underline whitespace-nowrap">
               See more <ChevronRight size={14} />
             </Link>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
             {TRENDING_SERVICES.map((s) => (
-              <Link key={s.name} to="/tasks" className="group flex-shrink-0 w-[200px] rounded-2xl overflow-hidden bg-white border border-[#c8dfd8] hover:shadow-lg transition-all hover:border-transparent">
+              <Link key={s.name} to="/tasks" className="group flex-shrink-0 w-[200px] rounded-2xl overflow-hidden bg-white border border-[#D8E2F0] hover:shadow-lg transition-all hover:border-transparent">
                 <GradientCard from={s.from} to={s.to} className="h-[110px] relative flex items-center justify-center group-hover:brightness-95 transition-all">
                   <span className="text-[48px]">{s.emoji}</span>
                   <div className="absolute top-2.5 right-2.5 bg-[#20bf6f] text-white text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5">
@@ -268,7 +268,7 @@ export default function Categories() {
                   </div>
                 </GradientCard>
                 <div className="p-4">
-                  <p className="font-bold text-[14px] text-[#0f2035]">{s.name}</p>
+                  <p className="font-bold text-[14px] text-[#172E4D]">{s.name}</p>
                   <p className="text-[12px] text-[#20bf6f] font-semibold mt-0.5">↑ {s.growth} growth</p>
                 </div>
               </Link>
@@ -280,16 +280,16 @@ export default function Categories() {
       {/* ── POPULAR LOCATIONS ── */}
       <section className="py-12 max-w-[1400px] mx-auto px-6">
         <div className="flex items-center gap-2 mb-2">
-          <MapPin size={20} className="text-[#2E5090]" />
-          <h2 className="font-black text-[26px] text-[#1a2d4a]">Popular locations</h2>
+          <MapPin size={20} className="text-[#1D4196]" />
+          <h2 className="font-black text-[26px] text-[#172E4D]">Popular locations</h2>
         </div>
-        <p className="text-[#3d6b5e] text-[13px] mb-6">Browse KerjaIn services in cities near you</p>
+        <p className="text-[#58708D] text-[13px] mb-6">Browse KerjaIn services in cities near you</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
           {LOCATIONS.map((loc) => (
             <Link key={loc.name} to="/tasks" className="group rounded-2xl overflow-hidden aspect-[4/3] cursor-pointer">
               <GradientCard from={loc.from} to={loc.to} className="w-full h-full flex flex-col items-center justify-center gap-2 group-hover:brightness-95 transition-all">
                 <span className="text-[44px]">{loc.emoji}</span>
-                <p className="font-black text-[15px] text-[#0f2035]">{loc.name}</p>
+                <p className="font-black text-[15px] text-[#172E4D]">{loc.name}</p>
               </GradientCard>
             </Link>
           ))}
@@ -297,31 +297,31 @@ export default function Categories() {
       </section>
 
       {/* ── BROWSE ALL CATEGORIES ── */}
-      <section className="py-14 bg-[#F5F1E8]">
+      <section className="py-14 bg-[#F7F9FC]">
         <div className="max-w-[1400px] mx-auto px-6">
-          <h2 className="font-black text-[30px] text-[#1a2d4a] mb-2">Browse all categories</h2>
-          <p className="text-[#3d6b5e] text-[14px] mb-8">Find the right service for any task, big or small</p>
+          <h2 className="font-black text-[30px] text-[#172E4D] mb-2">Browse all categories</h2>
+          <p className="text-[#58708D] text-[14px] mb-8">Find the right service for any task, big or small</p>
 
-          <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-[#b8d4c8] max-w-md mb-10 focus-within:border-[#2E5090] transition-colors shadow-sm">
-            <Search size={16} className="text-[#7a9a8f] shrink-0" />
+          <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-3 border border-[#D8E2F0] max-w-md mb-10 focus-within:border-[#1D4196] transition-colors shadow-sm">
+            <Search size={16} className="text-[#7890AA] shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search categories…"
-              className="bg-transparent text-[14px] text-[#1a3d5c] placeholder-[#7a9a8f] outline-none w-full"
+              className="bg-transparent text-[14px] text-[#294566] placeholder-[#7890AA] outline-none w-full"
             />
           </div>
 
           {/* Alphabetical index */}
           {!search && (
-            <div className="bg-white rounded-2xl border border-[#c8dfd8] p-6 mb-10">
+            <div className="bg-white rounded-2xl border border-[#D8E2F0] p-6 mb-10">
               {Object.entries(grouped).sort().map(([letter, cats]) => (
                 <div key={letter} className="flex gap-x-2 gap-y-0 items-baseline flex-wrap mb-3 last:mb-0">
-                  <span className="font-black text-[13px] text-[#2E5090] w-5 shrink-0">{letter}</span>
+                  <span className="font-black text-[13px] text-[#1D4196] w-5 shrink-0">{letter}</span>
                   <div className="flex flex-wrap gap-x-4 gap-y-1">
                     {cats.map((cat) => (
                       <a key={cat} href={`#${cat.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-                        className="text-[13px] text-[#1a3d5c] hover:text-[#2E5090] transition-colors">
+                        className="text-[13px] text-[#294566] hover:text-[#1D4196] transition-colors">
                         {cat}
                       </a>
                     ))}
@@ -339,8 +339,8 @@ export default function Categories() {
 
           {!search && (
             <div className="mt-8 text-center">
-              <p className="text-[#3d6b5e] text-[13px] mb-4">Can't find what you're looking for?</p>
-              <Link to="/tasks" className="inline-flex items-center gap-2 bg-[#2E5090] text-white font-bold text-[14px] px-7 py-3 rounded-full hover:bg-[#1e3d7a] transition-colors">
+              <p className="text-[#58708D] text-[13px] mb-4">Can't find what you're looking for?</p>
+              <Link to="/tasks" className="inline-flex items-center gap-2 bg-[#1D4196] text-white font-bold text-[14px] px-7 py-3 rounded-full hover:bg-[#173577] transition-colors">
                 Post a custom task <ChevronRight size={16} />
               </Link>
             </div>

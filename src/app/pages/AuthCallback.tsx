@@ -1,0 +1,42 @@
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router";
+import { useAuth } from "../../lib/auth";
+import { api, setTokens } from "../../lib/api";
+
+export default function AuthCallback() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const { setSession } = useAuth();
+
+  useEffect(() => {
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const error = params.get("error");
+
+    if (error) {
+      navigate("/masuk?error=oauth_failed", { replace: true });
+      return;
+    }
+
+    if (accessToken && refreshToken) {
+      (async () => {
+        try {
+          setTokens(accessToken, refreshToken);
+          const { user } = await api.me();
+          setSession(accessToken, refreshToken, user);
+          navigate(user.role === "technician" ? "/dasbor-tukang" : "/", { replace: true });
+        } catch {
+          navigate("/masuk?error=oauth_failed", { replace: true });
+        }
+      })();
+    } else {
+      navigate("/masuk", { replace: true });
+    }
+  }, [params, navigate, setSession]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
+      <p className="text-[#172E4D] font-semibold">Memproses masuk…</p>
+    </div>
+  );
+}

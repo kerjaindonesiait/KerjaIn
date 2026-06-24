@@ -4,6 +4,9 @@ import {
   ChevronLeft, ChevronRight, CheckCircle, AlertCircle,
   Upload, Camera, Eye, EyeOff, HardHat, Clock,
 } from "lucide-react";
+import { useAuth } from "../../lib/auth";
+import { api } from "../../lib/api";
+import { BrandLogo } from "../components/BrandLogo";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -110,20 +113,20 @@ function ProgressBar({ step }: { step: number }) {
         <div key={label} className="flex items-center flex-1">
           <div className="flex flex-col items-center flex-1">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black transition-all ${
-              i < step ? "bg-[#1a2d4a] text-white"
-              : i === step ? "bg-[#1a2d4a] text-white ring-4 ring-[#1a2d4a]/20"
-              : "bg-[#c8dfd8] text-[#7a9a8f]"
+              i < step ? "bg-[#172E4D] text-white"
+              : i === step ? "bg-[#172E4D] text-white ring-4 ring-[#172E4D]/20"
+              : "bg-[#D8E2F0] text-[#7890AA]"
             }`}>
               {i < step ? <CheckCircle size={13} /> : i + 1}
             </div>
             <p className={`text-[9px] font-bold mt-1 hidden sm:block text-center leading-tight ${
-              i === step ? "text-[#1a2d4a]" : i < step ? "text-[#1a2d4a]/50" : "text-[#7a9a8f]"
+              i === step ? "text-[#172E4D]" : i < step ? "text-[#172E4D]/50" : "text-[#7890AA]"
             }`}>
               {label}
             </p>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-1 transition-all ${i < step ? "bg-[#1a2d4a]" : "bg-[#c8dfd8]"}`} />
+            <div className={`h-0.5 flex-1 mx-1 transition-all ${i < step ? "bg-[#172E4D]" : "bg-[#D8E2F0]"}`} />
           )}
         </div>
       ))}
@@ -146,21 +149,21 @@ function StepAuth({
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-5 p-3 bg-[#1a2d4a] rounded-2xl">
-        <HardHat size={22} className="text-[#F59E42] shrink-0" />
+      <div className="flex items-center gap-3 mb-5 p-3 bg-[#172E4D] rounded-2xl">
+        <HardHat size={22} className="text-[#FD6665] shrink-0" />
         <div>
           <p className="font-black text-[14px] text-white">Daftar sebagai tukang / teknisi</p>
           <p className="text-[11px] text-white/60">Buat akun dan mulai terima pekerjaan di Jakarta</p>
         </div>
       </div>
 
-      <h2 className="font-black text-[22px] text-[#1a2d4a] mb-5">Pilih cara masuk</h2>
+      <h2 className="font-black text-[22px] text-[#172E4D] mb-5">Pilih cara masuk</h2>
 
       <div className="flex flex-col gap-3 mb-5">
         {([
-          { id: "google" as OAuthProvider,   label: "Lanjutkan dengan Google",   logo: <GoogleLogo />,   bg: "bg-white border border-[#e0d0d0] text-[#0f2035]" },
+          { id: "google" as OAuthProvider,   label: "Lanjutkan dengan Google",   logo: <GoogleLogo />,   bg: "bg-white border border-[#D8E2F0] text-[#172E4D]" },
           { id: "facebook" as OAuthProvider, label: "Lanjutkan dengan Facebook", logo: <FacebookLogo />, bg: "bg-[#1877F2] text-white" },
-          { id: "apple" as OAuthProvider,    label: "Lanjutkan dengan Apple",    logo: <AppleLogo />,    bg: "bg-[#1a2d4a] text-white" },
+          { id: "apple" as OAuthProvider,    label: "Lanjutkan dengan Apple",    logo: <AppleLogo />,    bg: "bg-[#172E4D] text-white" },
         ]).map(({ id, label, logo, bg }) => (
           <button
             key={id}
@@ -179,15 +182,15 @@ function StepAuth({
       </div>
 
       <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 h-px bg-[#c8dfd8]" />
-        <span className="text-[12px] font-semibold text-[#7a9a8f]">atau</span>
-        <div className="flex-1 h-px bg-[#c8dfd8]" />
+        <div className="flex-1 h-px bg-[#D8E2F0]" />
+        <span className="text-[12px] font-semibold text-[#7890AA]">atau</span>
+        <div className="flex-1 h-px bg-[#D8E2F0]" />
       </div>
 
       {!showEmail ? (
         <button
           onClick={() => setShowEmail(true)}
-          className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#1a2d4a] hover:text-[#1a2d4a] transition-all"
+          className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#172E4D] hover:text-[#172E4D] transition-all"
         >
           Daftar dengan email
         </button>
@@ -198,7 +201,7 @@ function StepAuth({
             onChange={(e) => onChange({ email: e.target.value })}
             type="email"
             placeholder="nama@email.com"
-            className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all"
+            className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
           />
           <div className="relative">
             <input
@@ -206,9 +209,9 @@ function StepAuth({
               onChange={(e) => onChange({ password: e.target.value })}
               type={showPw ? "text" : "password"}
               placeholder="Kata sandi (min. 6 karakter)"
-              className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 pr-11 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all"
+              className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 pr-11 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
             />
-            <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a9a8f]">
+            <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7890AA]">
               {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
           </div>
@@ -217,8 +220,8 @@ function StepAuth({
             disabled={!data.email.includes("@") || data.password.length < 6}
             className={`w-full font-bold text-[14px] py-3 rounded-2xl transition-all ${
               data.email.includes("@") && data.password.length >= 6
-                ? "bg-[#1a2d4a] text-white hover:opacity-90"
-                : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
+                ? "bg-[#172E4D] text-white hover:opacity-90"
+                : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}
           >
             Buat akun dengan email
@@ -235,41 +238,41 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Informasi pribadi</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-5">Informasi ini akan tampil di profil tukangmu.</p>
+        <h2 className="font-black text-[22px] text-[#172E4D] mb-1">Informasi pribadi</h2>
+        <p className="text-[#58708D] text-[14px] mb-5">Informasi ini akan tampil di profil tukangmu.</p>
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Nama lengkap</label>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nama lengkap</label>
         <input
           value={data.nama}
           onChange={(e) => onChange({ nama: e.target.value })}
           placeholder="Budi Santoso"
-          className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all"
+          className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
         />
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Nomor HP / WhatsApp</label>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nomor HP / WhatsApp</label>
         <div className="flex">
-          <span className="flex items-center px-3 border-2 border-r-0 border-[#b8d4c8] rounded-l-xl bg-[#f0f7f4] text-[#1a3d5c] font-semibold text-[14px]">+62</span>
+          <span className="flex items-center px-3 border-2 border-r-0 border-[#D8E2F0] rounded-l-xl bg-[#EEF3FB] text-[#294566] font-semibold text-[14px]">+62</span>
           <input
             value={data.phone}
             onChange={(e) => onChange({ phone: e.target.value.replace(/\D/g, "") })}
             placeholder="812 3456 7890"
             type="tel"
-            className="flex-1 border-2 border-[#b8d4c8] rounded-r-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all"
+            className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
           />
         </div>
-        <p className="text-[11px] text-[#7a9a8f] mt-1">Pelanggan bisa menghubungimu via WhatsApp setelah penawaran diterima</p>
+        <p className="text-[11px] text-[#7890AA] mt-1">Pelanggan bisa menghubungimu via WhatsApp setelah penawaran diterima</p>
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Area kerja utama</label>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Area kerja utama</label>
         <select
           value={data.area}
           onChange={(e) => onChange({ area: e.target.value })}
-          className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all appearance-none cursor-pointer"
+          className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all appearance-none cursor-pointer"
         >
           <option value="">Pilih area…</option>
           {AREA_GROUPS.map(({ group, areas }) => (
@@ -278,7 +281,7 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
             </optgroup>
           ))}
         </select>
-        <p className="text-[11px] text-[#7a9a8f] mt-1">Kamu tetap bisa menerima pekerjaan di area lain, tapi area utama membantu pencocokan.</p>
+        <p className="text-[11px] text-[#7890AA] mt-1">Kamu tetap bisa menerima pekerjaan di area lain, tapi area utama membantu pencocokan.</p>
       </div>
     </div>
   );
@@ -293,7 +296,7 @@ function UploadBox({
   hasFile: boolean; onUpload: () => void; onRemove: () => void;
 }) {
   return (
-    <div className={`border-2 border-dashed rounded-2xl p-5 transition-all ${hasFile ? "border-[#20bf6f] bg-[#f0fdf4]" : "border-[#b8d4c8] bg-[#F5F1E8] hover:border-[#1a2d4a]"}`}>
+    <div className={`border-2 border-dashed rounded-2xl p-5 transition-all ${hasFile ? "border-[#20bf6f] bg-[#f0fdf4]" : "border-[#D8E2F0] bg-[#F7F9FC] hover:border-[#172E4D]"}`}>
       {hasFile ? (
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#bbf7d0] flex items-center justify-center shrink-0">
@@ -303,18 +306,18 @@ function UploadBox({
             <p className="font-bold text-[14px] text-[#166534]">{label} berhasil diunggah</p>
             <p className="text-[12px] text-[#4ade80]">File siap diverifikasi</p>
           </div>
-          <button onClick={onRemove} className="text-[12px] text-[#7a9a8f] hover:text-red-500 font-semibold transition-colors">Hapus</button>
+          <button onClick={onRemove} className="text-[12px] text-[#7890AA] hover:text-red-500 font-semibold transition-colors">Hapus</button>
         </div>
       ) : (
         <button onClick={onUpload} className="w-full flex flex-col items-center gap-3 py-2">
-          <div className="w-12 h-12 rounded-xl bg-[#f0f7f4] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-[#EEF3FB] flex items-center justify-center">
             {icon}
           </div>
           <div className="text-center">
-            <p className="font-bold text-[14px] text-[#1a2d4a]">{label}</p>
-            <p className="text-[12px] text-[#3d6b5e] mt-0.5">{sublabel}</p>
+            <p className="font-bold text-[14px] text-[#172E4D]">{label}</p>
+            <p className="text-[12px] text-[#58708D] mt-0.5">{sublabel}</p>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a2d4a] text-white text-[12px] font-bold px-4 py-2 rounded-full">
+          <div className="flex items-center gap-2 bg-[#172E4D] text-white text-[12px] font-bold px-4 py-2 rounded-full">
             <Upload size={13} /> Pilih file
           </div>
         </button>
@@ -337,13 +340,13 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Verifikasi identitas</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-1">Upload KTP agar pelanggan tahu profilmu sudah dicek.</p>
+        <h2 className="font-black text-[22px] text-[#172E4D] mb-1">Verifikasi identitas</h2>
+        <p className="text-[#58708D] text-[14px] mb-1">Upload KTP agar pelanggan tahu profilmu sudah dicek.</p>
       </div>
 
       {/* Info bar */}
-      <div className="flex items-start gap-3 bg-[#1a2d4a] rounded-xl p-4">
-        <AlertCircle size={16} className="text-[#F59E42] shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 bg-[#172E4D] rounded-xl p-4">
+        <AlertCircle size={16} className="text-[#FD6665] shrink-0 mt-0.5" />
         <div className="text-[12px] text-white/80">
           <span className="font-bold text-white">Kenapa perlu KTP?</span> Verifikasi identitas membantu pelanggan lebih percaya dan bisa meningkatkan peluang mendapat pekerjaan. Datamu dienkripsi dan aman.
         </div>
@@ -353,7 +356,7 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
       <UploadBox
         label="Foto KTP (Bagian Depan)"
         sublabel="Format JPG, PNG — maks. 5MB. Pastikan seluruh teks terbaca jelas"
-        icon={<Upload size={22} className="text-[#2E5090]" />}
+        icon={<Upload size={22} className="text-[#1D4196]" />}
         hasFile={!!data.ktpPhoto}
         onUpload={() => simulateUpload("ktpPhoto")}
         onRemove={() => onChange({ ktpPhoto: null })}
@@ -363,16 +366,16 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
       <UploadBox
         label="Foto Selfie"
         sublabel="Foto wajah yang jelas — pastikan wajah terlihat penuh dan terang"
-        icon={<Camera size={22} className="text-[#2E5090]" />}
+        icon={<Camera size={22} className="text-[#1D4196]" />}
         hasFile={!!data.selfiePhoto}
         onUpload={() => simulateUpload("selfiePhoto")}
         onRemove={() => onChange({ selfiePhoto: null })}
       />
 
       {/* Verification note */}
-      <div className="flex items-start gap-3 bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4 text-[12px] text-[#3d6b5e]">
-        <Clock size={14} className="text-[#7a9a8f] shrink-0 mt-0.5" />
-        Verifikasi KTP biasanya selesai dalam <span className="font-bold text-[#1a2d4a] mx-1">1×24 jam</span> kerja. Kamu bisa tetap melengkapi profil sambil menunggu.
+      <div className="flex items-start gap-3 bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl p-4 text-[12px] text-[#58708D]">
+        <Clock size={14} className="text-[#7890AA] shrink-0 mt-0.5" />
+        Verifikasi KTP biasanya selesai dalam <span className="font-bold text-[#172E4D] mx-1">1×24 jam</span> kerja. Kamu bisa tetap melengkapi profil sambil menunggu.
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" />
@@ -393,8 +396,8 @@ function StepKeahlian({ data, onChange }: { data: TechData; onChange: (d: Partia
 
   return (
     <div>
-      <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Pilih keahlianmu</h2>
-      <p className="text-[#3d6b5e] text-[14px] mb-5">Pilih semua layanan yang bisa kamu kerjakan. Minimal 1 keahlian.</p>
+      <h2 className="font-black text-[22px] text-[#172E4D] mb-1">Pilih keahlianmu</h2>
+      <p className="text-[#58708D] text-[14px] mb-5">Pilih semua layanan yang bisa kamu kerjakan. Minimal 1 keahlian.</p>
 
       <div className="grid grid-cols-2 gap-2.5 mb-4">
         {KEAHLIAN.map((k) => {
@@ -405,24 +408,24 @@ function StepKeahlian({ data, onChange }: { data: TechData; onChange: (d: Partia
               onClick={() => toggle(k.id)}
               className={`flex items-center gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
                 selected
-                  ? "border-[#1a2d4a] bg-[#1a2d4a] text-white"
-                  : "border-[#c8dfd8] bg-white hover:border-[#1a2d4a]/40"
+                  ? "border-[#172E4D] bg-[#172E4D] text-white"
+                  : "border-[#D8E2F0] bg-white hover:border-[#172E4D]/40"
               }`}
             >
               <span className="text-[22px] shrink-0">{k.emoji}</span>
               <div className="flex-1 min-w-0">
-                <p className={`font-bold text-[12px] leading-snug ${selected ? "text-white" : "text-[#0f2035]"}`}>
+                <p className={`font-bold text-[12px] leading-snug ${selected ? "text-white" : "text-[#172E4D]"}`}>
                   {k.label}
                 </p>
               </div>
-              {selected && <CheckCircle size={14} className="text-[#F59E42] shrink-0" />}
+              {selected && <CheckCircle size={14} className="text-[#FD6665] shrink-0" />}
             </button>
           );
         })}
       </div>
 
       {data.keahlian.length > 0 && (
-        <div className="bg-[#1a2d4a]/5 border border-[#1a2d4a]/10 rounded-xl px-4 py-2.5 text-[12px] text-[#1a3d5c] font-semibold">
+        <div className="bg-[#172E4D]/5 border border-[#172E4D]/10 rounded-xl px-4 py-2.5 text-[12px] text-[#294566] font-semibold">
           ✅ {data.keahlian.length} keahlian dipilih
         </div>
       )}
@@ -436,12 +439,12 @@ function StepPengalaman({ data, onChange }: { data: TechData; onChange: (d: Part
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Pengalaman & tarif</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-2">Bantu pelanggan memahami pengalaman dan kisaran hargamu.</p>
+        <h2 className="font-black text-[22px] text-[#172E4D] mb-1">Pengalaman & tarif</h2>
+        <p className="text-[#58708D] text-[14px] mb-2">Bantu pelanggan memahami pengalaman dan kisaran hargamu.</p>
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-2">Lama pengalaman</label>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-2">Lama pengalaman</label>
         <div className="flex flex-col gap-2">
           {PENGALAMAN_OPTIONS.map((opt) => (
             <button
@@ -449,29 +452,29 @@ function StepPengalaman({ data, onChange }: { data: TechData; onChange: (d: Part
               onClick={() => onChange({ pengalaman: opt })}
               className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-[14px] font-semibold text-left transition-all ${
                 data.pengalaman === opt
-                  ? "border-[#1a2d4a] bg-[#1a2d4a] text-white"
-                  : "border-[#c8dfd8] bg-white text-[#1a3d5c] hover:border-[#1a2d4a]/40"
+                  ? "border-[#172E4D] bg-[#172E4D] text-white"
+                  : "border-[#D8E2F0] bg-white text-[#294566] hover:border-[#172E4D]/40"
               }`}
             >
               {opt}
-              {data.pengalaman === opt && <CheckCircle size={16} className="text-[#F59E42]" />}
+              {data.pengalaman === opt && <CheckCircle size={16} className="text-[#FD6665]" />}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">
-          Deskripsi singkat tentang kamu <span className="font-normal text-[#7a9a8f]">(opsional)</span>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">
+          Deskripsi singkat tentang kamu <span className="font-normal text-[#7890AA]">(opsional)</span>
         </label>
         <textarea
           value={data.bio}
           onChange={(e) => onChange({ bio: e.target.value })}
           rows={4}
           placeholder="Contoh: Saya tukang ledeng dengan pengalaman 5 tahun untuk rumah dan ruko. Melayani pekerjaan darurat di Jakarta Selatan dan sekitarnya..."
-          className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] resize-none transition-all"
+          className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] resize-none transition-all"
         />
-        <p className="text-[11px] text-[#7a9a8f] mt-1">{data.bio.length}/300 karakter</p>
+        <p className="text-[11px] text-[#7890AA] mt-1">{data.bio.length}/300 karakter</p>
       </div>
     </div>
   );
@@ -493,16 +496,16 @@ function SuccessScreen({ data }: { data: TechData }) {
       </div>
 
       <div>
-        <h2 className="font-black text-[26px] text-[#1a2d4a] mb-1">Pendaftaran berhasil!</h2>
-        <p className="text-[#3d6b5e] text-[14px] max-w-xs mx-auto">
-          Akun tukangmu sedang diverifikasi. Kami akan memberi kabar dalam <span className="font-bold text-[#1a2d4a]">1×24 jam</span>.
+        <h2 className="font-black text-[26px] text-[#172E4D] mb-1">Pendaftaran berhasil!</h2>
+        <p className="text-[#58708D] text-[14px] max-w-xs mx-auto">
+          Akun tukangmu sedang diverifikasi. Kami akan memberi kabar dalam <span className="font-bold text-[#172E4D]">1×24 jam</span>.
         </p>
       </div>
 
       {/* Profile preview card */}
-      <div className="w-full bg-[#1a2d4a] rounded-2xl overflow-hidden text-left">
+      <div className="w-full bg-[#172E4D] rounded-2xl overflow-hidden text-left">
         <div className="px-5 py-4 flex items-center gap-3 border-b border-white/10">
-          <div className="w-12 h-12 rounded-full bg-[#2E5090] flex items-center justify-center text-white font-black text-[18px]">
+          <div className="w-12 h-12 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[18px]">
             {data.nama ? data.nama[0].toUpperCase() : "T"}
           </div>
           <div>
@@ -530,15 +533,15 @@ function SuccessScreen({ data }: { data: TechData }) {
           {data.tarif && (
             <div>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-semibold mb-1">Tarif</p>
-              <p className="text-[13px] font-bold text-[#F59E42]">{data.tarif}</p>
+              <p className="text-[13px] font-bold text-[#FD6665]">{data.tarif}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Verification status */}
-      <div className="w-full bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-4 text-left space-y-2.5">
-        <p className="font-bold text-[13px] text-[#0f2035] mb-3">Status verifikasi:</p>
+      <div className="w-full bg-[#F7F9FC] border border-[#D8E2F0] rounded-2xl p-4 text-left space-y-2.5">
+        <p className="font-bold text-[13px] text-[#172E4D] mb-3">Status verifikasi:</p>
         {[
           { label: "Akun dibuat", done: true },
           { label: "Informasi profil", done: !!data.nama && !!data.phone },
@@ -548,11 +551,11 @@ function SuccessScreen({ data }: { data: TechData }) {
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-3 text-[13px]">
             <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-              item.done ? "bg-[#20bf6f]" : item.pending ? "bg-yellow-400" : "bg-[#c8dfd8]"
+              item.done ? "bg-[#20bf6f]" : item.pending ? "bg-yellow-400" : "bg-[#D8E2F0]"
             }`}>
-              {item.done ? <CheckCircle size={12} className="text-white" /> : <Clock size={11} className="text-[#1a2d4a]" />}
+              {item.done ? <CheckCircle size={12} className="text-white" /> : <Clock size={11} className="text-[#172E4D]" />}
             </div>
-            <span className={item.done ? "text-[#0f2035] font-semibold" : item.pending ? "text-yellow-700 font-semibold" : "text-[#7a9a8f]"}>
+            <span className={item.done ? "text-[#172E4D] font-semibold" : item.pending ? "text-yellow-700 font-semibold" : "text-[#7890AA]"}>
               {item.label}
             </span>
           </div>
@@ -562,13 +565,13 @@ function SuccessScreen({ data }: { data: TechData }) {
       <div className="flex flex-col gap-3 w-full">
         <button
           onClick={() => navigate("/dasbor-tukang")}
-          className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
         >
           Buka Dasbor Tukang →
         </button>
         <button
           onClick={() => navigate("/")}
-          className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
+          className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
         >
           Kembali ke beranda
         </button>
@@ -598,14 +601,22 @@ const INITIAL: TechData = {
 };
 
 export default function TechAuth() {
+  const navigate = useNavigate();
+  const { register, setSession } = useAuth();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<TechData>(INITIAL);
   const [submitted, setSubmitted] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
   const handleOAuth = (provider: OAuthProvider) => {
+    if (provider === "google") {
+      window.location.href = api.googleAuthUrl();
+      return;
+    }
     setOauthLoading(provider);
     setTimeout(() => {
       const names: Record<OAuthProvider, string> = {
@@ -617,21 +628,44 @@ export default function TechAuth() {
     }, 1800);
   };
 
-  const handleNext = () => {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
-    else setSubmitted(true);
+  const handleNext = async () => {
+    if (step < STEPS.length - 1) {
+      setStep((s) => s + 1);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      if (data.authMethod === "email" || data.email) {
+        const result = await api.register(data.email, data.password, data.nama, "technician");
+        setSession(result.accessToken, result.refreshToken, result.user);
+      }
+      await api.saveTechnicianProfile({
+        phone: data.phone,
+        area: data.area,
+        nik: data.nik,
+        ktpPhoto: data.ktpPhoto,
+        selfiePhoto: data.selfiePhoto,
+        keahlian: data.keahlian,
+        pengalaman: data.pengalaman,
+        tarif: data.tarif,
+        bio: data.bio,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Pendaftaran gagal");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#F5F1E8] py-10 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
+      <div className="min-h-screen bg-[#F7F9FC] py-10 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
         <div className="max-w-[520px] mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#2E5090] flex items-center justify-center">
-                <HardHat size={16} className="text-white" />
-              </div>
-              <span className="font-black text-[18px] text-[#2E5090]">KerjaIn</span>
+            <div className="flex items-center">
+              <BrandLogo imgClassName="h-10" />
             </div>
           </div>
           <SuccessScreen data={data} />
@@ -641,22 +675,19 @@ export default function TechAuth() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8]" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4 max-w-[520px] mx-auto">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-[#2E5090] flex items-center justify-center">
-            <HardHat size={16} className="text-white" />
-          </div>
-          <span className="font-black text-[18px] text-[#2E5090]">KerjaIn</span>
-          <span className="text-[12px] font-bold text-[#7a9a8f] bg-[#f0f7f4] px-2 py-0.5 rounded-full">Tukang</span>
+          <BrandLogo imgClassName="h-10" />
+          <span className="text-[12px] font-bold text-[#7890AA] bg-[#EEF3FB] px-2 py-0.5 rounded-full">Tukang</span>
         </Link>
         {step > 0 ? (
-          <button onClick={() => setStep((s) => s - 1)} className="flex items-center gap-1 text-[13px] font-semibold text-[#3d6b5e] hover:text-[#1a2d4a] transition-colors">
+          <button onClick={() => setStep((s) => s - 1)} className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#172E4D] transition-colors">
             <ChevronLeft size={15} /> Kembali
           </button>
         ) : (
-          <Link to="/daftar" className="flex items-center gap-1 text-[13px] font-semibold text-[#3d6b5e] hover:text-[#2E5090] transition-colors">
+          <Link to="/daftar" className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors">
             <ChevronLeft size={15} /> Kembali
           </Link>
         )}
@@ -665,16 +696,16 @@ export default function TechAuth() {
       <div className="max-w-[520px] mx-auto px-4 py-4">
         {/* Banner */}
         {step === 0 && (
-          <div className="bg-gradient-to-r from-[#1a2d4a] to-[#3d1515] rounded-2xl p-5 mb-6 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#2E5090]/20 flex items-center justify-center shrink-0">
-              <HardHat size={30} className="text-[#F59E42]" />
+          <div className="bg-gradient-to-r from-[#172E4D] to-[#3d1515] rounded-2xl p-5 mb-6 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#1D4196]/20 flex items-center justify-center shrink-0">
+              <HardHat size={30} className="text-[#FD6665]" />
             </div>
             <div>
               <p className="font-black text-[16px] text-white">Daftar sebagai tukang</p>
               <p className="text-[12px] text-white/60 mt-0.5">Terima pekerjaan plumbing dan perawatan di Jakarta</p>
               <div className="flex gap-3 mt-2">
                 {["Gratis daftar", "Verifikasi KTP", "Langsung dapat pekerjaan"].map((t) => (
-                  <span key={t} className="text-[10px] font-bold text-[#F59E42]">✓ {t}</span>
+                  <span key={t} className="text-[10px] font-bold text-[#FD6665]">✓ {t}</span>
                 ))}
               </div>
             </div>
@@ -685,7 +716,7 @@ export default function TechAuth() {
         <ProgressBar step={step} />
 
         {/* Step content */}
-        <div className="bg-white rounded-3xl border border-[#c8dfd8] p-6 mb-5 min-h-[380px]">
+        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px]">
           {step === 0 && (
             <StepAuth data={data} onChange={update} onOAuth={handleOAuth} oauthLoading={oauthLoading} />
           )}
@@ -697,9 +728,9 @@ export default function TechAuth() {
 
         {/* KTP skip note */}
         {step === 2 && (
-          <p className="text-center text-[12px] text-[#7a9a8f] mb-3">
+          <p className="text-center text-[12px] text-[#7890AA] mb-3">
             Belum punya KTP siap?{" "}
-            <button onClick={() => setStep(3)} className="text-[#2E5090] font-bold hover:underline">
+            <button onClick={() => setStep(3)} className="text-[#1D4196] font-bold hover:underline">
               Lewati untuk sekarang
             </button>
           </p>
@@ -712,8 +743,8 @@ export default function TechAuth() {
             disabled={!canProceed(step, data)}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
               canProceed(step, data)
-                ? "bg-[#1a2d4a] hover:opacity-90 text-white"
-                : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
+                ? "bg-[#172E4D] hover:opacity-90 text-white"
+                : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}
           >
             {step === STEPS.length - 1 ? "Selesai dan daftarkan akun" : (
@@ -723,7 +754,7 @@ export default function TechAuth() {
         )}
 
         {/* Trust strip */}
-        <div className="flex flex-wrap justify-center gap-5 mt-5 text-[11px] text-[#7a9a8f]">
+        <div className="flex flex-wrap justify-center gap-5 mt-5 text-[11px] text-[#7890AA]">
           {["🔒 Data terenkripsi", "✅ Verifikasi resmi", "🆓 Daftar 100% gratis"].map((b) => (
             <span key={b} className="font-semibold">{b}</span>
           ))}
