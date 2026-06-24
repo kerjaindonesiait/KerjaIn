@@ -6,9 +6,10 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string, role?: "user" | "technician") => Promise<void>;
+  register: (email: string, password: string, fullName: string, role?: "user" | "technician") => Promise<{ devVerifyLink?: string }>;
   logout: () => Promise<void>;
   setSession: (accessToken: string, refreshToken: string, user: User) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, fullName: string, role: "user" | "technician" = "user") => {
     const data = await api.register(email, password, fullName, role);
     setSession(data.accessToken, data.refreshToken, data.user);
+    return { devVerifyLink: data.devVerifyLink };
   };
 
   const logout = async () => {
@@ -66,8 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    if (!getAccessToken()) return;
+    try {
+      const { user: me } = await api.me();
+      setUser(me);
+    } catch {
+      clearTokens();
+      setUser(null);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setSession }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setSession, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

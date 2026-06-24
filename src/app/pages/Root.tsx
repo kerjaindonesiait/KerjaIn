@@ -1,6 +1,7 @@
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
+import { useAuth } from "../../lib/auth";
 
 const NAV_LINKS = [
   { label: "Lihat Pekerjaan", href: "/tasks" },
@@ -33,8 +34,24 @@ const POPULAR_LOCATIONS = [
 
 export default function Root() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, loading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isTasksPage = location.pathname === "/tasks";
+
+  const handleLogout = async () => {
+    setMobileOpen(false);
+    await logout();
+    navigate("/");
+  };
+
+  const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "Akun";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F1E8]" style={{ fontFamily: "Manrope, sans-serif" }}>
@@ -80,12 +97,40 @@ export default function Root() {
 
           {/* Right nav */}
           <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto">
-            <Link to="/daftar" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
-              Daftar
-            </Link>
-            <Link to="/masuk" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap">
-              Masuk
-            </Link>
+            {loading ? null : user ? (
+              <>
+                {user.role === "technician" && (
+                  <Link to="/dasbor-tukang" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
+                    Dasbor Tukang
+                  </Link>
+                )}
+                <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#c8dfd8]" />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-[#2E5090] text-white text-[11px] font-bold flex items-center justify-center">
+                      {initials}
+                    </span>
+                  )}
+                  <span className="max-w-[120px] truncate">{displayName}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] hover:text-red-600 transition-colors px-2"
+                >
+                  <LogOut size={15} /> Keluar
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/daftar" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
+                  Daftar
+                </Link>
+                <Link to="/masuk" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap">
+                  Masuk
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -105,9 +150,37 @@ export default function Root() {
                 {item.label}
               </Link>
             ))}
-            <div className="flex gap-3 pt-2">
-              <Link to="/daftar" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-[#b8d4c8] text-[#1a3d5c] font-semibold text-[13px] py-2 rounded-full hover:border-[#2E5090] hover:text-[#2E5090] transition-all">Daftar</Link>
-              <Link to="/masuk" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-[#2E5090] text-white font-semibold text-[13px] py-2 rounded-full hover:bg-[#1e3d7a] transition-colors">Masuk</Link>
+            <div className="flex flex-col gap-3 pt-2 border-t border-[#f0f7f4]">
+              {user ? (
+                <>
+                  <Link to="/akun" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+                    ) : (
+                      <span className="w-9 h-9 rounded-full bg-[#2E5090] text-white text-[12px] font-bold flex items-center justify-center">
+                        {initials}
+                      </span>
+                    )}
+                    <div>
+                      <p className="text-[14px] font-bold text-[#1a2d4a]">{displayName}</p>
+                      <p className="text-[12px] text-[#7a9a8f]">{user.email}</p>
+                    </div>
+                  </Link>
+                  {user.role === "technician" && (
+                    <Link to="/dasbor-tukang" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#1a3d5c] py-2 flex items-center gap-2">
+                      <UserIcon size={16} /> Dasbor Tukang
+                    </Link>
+                  )}
+                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 border border-red-200 text-red-600 font-semibold text-[13px] py-2.5 rounded-full">
+                    <LogOut size={15} /> Keluar
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-3">
+                  <Link to="/daftar" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-[#b8d4c8] text-[#1a3d5c] font-semibold text-[13px] py-2 rounded-full hover:border-[#2E5090] hover:text-[#2E5090] transition-all">Daftar</Link>
+                  <Link to="/masuk" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-[#2E5090] text-white font-semibold text-[13px] py-2 rounded-full hover:bg-[#1e3d7a] transition-colors">Masuk</Link>
+                </div>
+              )}
             </div>
           </div>
         )}

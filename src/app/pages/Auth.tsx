@@ -7,7 +7,7 @@ import { api } from "../../lib/api";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AuthMode = "masuk" | "daftar";
-type OAuthProvider = "google" | "facebook" | "apple";
+type OAuthProvider = "google" | "facebook";
 type Screen = "role" | "main" | "loading" | "success" | "email-form";
 
 // ─── Brand SVG logos ──────────────────────────────────────────────────────────
@@ -27,14 +27,6 @@ function FacebookLogo() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
-
-function AppleLogo() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
     </svg>
   );
 }
@@ -65,13 +57,6 @@ function SocialButton({
       text: "text-white",
       logo: <FacebookLogo />,
     },
-    apple: {
-      label: "Lanjutkan dengan Apple",
-      bg: "bg-[#1a2d4a] hover:bg-black",
-      border: "",
-      text: "text-white",
-      logo: <AppleLogo />,
-    },
   }[provider];
 
   return (
@@ -92,7 +77,6 @@ function LoadingScreen({ provider }: { provider: OAuthProvider }) {
   const labels = {
     google: "Google",
     facebook: "Facebook",
-    apple: "Apple",
   };
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6">
@@ -102,7 +86,6 @@ function LoadingScreen({ provider }: { provider: OAuthProvider }) {
         <div className="absolute inset-0 flex items-center justify-center">
           {provider === "google" && <GoogleLogo />}
           {provider === "facebook" && <FacebookLogo />}
-          {provider === "apple" && <AppleLogo />}
         </div>
       </div>
       <div className="text-center">
@@ -120,11 +103,13 @@ function SuccessScreen({
   provider,
   email,
   name,
+  devVerifyLink,
 }: {
   mode: AuthMode;
   provider: OAuthProvider | "email" | null;
   email: string;
   name: string;
+  devVerifyLink?: string | null;
 }) {
   const navigate = useNavigate();
 
@@ -143,6 +128,20 @@ function SuccessScreen({
           Halo, <span className="font-bold text-[#2E5090]">{displayName}</span> 👋
         </p>
       </div>
+
+      {mode === "daftar" && provider === "email" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 w-full text-left">
+          <p className="font-bold text-[13px] text-amber-900 mb-1">Verifikasi email Anda</p>
+          <p className="text-[12px] text-amber-800">
+            Kami mengirim tautan verifikasi ke <span className="font-semibold">{email}</span>. Periksa inbox atau folder spam.
+          </p>
+          {devVerifyLink && (
+            <p className="mt-2 text-[11px] text-[#3d6b5e] break-all">
+              Dev: <a href={devVerifyLink} className="text-[#2E5090] underline">{devVerifyLink}</a>
+            </p>
+          )}
+        </div>
+      )}
 
       {mode === "daftar" && (
         <div className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-5 w-full text-left">
@@ -188,7 +187,7 @@ function EmailForm({
   onBack,
 }: {
   mode: AuthMode;
-  onSuccess: (name: string, email: string) => void;
+  onSuccess: (name: string, email: string, devVerifyLink?: string) => void;
   onBack: () => void;
 }) {
   const { login, register } = useAuth();
@@ -211,11 +210,12 @@ function EmailForm({
     setLoading(true);
     try {
       if (mode === "daftar") {
-        await register(email, password, name, "user");
+        const { devVerifyLink } = await register(email, password, name, "user");
+        onSuccess(name || email.split("@")[0], email, devVerifyLink);
       } else {
         await login(email, password);
+        onSuccess(name || email.split("@")[0], email);
       }
-      onSuccess(name || email.split("@")[0], email);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Autentikasi gagal");
     } finally {
@@ -280,9 +280,9 @@ function EmailForm({
         <div className="flex items-center justify-between mb-1.5">
           <label className="block text-[13px] font-bold text-[#0f2035]">Kata sandi</label>
           {mode === "masuk" && (
-            <button type="button" className="text-[12px] text-[#2E5090] font-semibold hover:underline">
+            <Link to="/lupa-sandi" className="text-[12px] text-[#2E5090] font-semibold hover:underline">
               Lupa kata sandi?
-            </button>
+            </Link>
           )}
         </div>
         <div className="relative">
@@ -364,37 +364,27 @@ export default function Auth() {
   const [authProvider, setAuthProvider] = useState<OAuthProvider | "email" | null>(null);
   const [successName, setSuccessName] = useState("");
   const [successEmail, setSuccessEmail] = useState("");
+  const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
+
+  const oauthError = params.get("error");
+  const oauthErrorMessage =
+    oauthError === "facebook_no_email"
+      ? "Facebook tidak mengembalikan email. Pastikan akun Facebook Anda memiliki email terverifikasi."
+      : oauthError === "oauth_denied"
+        ? "Login dibatalkan. Silakan coba lagi."
+        : oauthError === "oauth_failed"
+          ? "Login gagal. Silakan coba lagi atau gunakan email."
+          : null;
 
   const handleOAuth = (provider: OAuthProvider) => {
-    if (provider === "google") {
-      window.location.href = api.googleAuthUrl();
-      return;
-    }
-    setActiveProvider(provider);
-    setScreen("loading");
-    setTimeout(() => {
-      const names: Record<OAuthProvider, string> = {
-        google: "Budi Santoso",
-        facebook: "Sari Dewi",
-        apple: "Ahmad Rizki",
-      };
-      const emails: Record<OAuthProvider, string> = {
-        google: "budi.santoso@gmail.com",
-        facebook: "sari.dewi@facebook.com",
-        apple: "ahmadrizki@icloud.com",
-      };
-      setAuthProvider(provider);
-      setSuccessName(names[provider]);
-      setSuccessEmail(emails[provider]);
-      setActiveProvider(null);
-      setScreen("success");
-    }, 2000);
+    window.location.href = api.oauthAuthUrl(provider);
   };
 
-  const handleEmailSuccess = (name: string, email: string) => {
+  const handleEmailSuccess = (name: string, email: string, link?: string) => {
     setAuthProvider("email");
     setSuccessName(name);
     setSuccessEmail(email);
+    setDevVerifyLink(link ?? null);
     setScreen("success");
   };
 
@@ -475,6 +465,7 @@ export default function Auth() {
                 provider={authProvider}
                 email={successEmail}
                 name={successName}
+                devVerifyLink={devVerifyLink}
               />
             </div>
           ) : screen === "loading" && activeProvider ? (
@@ -522,6 +513,13 @@ export default function Auth() {
                   </p>
                 </div>
 
+                {oauthErrorMessage && (
+                  <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-[13px] rounded-xl px-4 py-3 mb-5">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    {oauthErrorMessage}
+                  </div>
+                )}
+
                 {/* Social buttons */}
                 <div className="flex flex-col gap-3 mb-5">
                   <SocialButton
@@ -532,11 +530,6 @@ export default function Auth() {
                   <SocialButton
                     provider="facebook"
                     onClick={() => handleOAuth("facebook")}
-                    loading={activeProvider !== null}
-                  />
-                  <SocialButton
-                    provider="apple"
-                    onClick={() => handleOAuth("apple")}
                     loading={activeProvider !== null}
                   />
                 </div>

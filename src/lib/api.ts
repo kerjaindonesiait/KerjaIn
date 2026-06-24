@@ -105,6 +105,15 @@ export const api = {
     return `${API_URL}/auth/google`;
   },
 
+  facebookAuthUrl() {
+    return `${API_URL}/auth/facebook`;
+  },
+
+  oauthAuthUrl(provider: "google" | "facebook", opts?: { role?: "user" | "technician" }) {
+    const qs = opts?.role === "technician" ? "?role=technician" : "";
+    return `${API_URL}/auth/${provider}${qs}`;
+  },
+
   getJobs(params?: { search?: string; area?: string }) {
     const qs = new URLSearchParams();
     if (params?.search) qs.set("search", params.search);
@@ -155,5 +164,46 @@ export const api = {
 
   confirmPayment(paymentId: string) {
     return request(`/api/payments/${paymentId}/confirm`, { method: "POST" });
+  },
+
+  forgotPassword(email: string) {
+    return request<{ ok: boolean; message: string; devResetLink?: string }>("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword(token: string, password: string) {
+    return request<{ ok: boolean }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
+  },
+
+  verifyEmail(token: string) {
+    return request<{ ok: boolean; user: User | null }>("/api/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  resendVerification() {
+    return request<{ ok: boolean; devVerifyLink?: string }>("/api/auth/resend-verification", {
+      method: "POST",
+    });
+  },
+
+  updateProfile(body: { fullName?: string; avatarUrl?: string }) {
+    return request<{ user: User }>("/api/auth/profile", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return request<{ ok: boolean }>("/api/auth/change-password", {
+      method: "PATCH",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
   },
 };
