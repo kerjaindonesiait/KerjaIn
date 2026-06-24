@@ -12,6 +12,7 @@ export type UserRow = {
   role: "user" | "technician";
   avatar_url: string | null;
   password_hash: string | null;
+  email_verified: boolean;
   created_at: string;
 };
 
