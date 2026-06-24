@@ -1,166 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   Plus, Minus, Crosshair, SlidersHorizontal, Shield,
   CheckCircle, Heart, Share2, ChevronLeft,
 } from "lucide-react";
+import { api } from "../../lib/api";
+import type { Job, Offer } from "../../types";
+
+type Task = Job & { status: string };
 
 const AVATAR_COLORS = ["#2E5090", "#6c47d9", "#e85d26", "#20bf6f", "#f59e0b", "#ec4899", "#14b8a6", "#8b5cf6"];
-
-const ALL_TASKS = [
-  {
-    id: 1,
-    title: "Pipa pecah – butuh perbaikan segera",
-    price: "Rp 500rb",
-    remote: false, flexible: false,
-    date: "Hari ini", time: "Segera",
-    status: "Terbuka", offers: 5, initials: "RK",
-    description: "Pipa pecah di bawah wastafel dapur dan air terus mengalir. Sudah menutup kran utama dan butuh tukang ledeng darurat untuk memeriksa dan memperbaiki secepatnya.\n\n• Pipa di bawah wastafel (retak terlihat)\n• Lantai lemari dapur ikut basah\n• Perlu perbaikan + inspeksi pipa sekitarnya\n\nMohon tersedia hari ini. Akses mudah — apartemen lantai dasar, ada parkir di depan.",
-    poster: { name: "Rina K.", initials: "RK", color: "#2E5090", rating: 4.9, reviews: 8, memberSince: "2022", completionRate: 96 },
-  },
-  {
-    id: 2,
-    title: "Kran bocor – dapur, menetes pelan",
-    price: "Rp 150rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 9, initials: null,
-    description: "Kran mixer dapur sudah menetes sekitar dua minggu. Tetesannya pelan tapi terus-menerus dan khawatir tagihan air membengkak.\n\nTidak tahu apakah perlu ganti seal atau kran baru — terserah rekomendasi tukang. Semua akses mudah, tidak ada ruang sempit.",
-    poster: { name: "Dewi M.", initials: "DM", color: "#6c47d9", rating: 4.7, reviews: 14, memberSince: "2021", completionRate: 93 },
-  },
-  {
-    id: 3,
-    title: "Saluran shower mampet – tidak bisa bersih",
-    price: "Rp 200rb",
-    remote: false, flexible: false,
-    date: "Sebelum Sabtu, 5 Jul", time: "Pagi",
-    status: "Terbuka", offers: 7, initials: "TW",
-    description: "Shower kamar mandi utama hampir tidak mengalir — sudah sangat mampet. Sudah coba cairan pembersih dua kali tapi tidak mempan.\n\nCari tukang ledeng dengan alat drain snake atau hydro-jet untuk membersihkan secara tuntas. Bisa booking Sabtu pagi. Apartemen dengan akses lift.",
-    poster: { name: "Tono W.", initials: "TW", color: "#e85d26", rating: 4.8, reviews: 5, memberSince: "2023", completionRate: 90 },
-  },
-  {
-    id: 4,
-    title: "Water heater tidak berfungsi",
-    price: "Rp 350rb",
-    remote: false, flexible: false,
-    date: "Sebelum Kamis, 3 Jul", time: "Kapan saja",
-    status: "Terbuka", offers: 4, initials: "HS",
-    description: "Water heater listrik tidak menghasilkan air panas lagi. Unit sudah berumur sekitar 8 tahun (Ariston 50L).\n\nTidak tahu apakah elemen, termostat, atau masalah lain. Cari tukang untuk diagnosa dan perbaikan — atau saran jika lebih baik diganti. Terbuka untuk diskusi.",
-    poster: { name: "Hana S.", initials: "HS", color: "#20bf6f", rating: 5.0, reviews: 22, memberSince: "2020", completionRate: 98 },
-  },
-  {
-    id: 5,
-    title: "Kloset terus mengalir – tidak berhenti",
-    price: "Rp 175rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 6, initials: null,
-    description: "Tangki kloset terus mengalir setelah disiram — terdengar suara air mengalir terus-menerus. Awalnya sesekali, sekarang tidak pernah berhenti.\n\nKemungkinan perlu ganti katup inlet atau flapper. Tukang cukup diagnosa di tempat dan perbaiki sesuai kebutuhan. Satu kamar mandi di rumah townhouse.",
-    poster: { name: "Agus P.", initials: "AP", color: "#f59e0b", rating: 4.6, reviews: 3, memberSince: "2024", completionRate: 85 },
-  },
-  {
-    id: 6,
-    title: "Ganti kran kamar mandi & pasang wastafel baru",
-    price: "Rp 650rb",
-    remote: false, flexible: false,
-    date: "Sebelum Senin, 7 Jul", time: "Pagi",
-    status: "Terbuka", offers: 3, initials: "BS",
-    description: "Sedang renovasi kamar mandi utama. Butuh tukang ledeng untuk:\n\n• Lepas kran dan wastafel lama\n• Pasang wastafel gantung baru (sudah ada)\n• Pasang set kran mixer baru (sudah dibeli)\n• Sambung supply air panas & dingin serta saluran\n\nKerja keramik sudah selesai. Hanya perlu penyambungan plumbing. Perkiraan 2–3 jam kerja.",
-    poster: { name: "Bowo S.", initials: "BS", color: "#ec4899", rating: 4.9, reviews: 31, memberSince: "2019", completionRate: 97 },
-  },
-  {
-    id: 7,
-    title: "Perbaiki pintu depan – tidak bisa menutup",
-    price: "Rp 140rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 11, initials: "LF",
-    description: "Pintu depan mengembang dan sekarang menyeret lantai saat ditutup. Bisa ditutup tapi harus didorong keras dan kunci tidak mengait dengan baik — sudah menjadi masalah keamanan.\n\nCari tukang atau tukang kayu untuk menyerut/memotong pintu dan menyetel engsel. Mohon bawa peralatan sendiri. Rumah satu lantai, akses mudah.",
-    poster: { name: "Laras F.", initials: "LF", color: "#14b8a6", rating: 4.7, reviews: 9, memberSince: "2022", completionRate: 91 },
-  },
-  {
-    id: 8,
-    title: "Bersih talang – rumah 2 lantai",
-    price: "Rp 300rb",
-    remote: false, flexible: false,
-    date: "Sebelum Minggu, 6 Jul", time: "Siang",
-    status: "Terbuka", offers: 5, initials: "MR",
-    description: "Talang di rumah bata 2 lantai meluap saat hujan — jelas tersumbat dedaunan dan kotoran. Butuh pembersihan menyeluruh depan dan belakang, plus pengecekan pipa turun.\n\nCari orang dengan tangga dan peralatan sendiri. Rumah sekitar 200m². Akses atap aman dari belakang.",
-    poster: { name: "Mira R.", initials: "MR", color: "#8b5cf6", rating: 4.5, reviews: 7, memberSince: "2022", completionRate: 89 },
-  },
-  {
-    id: 9,
-    title: "Tekanan air lemah di seluruh rumah",
-    price: "Rp 250rb",
-    remote: false, flexible: false,
-    date: "Sebelum Jumat, 4 Jul", time: "Kapan saja",
-    status: "Terbuka", offers: 4, initials: null,
-    description: "Tekanan air di rumah kami turun drastis beberapa minggu terakhir — baik air panas maupun dingin, di semua kran dan shower. Tetangga tidak ada masalah jadi sepertinya ada masalah di dalam properti.\n\nCari tukang ledeng berlisensi untuk mendiagnosa penyebabnya (kemungkinan pressure regulator bermasalah atau ada sumbatan) dan berikan penawaran perbaikan.",
-    poster: { name: "Citra N.", initials: "CN", color: "#2E5090", rating: 4.8, reviews: 11, memberSince: "2021", completionRate: 95 },
-  },
-  {
-    id: 10,
-    title: "Tambal keramik kamar mandi yang retak",
-    price: "Rp 220rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 6, initials: "PH",
-    description: "Tiga keramik di area shower retak — dua masih di tempatnya tapi retak tembus, satu sudah ada sudutnya yang copot. Butuh seseorang untuk:\n\n• Lepas keramik yang rusak dengan hati-hati\n• Carikan keramik yang cocok (bisa bantu)\n• Pasang ulang dan isi nat\n\nKeramik standar 20x20cm putih glossy. Warna nat abu-abu muda.",
-    poster: { name: "Pandu H.", initials: "PH", color: "#6c47d9", rating: 4.9, reviews: 18, memberSince: "2020", completionRate: 96 },
-  },
-  {
-    id: 11,
-    title: "Pasang kran luar – untuk taman",
-    price: "Rp 320rb",
-    remote: false, flexible: false,
-    date: "Sebelum Rabu, 2 Jul", time: "Pagi",
-    status: "Terbuka", offers: 8, initials: "YS",
-    description: "Ingin pasang kran taman di sisi rumah. Saat ini belum ada — sumber air terdekat ada di laundry di dalam.\n\nCari tukang ledeng berlisensi untuk menarik pipa baru dari laundry dan memasang kran taman standar dengan katup anti-balik. Mohon berikan penawaran termasuk material.",
-    poster: { name: "Yuda S.", initials: "YS", color: "#e85d26", rating: 4.7, reviews: 6, memberSince: "2023", completionRate: 88 },
-  },
-  {
-    id: 12,
-    title: "Atap bocor – area kecil di atas kamar tidur",
-    price: "Rp 400rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 3, initials: "AN",
-    description: "Noda air muncul di plafon kamar tidur setelah hujan — awalnya kecil tapi terus meluas. Butuh tukang atau ahli perawatan untuk inspeksi dan perbaiki sumber bocornya.\n\nAtap genteng, satu lantai. Bocoran tampaknya di sekitar bubungan di atas kamar utama. Saya bisa ada di rumah selama pengerjaan.",
-    poster: { name: "Ayu N.", initials: "AN", color: "#20bf6f", rating: 5.0, reviews: 4, memberSince: "2024", completionRate: 100 },
-  },
-  {
-    id: 13,
-    title: "Pasang ulang silikon – shower & bak mandi",
-    price: "Rp 160rb",
-    remote: false, flexible: true,
-    date: null, time: null,
-    status: "Terbuka", offers: 12, initials: null,
-    description: "Sealant silikon di pinggir shower screen dan bak mandi sudah berjamur, retak, dan mengelupas. Perlu dicabut dan dipasang ulang dengan rapi.\n\n• Sudut dan dasar shower screen (sekitar 2,5m)\n• Keliling bak mandi (sekitar 4m)\n\nHasilkan tampilan bersih dan rapi. Warna yang ada putih. Mohon bawa semua alat dan bahan.",
-    poster: { name: "Fitra D.", initials: "FD", color: "#f59e0b", rating: 4.6, reviews: 9, memberSince: "2022", completionRate: 87 },
-  },
-  {
-    id: 14,
-    title: "Tukang serba bisa – beberapa pekerjaan kecil",
-    price: "Rp 280rb",
-    remote: false, flexible: false,
-    date: "Sabtu, 5 Jul", time: "Pagi",
-    status: "Terbuka", offers: 7, initials: "WP",
-    description: "Ada beberapa pekerjaan perawatan kecil di rumah yang ingin diselesaikan dalam satu kunjungan:\n\n1. Kencangkan rel handuk kamar mandi yang goyang\n2. Perbaiki engsel lemari dapur (pintu miring)\n3. Ganti dua panel kasa nyamuk (rangka masih baik)\n4. Tambal lubang kecil di dinding (sekitar 5cm) dan ampelas siap cat\n\nPerkiraan 2–3 jam. Mohon bawa peralatan sendiri.",
-    poster: { name: "Wahyu P.", initials: "WP", color: "#ec4899", rating: 4.8, reviews: 15, memberSince: "2021", completionRate: 94 },
-  },
-];
 
 const MAP_PINS = [
   { x: "28%", y: "35%" }, { x: "42%", y: "22%" }, { x: "55%", y: "42%" },
   { x: "35%", y: "55%" }, { x: "65%", y: "30%" }, { x: "72%", y: "60%" },
   { x: "18%", y: "62%" }, { x: "50%", y: "65%" }, { x: "80%", y: "45%" },
 ];
-
-type Task = typeof ALL_TASKS[0];
-
-function Avatar({ initials, id, size = "sm" }: { initials: string | null; id: number; size?: "sm" | "lg" }) {
-  const color = AVATAR_COLORS[id % AVATAR_COLORS.length];
+function Avatar({ initials, id, size = "sm" }: { initials: string | null | undefined; id: string; size?: "sm" | "lg" }) {
+  const colorIdx = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
   const cls = size === "lg"
     ? "w-14 h-14 text-[16px] rounded-full border-2 border-white shadow"
     : "w-9 h-9 text-[11px] rounded-full border-2 border-white shadow-sm";
@@ -247,16 +106,31 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
   );
 }
 
-const MOCK_OFFERS = [
-  { id: 1, name: "Andi S.",   initials: "AS", color: "#2E5090", rating: 5.0, reviews: 134, price: "Rp 280rb", note: "Saya bisa datang hari ini dalam 1 jam. Sudah berpengalaman 8 tahun." },
-  { id: 2, name: "Budi H.",   initials: "BH", color: "#6c47d9", rating: 4.9, reviews: 211, price: "Rp 320rb", note: "Siap berangkat setelah dikonfirmasi. Garansi pekerjaan 30 hari." },
-  { id: 3, name: "Reza M.",   initials: "RM", color: "#e85d26", rating: 4.8, reviews: 89,  price: "Rp 250rb", note: "Harga sudah termasuk material standar. Bisa negosiasi." },
-];
-
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const [offerSent, setOfferSent] = useState(false);
+  const [acceptedOfferId, setAcceptedOfferId] = useState<string | null>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
+
+  useEffect(() => {
+    if (tab === "penawaran") {
+      setLoadingOffers(true);
+      api.getOffers(task.id)
+        .then(({ offers: data }) => setOffers(data))
+        .catch(() => setOffers([]))
+        .finally(() => setLoadingOffers(false));
+    }
+  }, [tab, task.id]);
+
+  const handleAcceptOffer = async (offerId: string) => {
+    try {
+      await api.acceptOffer(offerId);
+      setAcceptedOfferId(offerId);
+    } catch {
+      // keep UI state
+    }
+  };
 
   const TABS = [
     { id: "detail"    as const, label: "Detail",    count: null },
@@ -376,7 +250,9 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         {/* ── TAB: Penawaran ── */}
         {tab === "penawaran" && (
           <div className="px-6 py-5">
-            {task.offers === null || task.offers === 0 ? (
+            {loadingOffers ? (
+              <p className="text-center py-12 text-[#7a9a8f] text-[14px]">Memuat penawaran…</p>
+            ) : offers.length === 0 ? (
               <div className="text-center py-12 text-[#7a9a8f]">
                 <p className="text-[32px] mb-3">📭</p>
                 <p className="font-bold text-[14px]">Belum ada penawaran</p>
@@ -385,50 +261,46 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             ) : (
               <div className="flex flex-col gap-3">
                 <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-wider mb-1">
-                  {MOCK_OFFERS.length} penawaran masuk
+                  {offers.length} penawaran masuk
                 </p>
-                {MOCK_OFFERS.map((offer) => (
+                {offers.map((offer) => {
+                  const initials = offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+                  const colorIdx = offer.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+                  return (
                   <div key={offer.id} className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0"
-                        style={{ background: offer.color }}
+                        style={{ background: AVATAR_COLORS[colorIdx % AVATAR_COLORS.length] }}
                       >
-                        {offer.initials}
+                        {initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[14px] text-[#0f2035]">{offer.name}</p>
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex gap-0.5">
-                            {[1,2,3,4,5].map((i) => (
-                              <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(offer.rating) ? "#f59e0b" : "#e5e7eb"}>
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                            ))}
-                          </div>
-                          <span className="text-[11px] text-[#3d6b5e]">{offer.rating} · {offer.reviews} ulasan</span>
-                        </div>
+                        <p className="font-bold text-[14px] text-[#0f2035]">{offer.technicianName}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-black text-[16px] text-[#1a2d4a]">{offer.price}</p>
+                        <p className="font-black text-[16px] text-[#1a2d4a]">{offer.priceFormatted}</p>
                       </div>
                     </div>
-                    <p className="text-[12px] text-[#3d6b5e] leading-relaxed mb-3 italic">"{offer.note}"</p>
+                    {offer.message && (
+                      <p className="text-[12px] text-[#3d6b5e] leading-relaxed mb-3 italic">"{offer.message}"</p>
+                    )}
                     <button
-                      onClick={() => setOfferSent(true)}
+                      onClick={() => handleAcceptOffer(offer.id)}
                       className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
                     >
                       Terima penawaran ini
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         )}
 
         {/* ── TAB: Pemilik ── */}
-        {tab === "pemilik" && (
+        {tab === "pemilik" && task.poster && (
           <div className="px-6 py-5">
             <div className="flex items-start gap-4 mb-5">
               <Avatar initials={task.poster.initials} id={task.id} size="lg" />
@@ -487,13 +359,13 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
       {/* Sticky CTA */}
       <div className="shrink-0 border-t border-[#f5eded] px-6 py-4 bg-white">
-        {offerSent ? (
+        {acceptedOfferId ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] font-bold text-[14px] rounded-xl py-3">
               <CheckCircle size={16} /> Penawaran diterima!
             </div>
             <Link
-              to="/bayar"
+              to={`/bayar?jobId=${task.id}&offerId=${acceptedOfferId}`}
               className="w-full flex items-center justify-center gap-2 bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors"
             >
               Lanjut ke Pembayaran →
@@ -501,14 +373,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <button
-              onClick={() => setOfferSent(true)}
-              className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors"
-            >
-              Ajukan Penawaran
-            </button>
             <p className="text-center text-[11px] text-[#7a9a8f]">
-              Gratis mengajukan penawaran · Tanpa biaya berlangganan
+              Buka tab Penawaran untuk menerima penawaran dari tukang
             </p>
           </div>
         )}
@@ -517,7 +383,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   );
 }
 
-function MapPlaceholder({ selectedId }: { selectedId: number | null }) {
+function MapPlaceholder({ selectedId }: { selectedId: string | null }) {
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#f8eded]">
       <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0">
@@ -547,7 +413,7 @@ function MapPlaceholder({ selectedId }: { selectedId: number | null }) {
       </svg>
 
       {MAP_PINS.map((pin, i) => {
-        const active = selectedId === i + 1;
+        const active = selectedId !== null && i === 0;
         return (
           <div key={i} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: pin.x, top: pin.y }}>
             <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 transition-all ${
@@ -581,14 +447,23 @@ function MapPlaceholder({ selectedId }: { selectedId: number | null }) {
 }
 
 export default function Tasks() {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filtered = ALL_TASKS.filter((t) =>
+  useEffect(() => {
+    api.getJobs({ search: searchQuery || undefined })
+      .then(({ jobs }) => setTasks(jobs.map((j) => ({ ...j, status: j.status === "open" ? "Terbuka" : j.status }))))
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false));
+  }, [searchQuery]);
+
+  const filtered = tasks.filter((t) =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedTask = ALL_TASKS.find((t) => t.id === selectedId) ?? null;
+  const selectedTask = tasks.find((t) => t.id === selectedId) ?? null;
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -630,7 +505,9 @@ export default function Tasks() {
             <p className="text-[12px] text-[#7a9a8f] font-semibold">{filtered.length} pekerjaan tersedia</p>
           </div>
           <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
-            {filtered.map((task) => (
+            {loading ? (
+              <p className="text-center py-16 text-[#7a9a8f] text-[14px]">Memuat pekerjaan…</p>
+            ) : filtered.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}

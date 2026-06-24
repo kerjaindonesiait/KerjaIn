@@ -4,6 +4,8 @@ import {
   ChevronLeft, ChevronRight, CheckCircle, AlertCircle,
   Upload, Camera, Eye, EyeOff, HardHat, Clock,
 } from "lucide-react";
+import { useAuth } from "../../lib/auth";
+import { api } from "../../lib/api";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -598,14 +600,22 @@ const INITIAL: TechData = {
 };
 
 export default function TechAuth() {
+  const navigate = useNavigate();
+  const { register, setSession } = useAuth();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<TechData>(INITIAL);
   const [submitted, setSubmitted] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
   const handleOAuth = (provider: OAuthProvider) => {
+    if (provider === "google") {
+      window.location.href = api.googleAuthUrl();
+      return;
+    }
     setOauthLoading(provider);
     setTimeout(() => {
       const names: Record<OAuthProvider, string> = {
@@ -617,9 +627,35 @@ export default function TechAuth() {
     }, 1800);
   };
 
-  const handleNext = () => {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
-    else setSubmitted(true);
+  const handleNext = async () => {
+    if (step < STEPS.length - 1) {
+      setStep((s) => s + 1);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      if (data.authMethod === "email" || data.email) {
+        const result = await api.register(data.email, data.password, data.nama, "technician");
+        setSession(result.accessToken, result.refreshToken, result.user);
+      }
+      await api.saveTechnicianProfile({
+        phone: data.phone,
+        area: data.area,
+        nik: data.nik,
+        ktpPhoto: data.ktpPhoto,
+        selfiePhoto: data.selfiePhoto,
+        keahlian: data.keahlian,
+        pengalaman: data.pengalaman,
+        tarif: data.tarif,
+        bio: data.bio,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Pendaftaran gagal");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {

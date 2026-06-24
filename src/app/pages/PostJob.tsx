@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
   ChevronRight, ChevronLeft, CheckCircle, MapPin, Calendar,
   Clock, Banknote, Camera, X, AlertCircle, Share2, Copy, ExternalLink,
   Wrench, FileText, Star,
 } from "lucide-react";
+import { api } from "../../lib/api";
+import type { PostJobFormData } from "../../types";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -36,18 +38,7 @@ const WAKTU_OPTIONS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface FormData {
-  layanan: string;
-  deskripsi: string;
-  photos: string[];
-  lokasiType: "lokasi" | "remote";
-  area: string;
-  alamat: string;
-  waktuType: string;
-  tanggal: string;
-  budgetType: "tetap" | "minta";
-  budget: string;
-}
+interface FormData extends PostJobFormData {}
 
 // ─── Step components ─────────────────────────────────────────────────────────
 
@@ -661,13 +652,28 @@ export default function PostJob() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<FormData>(INITIAL_DATA);
   const [submitted, setSubmitted] = useState(false);
-  const [jobId] = useState(generateJobId);
+  const [jobId, setJobId] = useState(generateJobId());
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const update = (patch: Partial<FormData>) => setData((d) => ({ ...d, ...patch }));
 
-  const handleNext = () => {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
-    else setSubmitted(true);
+  const handleNext = async () => {
+    if (step < STEPS.length - 1) {
+      setStep((s) => s + 1);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const { job } = await api.createJob(data);
+      setJobId(job.jobNumber);
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Gagal memposting pekerjaan");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleBack = () => setStep((s) => s - 1);
@@ -719,20 +725,26 @@ export default function PostJob() {
           )}
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data)}
+            disabled={!canProceed(step, data) || submitting}
             className={`flex-1 flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data)
+              canProceed(step, data) && !submitting
                 ? "bg-[#2E5090] hover:bg-[#1e3d7a] text-white"
                 : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
             }`}
           >
-            {step === STEPS.length - 1 ? (
+            {submitting ? (
+              "Memposting…"
+            ) : step === STEPS.length - 1 ? (
               <>Posting Sekarang <Star size={16} /></>
             ) : (
               <>Lanjut <ChevronRight size={16} /></>
             )}
           </button>
         </div>
+
+        {submitError && (
+          <p className="text-center text-[13px] text-red-600 font-semibold mt-3">{submitError}</p>
+        )}
 
         {/* Trust note */}
         <div className="flex items-center justify-center gap-4 mt-5 text-[12px] text-[#7a9a8f]">

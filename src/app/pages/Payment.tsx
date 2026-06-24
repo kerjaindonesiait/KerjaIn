@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   ChevronLeft, Shield, CheckCircle, Copy, Clock,
   AlertCircle, ChevronRight, Lock, Smartphone, CreditCard, Building2,
 } from "lucide-react";
+import { api } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -478,21 +479,63 @@ function SuccessScreen() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Payment() {
+  const [params] = useSearchParams();
+  const jobId = params.get("jobId");
+  const offerId = params.get("offerId");
   const [screen, setScreen] = useState<Screen>("method");
   const [selected, setSelected] = useState<PayMethod | null>(null);
   const [expandCard, setExpandCard] = useState(false);
+  const [jobData, setJobData] = useState(JOB);
+  const [total, setTotal] = useState(TOTAL);
+  const [vaNumber, setVaNumber] = useState("8277 0091 4821 7365");
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!jobId || !offerId) return;
+    Promise.all([api.getJob(jobId), api.getOffers(jobId)])
+      .then(([{ job }, { offers }]) => {
+        const offer = offers.find((o) => o.id === offerId);
+        if (!offer) return;
+        const serviceFee = Math.round(offer.price * 0.05);
+        const insurance = 5000;
+        setJobData({
+          id: job.jobNumber,
+          title: job.title,
+          category: job.category,
+          emoji: "🚨",
+          tasker: {
+            name: offer.technicianName,
+            initials: offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2),
+            color: "#2E5090",
+            rating: 5.0,
+            reviews: 0,
+          },
+          priceRaw: offer.price,
+          serviceFee,
+          insurance,
+        });
+        setTotal(offer.price + serviceFee + insurance);
+      })
+      .catch(() => {});
+  }, [jobId, offerId]);
 
   const selectedM = METHODS.find((m) => m.id === selected);
 
-  const handlePay = () => {
-    if (!selected) return;
-    if (selected === "card") return; // card form handles its own submit
+  const handlePay = async () => {
+    if (!selected || !jobId || !offerId) return;
+    if (selected === "card") return;
     setScreen("processing");
-    const isInstant = METHODS.find((m) => m.id === selected)?.instant;
-    if (!isInstant) {
-      setTimeout(() => setScreen("pending"), 1500);
-    } else {
-      setTimeout(() => setScreen("success"), 2200);
+    try {
+      const { payment } = await api.createPayment({ jobId, offerId, method: selected });
+      setPaymentId(payment.id);
+      if (payment.vaNumber) setVaNumber(payment.vaNumber);
+      if (payment.status === "pending") {
+        setScreen("pending");
+      } else {
+        setTimeout(() => setScreen("success"), 1500);
+      }
+    } catch {
+      setScreen("method");
     }
   };
 

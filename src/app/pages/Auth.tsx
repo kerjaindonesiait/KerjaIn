@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Wrench, ArrowRight, HardHat, User } from "lucide-react";
+import { useAuth } from "../../lib/auth";
+import { api } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,6 +191,7 @@ function EmailForm({
   onSuccess: (name: string, email: string) => void;
   onBack: () => void;
 }) {
+  const { login, register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -201,15 +204,23 @@ function EmailForm({
     email.includes("@") &&
     password.length >= 6;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
     setError("");
     setLoading(true);
-    setTimeout(() => {
+    try {
+      if (mode === "daftar") {
+        await register(email, password, name, "user");
+      } else {
+        await login(email, password);
+      }
+      onSuccess(name || email.split("@")[0], email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Autentikasi gagal");
+    } finally {
       setLoading(false);
-      onSuccess(name, email);
-    }, 1400);
+    }
   };
 
   const strengthColor = password.length === 0
@@ -353,7 +364,12 @@ export default function Auth() {
   const [authProvider, setAuthProvider] = useState<OAuthProvider | "email" | null>(null);
   const [successName, setSuccessName] = useState("");
   const [successEmail, setSuccessEmail] = useState("");
+
   const handleOAuth = (provider: OAuthProvider) => {
+    if (provider === "google") {
+      window.location.href = api.googleAuthUrl();
+      return;
+    }
     setActiveProvider(provider);
     setScreen("loading");
     setTimeout(() => {

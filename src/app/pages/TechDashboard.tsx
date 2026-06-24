@@ -1,26 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronDown, Bell, Star, SlidersHorizontal, Send,
   Briefcase, FileText, TrendingUp, LogOut, Filter,
 } from "lucide-react";
+import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth";
+import type { Job } from "../../types";
 
-// ─── Tukang profile (mock verified user) ─────────────────────────────────────
-
-const TUKANG = {
-  name: "Andi Santoso",
-  initials: "AS",
-  area: "Jakarta Selatan",
-  keahlian: ["Pipa Bocor Darurat", "Saluran Mampet", "Pemanas Air", "Ganti Pipa"],
-  rating: 4.9,
-  reviews: 47,
-  selesai: 52,
-  penawaran_aktif: 3,
-  penghasilan: "Rp 4.2jt",
+type ApiJob = {
+  id: string;
+  category: string;
+  title: string;
+  budget: string;
+  budgetRaw: number;
+  area: string;
+  urgency: string;
+  date: string;
+  time: string;
+  posterName: string;
+  posterRating: number;
+  offers: number;
+  description: string;
 };
 
-// ─── Job data ─────────────────────────────────────────────────────────────────
+function mapJob(j: Job): ApiJob {
+  return {
+    id: j.id,
+    category: j.category,
+    title: j.title,
+    budget: j.price,
+    budgetRaw: j.budgetRaw ?? 0,
+    area: j.area,
+    urgency: j.urgency ?? "Normal",
+    date: j.date ?? "Fleksibel",
+    time: j.time ?? "Kapan saja",
+    posterName: j.poster?.name ?? "Pelanggan",
+    posterRating: j.poster?.rating ?? 4.8,
+    offers: j.offers,
+    description: j.description,
+  };
+}
+
+// ─── Job data (static tabs) ───────────────────────────────────────────────────
 
 const ALL_JOBS = [
   {
@@ -168,7 +191,7 @@ function StarRow({ rating }: { rating: number }) {
 // ─── Job Card ─────────────────────────────────────────────────────────────────
 
 function JobCard({ job, selected, quoted, onClick }: {
-  job: typeof ALL_JOBS[0];
+  job: ApiJob;
   selected: boolean;
   quoted: boolean;
   onClick: () => void;
@@ -215,7 +238,7 @@ function JobCard({ job, selected, quoted, onClick }: {
 
 // ─── Quote Form ───────────────────────────────────────────────────────────────
 
-function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (price: number) => void }) {
+function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number) => void }) {
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
   const [waktu, setWaktu] = useState("segera");
@@ -230,13 +253,22 @@ function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (pr
     return n ? `Rp ${parseInt(n).toLocaleString("id-ID")}` : "";
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!valid) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.createOffer(job.id, {
+        price: priceNum,
+        message: note,
+        availability: waktu,
+        scheduledTime: jam || undefined,
+      });
       onSuccess(priceNum);
-    }, 1500);
+    } catch {
+      // show error silently for now
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -352,7 +384,7 @@ function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (pr
 
 // ─── Quote Success ────────────────────────────────────────────────────────────
 
-function QuoteSuccess({ job, price, onBack }: { job: typeof ALL_JOBS[0]; price: number; onBack: () => void }) {
+function QuoteSuccess({ job, price, onBack }: { job: ApiJob; price: number; onBack: () => void }) {
   const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
   return (
@@ -415,7 +447,7 @@ function QuoteSuccess({ job, price, onBack }: { job: typeof ALL_JOBS[0]; price: 
 // ─── Job Detail Panel ─────────────────────────────────────────────────────────
 
 function JobDetail({ job, quoted, quotedPrice, onQuote }: {
-  job: typeof ALL_JOBS[0];
+  job: ApiJob;
   quoted: boolean;
   quotedPrice: number;
   onQuote: (price: number) => void;
@@ -589,19 +621,41 @@ const ACTIVE_JOBS = [
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function TechDashboard() {
+  const { user, logout } = useAuth();
+  const [jobs, setJobs] = useState<ApiJob[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
   const [navTab, setNavTab] = useState<"lowongan" | "penawaran" | "aktif" | "selesai">("lowongan");
   const [filterTab, setFilterTab] = useState("semua");
   const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [quotedJobs, setQuotedJobs] = useState<Record<number, number>>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [quotedJobs, setQuotedJobs] = useState<Record<string, number>>({});
 
-  const filtered = ALL_JOBS.filter((j) => {
+  useEffect(() => {
+    api.getJobs({ search: search || undefined })
+      .then(({ jobs: data }) => setJobs(data.map(mapJob)))
+      .catch(() => setJobs([]))
+      .finally(() => setLoadingJobs(false));
+  }, [search]);
+
+  const filtered = jobs.filter((j) => {
     const matchCat = filterTab === "semua" || j.category === filterTab;
     const matchSearch = j.title.toLowerCase().includes(search.toLowerCase()) || j.area.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const selectedJob = ALL_JOBS.find((j) => j.id === selectedId) ?? null;
+  const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
+
+  const TUKANG = {
+    name: user?.fullName ?? "Tukang",
+    initials: (user?.fullName ?? "T").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+    area: "Jakarta",
+    keahlian: ["Pipa Bocor Darurat", "Saluran Mampet"],
+    rating: 4.9,
+    reviews: 0,
+    selesai: 0,
+    penawaran_aktif: Object.keys(quotedJobs).length,
+    penghasilan: "Rp 0",
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F1E8] flex flex-col" style={{ fontFamily: "Manrope, sans-serif" }}>
