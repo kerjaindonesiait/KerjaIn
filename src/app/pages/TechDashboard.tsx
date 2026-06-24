@@ -242,7 +242,7 @@ function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (pr
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Harga yang Anda tawarkan</label>
+        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Harga penawaranmu</label>
         <div className="relative">
           <input
             value={price}
@@ -265,7 +265,7 @@ function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (pr
       </div>
 
       <div>
-        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Kapan Anda bisa mulai?</label>
+        <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Kapan bisa mulai?</label>
         <div className="grid grid-cols-2 gap-2">
           {WAKTU_OPTIONS.map((opt) => (
             <button
@@ -319,11 +319,11 @@ function QuoteForm({ job, onSuccess }: { job: typeof ALL_JOBS[0]; onSuccess: (pr
       </div>
 
       <div className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4 text-[12px] text-[#3d6b5e]">
-        <p className="font-bold text-[#0f2035] mb-1.5">💡 Tips agar penawaran Anda dipilih:</p>
+        <p className="font-bold text-[#0f2035] mb-1.5">💡 Tips agar penawaranmu dipilih:</p>
         <ul className="space-y-1">
           <li>• Sebutkan pengalaman spesifik yang relevan dengan masalah ini</li>
           <li>• Tawarkan garansi pekerjaan jika memungkinkan</li>
-          <li>• Jelaskan apa yang termasuk dalam harga Anda</li>
+          <li>• Jelaskan apa saja yang termasuk dalam harga</li>
           <li>• Respons cepat meningkatkan kepercayaan pelanggan</li>
         </ul>
       </div>
@@ -361,9 +361,9 @@ function QuoteSuccess({ job, price, onBack }: { job: typeof ALL_JOBS[0]; price: 
         <Send size={36} className="text-[#20bf6f]" />
       </div>
       <div>
-        <h3 className="font-black text-[22px] text-[#1a2d4a] mb-1">Penawaran Terkirim!</h3>
+        <h3 className="font-black text-[22px] text-[#1a2d4a] mb-1">Penawaran terkirim!</h3>
         <p className="text-[#3d6b5e] text-[14px]">
-          Penawaran Anda untuk <span className="font-bold text-[#1a2d4a]">{formatRp(price)}</span> sudah dikirim ke pelanggan
+          Penawaran <span className="font-bold text-[#1a2d4a]">{formatRp(price)}</span> sudah dikirim ke pelanggan.
         </p>
       </div>
 
@@ -375,7 +375,7 @@ function QuoteSuccess({ job, price, onBack }: { job: typeof ALL_JOBS[0]; price: 
         <div className="px-5 py-4 grid grid-cols-2 gap-3">
           {[
             ["Anggaran pelanggan", job.budget],
-            ["Penawaran Anda", formatRp(price)],
+            ["Penawaranmu", formatRp(price)],
             ["Lokasi", job.area],
             ["Status", "Menunggu respons"],
           ].map(([k, v]) => (
@@ -388,12 +388,12 @@ function QuoteSuccess({ job, price, onBack }: { job: typeof ALL_JOBS[0]; price: 
       </div>
 
       <div className="w-full space-y-2.5 text-[13px] text-[#3d6b5e] bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4 text-left">
-        <p className="font-bold text-[#0f2035] mb-2">Apa yang terjadi selanjutnya?</p>
+        <p className="font-bold text-[#0f2035] mb-2">Setelah ini apa?</p>
         {[
-          { icon: "🔔", text: "Anda akan dapat notifikasi jika pelanggan menerima penawaran Anda" },
-          { icon: "💬", text: "Pelanggan mungkin menghubungi Anda untuk bertanya sebelum memilih" },
-          { icon: "✅", text: "Jika diterima, Anda bisa langsung atur jadwal dengan pelanggan" },
-          { icon: "💰", text: "Pembayaran masuk ke akun Anda setelah pekerjaan dikonfirmasi selesai" },
+          { icon: "🔔", text: "Kamu akan dapat notifikasi jika pelanggan menerima penawaranmu" },
+          { icon: "💬", text: "Pelanggan mungkin menghubungi kamu untuk bertanya sebelum memilih" },
+          { icon: "✅", text: "Jika diterima, kamu bisa langsung atur jadwal dengan pelanggan" },
+          { icon: "💰", text: "Pembayaran masuk setelah pekerjaan dikonfirmasi selesai" },
         ].map((item) => (
           <div key={item.icon} className="flex items-start gap-2.5">
             <span className="text-[16px] shrink-0 mt-0.5">{item.icon}</span>
@@ -527,7 +527,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
               <div className="flex items-start gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4">
                 <Shield size={16} className="text-[#20bf6f] shrink-0 mt-0.5" />
                 <p className="text-[12px] text-[#166534] font-semibold">
-                  Pembayaran dijamin — dana ditahan aman oleh KerjaIn Pay dan dicairkan ke Anda setelah pekerjaan selesai dan dikonfirmasi pelanggan.
+                  Pembayaran dijamin — dana ditahan aman oleh KerjaIn Pay dan dicairkan setelah pekerjaan selesai dikonfirmasi pelanggan.
                 </p>
               </div>
 
@@ -717,7 +717,7 @@ export default function TechDashboard() {
             {/* Job count */}
             <div className="px-4 py-2 border-b border-[#c8dfd8]">
               <p className="text-[11px] text-[#7a9a8f] font-semibold">
-                {filtered.length} pekerjaan tersedia di area Anda
+                {filtered.length} pekerjaan tersedia di area utama
               </p>
             </div>
 

@@ -81,16 +81,10 @@ const COMPLETED_TASKS: Record<string, {
 };
 
 const PROS = [
-  { name: "Andi S.", initials: "AS", color: "#2E5090", rating: 5.0, reviews: 134, completion: 98, specialty: "pipa bocor darurat, deteksi kebocoran & pemanas air", review: "Andi datang dalam satu jam saat pipa pecah tengah malam. Benar-benar penyelamat — profesional, cepat dan harga wajar.", reviewer: "Rina K." },
-  { name: "Budi H.", initials: "BH", color: "#6c47d9", rating: 4.9, reviews: 211, completion: 96, specialty: "perawatan umum, tukang serba bisa & perbaikan pintu",       review: "Budi menyelesaikan tiga masalah yang sudah lama saya tunda, semuanya dalam satu kunjungan. Komunikasi bagus dan kerja rapi.", reviewer: "Dewi S." },
-  { name: "Reza M.", initials: "RM", color: "#e85d26", rating: 4.8, reviews: 89,  completion: 95, specialty: "saluran mampet, ganti pipa & pemasangan kamar mandi",        review: "Saluran mampet parah dan Reza beres hari itu juga. Penjelasannya jelas dan tempat ditinggal bersih.", reviewer: "Tono W." },
-  { name: "Sari P.", initials: "SP", color: "#20bf6f", rating: 5.0, reviews: 57,  completion: 100, specialty: "perbaikan keramik, bersih talang & perawatan atap",         review: "Sari memasang ulang silikon kamar mandi kami dan hasilnya seperti baru. Tepat waktu, profesional dan harga sangat terjangkau.", reviewer: "Hana A." },
-];
-
-const ARTICLES = [
-  { title: "5 tanda rumah Anda mengalami kebocoran air tersembunyi", category: "Tips Plumbing", emoji: "💧", from: "#dbeafe", to: "#bfdbfe" },
-  { title: "Cara memilih water heater yang tepat untuk rumah Anda",  category: "Panduan Perawatan", emoji: "🔥", from: "#fee2e2", to: "#fecaca" },
-  { title: "10 perawatan rumah yang wajib dilakukan setiap tahun",   category: "Perawatan Rumah", emoji: "🏠", from: "#d1fae5", to: "#a7f3d0" },
+  { name: "Andi S.", initials: "AS", color: "#2E5090", rating: 5.0, reviews: 134, completion: 98, specialty: "pipa bocor darurat, deteksi kebocoran & pemanas air", review: "Andi datang dalam satu jam saat pipa pecah tengah malam. Cepat, rapi, dan harganya jelas dari awal.", reviewer: "Rina K." },
+  { name: "Budi H.", initials: "BH", color: "#6c47d9", rating: 4.9, reviews: 211, completion: 96, specialty: "perawatan umum, tukang serba bisa & perbaikan pintu",       review: "Budi menyelesaikan beberapa perbaikan kecil dalam satu kunjungan. Komunikasinya enak dan hasilnya rapi.", reviewer: "Dewi S." },
+  { name: "Reza M.", initials: "RM", color: "#e85d26", rating: 4.8, reviews: 89,  completion: 95, specialty: "saluran mampet, ganti pipa & pemasangan kamar mandi",        review: "Saluran mampet selesai hari itu juga. Reza menjelaskan masalahnya dengan jelas dan area kerja ditinggalkan bersih.", reviewer: "Tono W." },
+  { name: "Sari P.", initials: "SP", color: "#20bf6f", rating: 5.0, reviews: 57,  completion: 100, specialty: "perbaikan keramik, bersih talang & perawatan atap",         review: "Sari memasang ulang silikon kamar mandi dan hasilnya terlihat jauh lebih rapi. Tepat waktu dan harganya masuk akal.", reviewer: "Hana A." },
 ];
 
 const SERVICE_TABS = ["Plumbing", "Perawatan Umum", "Panduan Biaya", "Panduan Cara", "Checklist"];
@@ -182,7 +176,7 @@ export default function Home() {
           <div className="flex-1 min-w-0">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-[13px] text-white/80 font-semibold mb-7">
               <span className="w-2 h-2 rounded-full bg-[#F59E42] animate-pulse" />
-              Tukang Plumbing & Perawatan Rumah · Jakarta
+              Tukang plumbing & perawatan rumah di Jakarta
             </div>
 
             <h1 className="font-black leading-[0.92] tracking-tight uppercase mb-6">
@@ -192,7 +186,7 @@ export default function Home() {
             </h1>
 
             <p className="text-white/60 text-[17px] mb-8 max-w-lg leading-relaxed">
-              Pasang pekerjaan. Pilih tukang terbaik. Beres.
+              Ceritakan masalahnya, tentukan harga, lalu pilih tukang yang cocok.
             </p>
 
             {/* Search */}
@@ -210,17 +204,17 @@ export default function Home() {
                 to="/post-job"
                 className="bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[14px] px-6 py-4 shrink-0 transition-colors"
               >
-                Cari Tukang
+                Cari tukang
               </Link>
             </div>
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-3 mb-10">
               <Link to="/post-job" className="bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[14px] px-7 py-3.5 rounded-full transition-colors">
-                Pasang pekerjaan gratis
+                Post Kerjaan gratis
               </Link>
               <Link to="/daftar-tukang" className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-[14px] px-7 py-3.5 rounded-full transition-colors">
-                Daftar sebagai Tukang
+                Daftar jadi tukang
               </Link>
             </div>
 
@@ -289,8 +283,8 @@ export default function Home() {
       {/* ── SEE WHAT OTHERS HAVE DONE ── */}
       <section className="py-16 overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 mb-8">
-          <h2 className="font-black text-[32px] text-[#1a2d4a] mb-1">Lihat apa yang pernah dikerjakan</h2>
-          <p className="text-[#3d6b5e] text-[15px]">Pekerjaan nyata yang telah diselesaikan oleh tukang terpercaya di Jakarta</p>
+          <h2 className="font-black text-[32px] text-[#1a2d4a] mb-1">Contoh pekerjaan yang sudah beres</h2>
+          <p className="text-[#3d6b5e] text-[15px]">Lihat pekerjaan nyata yang diselesaikan tukang terpercaya di Jakarta.</p>
         </div>
 
         {/* Tab selector */}
@@ -321,7 +315,7 @@ export default function Home() {
 
         <div className="max-w-[1400px] mx-auto px-6 mt-7">
           <Link to="/tasks" className="inline-flex items-center gap-2 text-[#2E5090] font-bold text-[14px] hover:underline">
-            Lihat semua pekerjaan <ChevronRight size={16} />
+            Lihat pekerjaan lainnya <ChevronRight size={16} />
           </Link>
         </div>
       </section>
@@ -331,17 +325,18 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-12 items-center">
           <div className="flex-1">
             <h2 className="font-black text-[38px] leading-tight text-[#1a2d4a] mb-4">
-              Pasang pekerjaan<br />dalam hitungan menit
+              Post Kerjaan<br />dalam beberapa menit
             </h2>
             <p className="text-[#3d6b5e] text-[16px] mb-10">
-              Tidak perlu menunggu lama atau menelepon sana-sini. Pasang pekerjaan dan biarkan tukang terpercaya menghubungi Anda.
+              Tidak perlu menelepon satu per satu. Post Kerjaan, lalu tukang yang sesuai bisa mengirim penawaran.
             </p>
 
             <div className="flex flex-col gap-7 mb-10">
               {[
-                { n: "1", title: "Jelaskan masalahnya",          desc: "Ceritakan apa yang perlu diperbaiki — kran bocor, saluran mampet, atau perawatan umum. Tambahkan foto jika ada." },
-                { n: "2", title: "Tentukan anggaran",             desc: "Tetapkan harga Anda atau minta tukang mengajukan penawaran. Anggaran bisa disesuaikan kapan saja." },
-                { n: "3", title: "Pilih tukang & masalah beres",  desc: "Tinjau profil, rating, dan ulasan nyata. Terima penawaran terbaik dan tukang akan datang ke lokasi Anda." },
+                { n: "1", title: "Ceritakan Masalahnya", desc: "Jelaskan apa yang perlu dibereskan di rumahmu." },
+                { n: "2", title: "Atur Budget", desc: "Tentukan kisaran biaya atau biarkan tukang memberi penawaran." },
+                { n: "3", title: "Pilih Penawaran", desc: "Bandingkan harga, profil, rating, dan ulasan tukang." },
+                { n: "4", title: "Dikerjain", desc: "Tukang datang sesuai jadwal dan pekerjaan mulai dibereskan." },
               ].map((step) => (
                 <div key={step.n} className="flex gap-5 items-start">
                   <div className="w-10 h-10 rounded-full bg-[#2E5090] flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-[#2E5090]/30">
@@ -356,7 +351,7 @@ export default function Home() {
             </div>
 
             <Link to="/post-job" className="inline-flex items-center gap-2 bg-[#2E5090] text-white font-bold text-[15px] px-8 py-4 rounded-full hover:bg-[#1e3d7a] transition-colors shadow-lg shadow-[#2E5090]/30">
-              Pasang pekerjaan gratis <ArrowRight size={16} />
+              Post Kerjaan gratis <ArrowRight size={16} />
             </Link>
           </div>
 
@@ -418,18 +413,18 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           <div className="lg:w-[380px] shrink-0">
             <h2 className="font-black text-[36px] leading-tight text-[#1a2d4a] mb-4">
-              Setiap tukang sudah terverifikasi untuk keamanan Anda
+              Cari tukang dengan lebih tenang
             </h2>
-            <p className="text-[#3d6b5e] text-[15px] mb-6">Kami tidak sembarangan menerima tukang. Setiap plumber dan tukang perawatan di KerjaIn sudah diverifikasi, dinilai, dan diasuransikan.</p>
+            <p className="text-[#3d6b5e] text-[15px] mb-6">KerjaIn membantu kamu melihat profil, rating, dan ulasan sebelum memilih tukang untuk pekerjaan rumah.</p>
             <Link to="/tasks" className="inline-flex items-center gap-2 bg-[#2E5090] text-white font-bold text-[14px] px-7 py-3.5 rounded-full hover:bg-[#1e3d7a] transition-colors">
-              Temukan tukang terverifikasi <ArrowRight size={16} />
+              Lihat tukang tersedia <ArrowRight size={16} />
             </Link>
           </div>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
-              { icon: <Shield size={24} className="text-[#2E5090]" />, title: "Pembayaran aman",       desc: "Uang Anda ditahan dengan aman dan hanya dicairkan ke tukang setelah Anda mengonfirmasi pekerjaan selesai." },
-              { icon: <Star size={24} className="text-[#2E5090]" />,   title: "Ulasan terverifikasi", desc: "Setiap bintang berasal dari pekerjaan plumbing atau perawatan nyata yang sudah selesai — tidak ada ulasan palsu." },
-              { icon: <CheckCircle size={24} className="text-[#2E5090]" />, title: "Berlisensi & diasuransikan", desc: "Tukang plumbing membawa lisensi yang relevan. Asuransi tanggung jawab umum tersedia untuk pekerjaan yang memenuhi syarat." },
+              { icon: <Shield size={24} className="text-[#2E5090]" />, title: "Bayar dengan aman",       desc: "Dana disimpan dulu dan baru diteruskan setelah pekerjaan selesai dikonfirmasi." },
+              { icon: <Star size={24} className="text-[#2E5090]" />,   title: "Ulasan asli", desc: "Baca pengalaman pelanggan lain dari pekerjaan yang benar-benar sudah selesai." },
+              { icon: <CheckCircle size={24} className="text-[#2E5090]" />, title: "Tukang terverifikasi", desc: "Profil tukang dicek agar kamu bisa memilih dengan lebih percaya diri." },
             ].map((item) => (
               <div key={item.title} className="bg-[#F5F1E8] rounded-2xl p-6 border border-[#c8dfd8]">
                 <div className="w-12 h-12 rounded-xl bg-[#f0f7f4] flex items-center justify-center mb-4">{item.icon}</div>
@@ -441,196 +436,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── BE YOUR OWN BOSS ── */}
-      <section className="py-0 bg-white overflow-hidden">
-        <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row min-h-[520px]">
-
-          {/* Left — text */}
-          <div className="flex-1 flex flex-col justify-center px-8 lg:px-16 py-16">
-            <h2 className="font-black text-[48px] sm:text-[56px] leading-tight text-[#1a2d4a] mb-5">
-              Jadilah bos<br />kamu sendiri
-            </h2>
-            <p className="text-[#3d6b5e] text-[16px] mb-8 max-w-md leading-relaxed">
-              Apakah kamu seorang tukang ledeng berpengalaman atau ahli perawatan rumah, temukan pekerjaan berikutnya di KerjaIn.
-            </p>
-
-            <ul className="flex flex-col gap-3.5 mb-10">
-              {[
-                "Akses gratis ke ribuan peluang pekerjaan",
-                "Tanpa biaya berlangganan atau kredit",
-                "Raih penghasilan tambahan dengan jadwal fleksibel",
-                "Kembangkan bisnis dan basis klien Anda",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-3 text-[15px] text-[#1a2d4a]">
-                  <div className="w-5 h-5 rounded-full bg-[#2E5090] flex items-center justify-center shrink-0 mt-0.5">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <div>
-              <Link
-                to="/daftar-tukang"
-                className="inline-flex items-center gap-2 border-2 border-[#1a2d4a] text-[#1a2d4a] font-bold text-[15px] px-8 py-3.5 rounded-full hover:bg-[#1a2d4a] hover:text-white transition-all"
-              >
-                Daftar sebagai Tukang
-              </Link>
-            </div>
-          </div>
-
-          {/* Right — dark panel with floating cards */}
-          <div className="relative lg:w-[520px] shrink-0 bg-[#1a2d4a] flex items-end justify-center overflow-hidden min-h-[400px] lg:min-h-0">
-
-            {/* Background texture rings */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute bottom-[-80px] left-[50%] -translate-x-1/2 w-[500px] h-[500px] rounded-full border border-white/5" />
-              <div className="absolute bottom-[-40px] left-[50%] -translate-x-1/2 w-[380px] h-[380px] rounded-full border border-white/8" />
-              <div className="absolute bottom-[20px] left-[50%] -translate-x-1/2 w-[260px] h-[260px] rounded-full border border-white/10" />
-            </div>
-
-            {/* Silhouette illustration */}
-            <div className="relative z-10 flex items-end justify-center w-full h-full pt-12 pb-0">
-              <svg viewBox="0 0 320 400" width="320" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90">
-                {/* Body */}
-                <ellipse cx="160" cy="390" rx="90" ry="18" fill="#0d0404" opacity="0.5"/>
-                {/* Legs */}
-                <rect x="130" y="300" width="28" height="90" rx="14" fill="#2d5a8e"/>
-                <rect x="162" y="300" width="28" height="90" rx="14" fill="#2d5a8e"/>
-                {/* Shoes */}
-                <rect x="120" y="376" width="46" height="16" rx="8" fill="#1a1a2e"/>
-                <rect x="154" y="376" width="46" height="16" rx="8" fill="#1a1a2e"/>
-                {/* Torso — blue overalls */}
-                <rect x="115" y="190" width="90" height="120" rx="20" fill="#3b7dd8"/>
-                {/* Overall straps */}
-                <rect x="135" y="168" width="16" height="32" rx="8" fill="#3b7dd8"/>
-                <rect x="169" y="168" width="16" height="32" rx="8" fill="#3b7dd8"/>
-                {/* Overall bib */}
-                <rect x="133" y="190" width="54" height="40" rx="6" fill="#2d6bc4"/>
-                {/* Arms */}
-                <rect x="78" y="195" width="42" height="22" rx="11" fill="#e8a87c" transform="rotate(-15 78 195)"/>
-                <rect x="202" y="190" width="42" height="22" rx="11" fill="#e8a87c" transform="rotate(20 202 190)"/>
-                {/* Hand holding wrench */}
-                <circle cx="72" cy="225" r="12" fill="#e8a87c"/>
-                <rect x="56" y="218" width="6" height="30" rx="3" fill="#888" transform="rotate(-20 56 218)"/>
-                <rect x="46" y="215" width="20" height="7" rx="3" fill="#888" transform="rotate(-20 46 215)"/>
-                {/* Neck */}
-                <rect x="148" y="158" width="24" height="34" rx="12" fill="#e8a87c"/>
-                {/* Head */}
-                <ellipse cx="160" cy="140" rx="38" ry="44" fill="#e8a87c"/>
-                {/* Hair */}
-                <ellipse cx="160" cy="105" rx="36" ry="18" fill="#3d2000"/>
-                <ellipse cx="132" cy="120" rx="14" ry="22" fill="#3d2000"/>
-                <ellipse cx="188" cy="120" rx="14" ry="22" fill="#3d2000"/>
-                {/* Face — smile */}
-                <path d="M148 150 Q160 162 172 150" stroke="#c47a5a" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                {/* Eyes */}
-                <ellipse cx="148" cy="138" rx="5" ry="6" fill="#3d2000"/>
-                <ellipse cx="172" cy="138" rx="5" ry="6" fill="#3d2000"/>
-                {/* Eye shine */}
-                <circle cx="150" cy="136" r="2" fill="white"/>
-                <circle cx="174" cy="136" r="2" fill="white"/>
-                {/* Pocket on overalls */}
-                <rect x="143" y="230" width="34" height="24" rx="5" fill="#2d6bc4" stroke="#1e56aa" strokeWidth="1"/>
-                {/* Tool in pocket */}
-                <rect x="152" y="225" width="5" height="14" rx="2" fill="#aaa"/>
-                <rect x="160" y="223" width="5" height="16" rx="2" fill="#f59e0b"/>
-              </svg>
-            </div>
-
-            {/* Floating card — Payment received (top right) */}
-            <div className="absolute top-8 right-6 bg-white rounded-2xl shadow-2xl px-5 py-4 w-[210px]">
-              <p className="text-[11px] font-bold text-[#7a9a8f] mb-2">Pembayaran diterima!</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[13px] text-[#1a2d4a]">Perbaiki kran bocor</p>
-                  <p className="text-[11px] text-[#3d6b5e]">Jakarta Selatan</p>
-                </div>
-                <p className="font-black text-[18px] text-[#1a2d4a]">Rp 179rb</p>
-              </div>
-              {/* New job badge */}
-              <div className="mt-3 flex items-center gap-1.5 bg-[#20bf6f] text-white text-[11px] font-bold px-3 py-1.5 rounded-full w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                Lowongan baru!
-              </div>
-            </div>
-
-            {/* Floating card — Total earnings (bottom right) */}
-            <div className="absolute bottom-8 right-6 bg-white rounded-2xl shadow-2xl px-5 py-4 w-[190px]">
-              <p className="text-[11px] font-bold text-[#7a9a8f] mb-1">Total penghasilan</p>
-              <p className="font-black text-[28px] text-[#1a2d4a] leading-none">Rp 13jt</p>
-              <p className="text-[12px] text-[#20bf6f] font-bold mt-1">↑ 20% vs bulan lalu</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── ARTICLES ── */}
-      <section className="py-16 px-6 max-w-[1400px] mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-black text-[30px] text-[#1a2d4a]">Panduan plumbing & perawatan</h2>
-          <button className="flex items-center gap-1 text-[#2E5090] font-bold text-[14px] hover:underline">
-            Lihat semua <ChevronRight size={16} />
-          </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {ARTICLES.map((a) => (
-            <div key={a.title} className="group cursor-pointer">
-              <div
-                className="rounded-2xl mb-4 aspect-[16/10] flex items-center justify-center group-hover:brightness-95 transition-all"
-                style={{ background: `linear-gradient(135deg, ${a.from}, ${a.to})` }}
-              >
-                <span className="text-[56px]">{a.emoji}</span>
-              </div>
-              <span className="text-[11px] font-bold text-[#2E5090] uppercase tracking-wider">{a.category}</span>
-              <h3 className="font-bold text-[16px] text-[#1a2d4a] mt-1 leading-snug group-hover:text-[#2E5090] transition-colors">{a.title}</h3>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── SERVICE DIRECTORY ── */}
-      <section className="py-16 px-6 bg-[#F5F1E8]">
+      <section className="py-20 px-6 bg-[#F5F1E8]">
         <div className="max-w-[1400px] mx-auto">
-          <h2 className="font-black text-[28px] text-[#1a2d4a] mb-2">Direktori Layanan</h2>
-          <p className="text-[#3d6b5e] text-[15px] mb-8">Telusuri semua layanan plumbing dan perawatan yang tersedia di Jakarta.</p>
-          <div className="flex gap-2 mb-8 flex-wrap">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+            <div>
+              <p className="text-[12px] font-bold text-[#2E5090] uppercase tracking-widest mb-3">Butuh bantuan apa?</p>
+              <h2 className="font-black text-[38px] sm:text-[48px] leading-tight text-[#1a2d4a] mb-3">
+                Pilih layanan yang kamu butuhkan
+              </h2>
+              <p className="text-[#3d6b5e] text-[17px] leading-relaxed max-w-2xl">
+                Dari pipa bocor sampai perawatan rumah rutin, temukan tukang yang pas untuk pekerjaanmu di Jakarta.
+              </p>
+            </div>
+            <div className="bg-white border border-[#c8dfd8] rounded-2xl px-5 py-4 max-w-[280px]">
+              <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-wider mb-1">Layanan populer</p>
+              <p className="font-black text-[28px] text-[#1a2d4a] leading-none">50+</p>
+              <p className="text-[13px] text-[#3d6b5e] mt-1">kategori pekerjaan yang bisa kamu pilih</p>
+            </div>
+          </div>
+          <div className="flex gap-3 mb-10 flex-wrap">
             {SERVICE_TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`text-[13px] font-semibold px-4 py-2 rounded-full transition-all ${
-                  activeTab === tab ? "bg-[#1a2d4a] text-white" : "bg-white text-[#1a3d5c] border border-[#b8d4c8] hover:border-[#2E5090] hover:text-[#2E5090]"
+                className={`text-[15px] font-bold px-5 py-3 rounded-full transition-all ${
+                  activeTab === tab ? "bg-[#1a2d4a] text-white shadow-lg shadow-[#1a2d4a]/10" : "bg-white text-[#1a3d5c] border border-[#b8d4c8] hover:border-[#2E5090] hover:text-[#2E5090] hover:shadow-sm"
                 }`}
               >
                 {tab}
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {(SERVICE_LINKS[activeTab] || []).map((link) => (
-              <a key={link} href="#" className="text-[13px] text-[#1a3d5c] hover:text-[#2E5090] transition-colors py-1 truncate">
-                {link}
-              </a>
+              <div
+                key={link}
+                className="flex items-center gap-3 bg-white border border-[#d7e7e1] rounded-xl px-4 py-3.5 text-[14px] font-semibold text-[#1a3d5c]"
+              >
+                <span className="w-2 h-2 rounded-full bg-[#2E5090] shrink-0" />
+                <span className="truncate">{link}</span>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── INTERNATIONAL ── */}
-      <section className="py-10 px-6 border-t border-[#c8dfd8]">
-        <div className="max-w-[1400px] mx-auto">
-          <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-widest mb-4">Juga tersedia di</p>
-          <div className="flex flex-wrap gap-5">
-            {["🇦🇺 Australia", "🇮🇩 Indonesia", "🇸🇬 Singapura", "🇲🇾 Malaysia", "🇬🇧 Inggris"].map((c) => (
-              <a key={c} href="#" className="text-[14px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors">{c}</a>
-            ))}
+      {/* ── FINAL CTA ── */}
+      <section className="bg-[#1a2d4a] px-6 py-20">
+        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-10">
+          <div className="max-w-3xl">
+            <p className="text-[13px] font-bold text-[#F59E42] uppercase tracking-widest mb-4">Siap mulai?</p>
+            <h2 className="font-black text-[46px] sm:text-[64px] leading-[0.95] text-white mb-5">
+              Post Kerjaan sekarang!
+            </h2>
+            <p className="text-white/65 text-[17px] leading-relaxed max-w-2xl">
+              Ceritakan masalah plumbing atau perawatan rumahmu, lalu dapatkan penawaran dari tukang terpercaya di Jakarta.
+            </p>
           </div>
+          <Link
+            to="/post-job"
+            className="inline-flex items-center justify-center gap-2 bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[16px] px-9 py-4.5 rounded-full transition-colors shrink-0"
+          >
+            Post Kerjaan gratis <ArrowRight size={18} />
+          </Link>
         </div>
       </section>
+
     </div>
   );
 }

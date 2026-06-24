@@ -149,8 +149,8 @@ function StepAuth({
       <div className="flex items-center gap-3 mb-5 p-3 bg-[#1a2d4a] rounded-2xl">
         <HardHat size={22} className="text-[#F59E42] shrink-0" />
         <div>
-          <p className="font-black text-[14px] text-white">Daftar sebagai Tukang / Teknisi</p>
-          <p className="text-[11px] text-white/60">Buat akun untuk mulai menerima pekerjaan di Jakarta</p>
+          <p className="font-black text-[14px] text-white">Daftar sebagai tukang / teknisi</p>
+          <p className="text-[11px] text-white/60">Buat akun dan mulai terima pekerjaan di Jakarta</p>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
     <div className="space-y-4">
       <div>
         <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Informasi pribadi</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-5">Informasi ini akan ditampilkan di profil tukang Anda</p>
+        <p className="text-[#3d6b5e] text-[14px] mb-5">Informasi ini akan tampil di profil tukangmu.</p>
       </div>
 
       <div>
@@ -261,7 +261,7 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
             className="flex-1 border-2 border-[#b8d4c8] rounded-r-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] transition-all"
           />
         </div>
-        <p className="text-[11px] text-[#7a9a8f] mt-1">Pelanggan akan menghubungi Anda via WhatsApp setelah penawaran diterima</p>
+        <p className="text-[11px] text-[#7a9a8f] mt-1">Pelanggan bisa menghubungimu via WhatsApp setelah penawaran diterima</p>
       </div>
 
       <div>
@@ -278,7 +278,7 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
             </optgroup>
           ))}
         </select>
-        <p className="text-[11px] text-[#7a9a8f] mt-1">Anda bisa menerima pekerjaan di seluruh Jakarta, tapi area utama membantu pencocokan</p>
+        <p className="text-[11px] text-[#7a9a8f] mt-1">Kamu tetap bisa menerima pekerjaan di area lain, tapi area utama membantu pencocokan.</p>
       </div>
     </div>
   );
@@ -338,14 +338,14 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
     <div className="space-y-5">
       <div>
         <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Verifikasi identitas</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-1">Upload KTP untuk membuktikan identitas Anda kepada pelanggan</p>
+        <p className="text-[#3d6b5e] text-[14px] mb-1">Upload KTP agar pelanggan tahu profilmu sudah dicek.</p>
       </div>
 
       {/* Info bar */}
       <div className="flex items-start gap-3 bg-[#1a2d4a] rounded-xl p-4">
         <AlertCircle size={16} className="text-[#F59E42] shrink-0 mt-0.5" />
         <div className="text-[12px] text-white/80">
-          <span className="font-bold text-white">Mengapa perlu KTP?</span> Verifikasi identitas meningkatkan kepercayaan pelanggan dan membantu Anda mendapat lebih banyak pekerjaan. Data Anda dienkripsi dan aman.
+          <span className="font-bold text-white">Kenapa perlu KTP?</span> Verifikasi identitas membantu pelanggan lebih percaya dan bisa meningkatkan peluang mendapat pekerjaan. Datamu dienkripsi dan aman.
         </div>
       </div>
 
@@ -362,7 +362,7 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
       {/* Selfie */}
       <UploadBox
         label="Foto Selfie"
-        sublabel="Foto wajah Anda yang jelas — pastikan wajah terlihat penuh dan terang"
+        sublabel="Foto wajah yang jelas — pastikan wajah terlihat penuh dan terang"
         icon={<Camera size={22} className="text-[#2E5090]" />}
         hasFile={!!data.selfiePhoto}
         onUpload={() => simulateUpload("selfiePhoto")}
@@ -372,7 +372,7 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
       {/* Verification note */}
       <div className="flex items-start gap-3 bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4 text-[12px] text-[#3d6b5e]">
         <Clock size={14} className="text-[#7a9a8f] shrink-0 mt-0.5" />
-        Verifikasi KTP biasanya selesai dalam <span className="font-bold text-[#1a2d4a] mx-1">1×24 jam</span> kerja. Anda bisa tetap melengkapi profil sembari menunggu.
+        Verifikasi KTP biasanya selesai dalam <span className="font-bold text-[#1a2d4a] mx-1">1×24 jam</span> kerja. Kamu bisa tetap melengkapi profil sambil menunggu.
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden" />
@@ -393,8 +393,8 @@ function StepKeahlian({ data, onChange }: { data: TechData; onChange: (d: Partia
 
   return (
     <div>
-      <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Pilih keahlian Anda</h2>
-      <p className="text-[#3d6b5e] text-[14px] mb-5">Pilih semua layanan yang bisa Anda kerjakan. Minimal 1 keahlian.</p>
+      <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Pilih keahlianmu</h2>
+      <p className="text-[#3d6b5e] text-[14px] mb-5">Pilih semua layanan yang bisa kamu kerjakan. Minimal 1 keahlian.</p>
 
       <div className="grid grid-cols-2 gap-2.5 mb-4">
         {KEAHLIAN.map((k) => {
@@ -437,7 +437,7 @@ function StepPengalaman({ data, onChange }: { data: TechData; onChange: (d: Part
     <div className="space-y-5">
       <div>
         <h2 className="font-black text-[22px] text-[#1a2d4a] mb-1">Pengalaman & tarif</h2>
-        <p className="text-[#3d6b5e] text-[14px] mb-2">Bantu pelanggan memahami kemampuan dan harga Anda</p>
+        <p className="text-[#3d6b5e] text-[14px] mb-2">Bantu pelanggan memahami pengalaman dan kisaran hargamu.</p>
       </div>
 
       <div>
@@ -462,13 +462,13 @@ function StepPengalaman({ data, onChange }: { data: TechData; onChange: (d: Part
 
       <div>
         <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">
-          Deskripsi singkat tentang Anda <span className="font-normal text-[#7a9a8f]">(opsional)</span>
+          Deskripsi singkat tentang kamu <span className="font-normal text-[#7a9a8f]">(opsional)</span>
         </label>
         <textarea
           value={data.bio}
           onChange={(e) => onChange({ bio: e.target.value })}
           rows={4}
-          placeholder="Contoh: Saya adalah tukang ledeng berpengalaman dengan 5 tahun di bidang plumbing residensial dan komersial. Melayani darurat 24 jam di Jakarta Selatan dan sekitarnya..."
+          placeholder="Contoh: Saya tukang ledeng dengan pengalaman 5 tahun untuk rumah dan ruko. Melayani pekerjaan darurat di Jakarta Selatan dan sekitarnya..."
           className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#1a2d4a] resize-none transition-all"
         />
         <p className="text-[11px] text-[#7a9a8f] mt-1">{data.bio.length}/300 karakter</p>
@@ -495,7 +495,7 @@ function SuccessScreen({ data }: { data: TechData }) {
       <div>
         <h2 className="font-black text-[26px] text-[#1a2d4a] mb-1">Pendaftaran berhasil!</h2>
         <p className="text-[#3d6b5e] text-[14px] max-w-xs mx-auto">
-          Akun tukang Anda sedang dalam proses verifikasi. Kami akan memberi tahu Anda dalam <span className="font-bold text-[#1a2d4a]">1×24 jam</span>.
+          Akun tukangmu sedang diverifikasi. Kami akan memberi kabar dalam <span className="font-bold text-[#1a2d4a]">1×24 jam</span>.
         </p>
       </div>
 
@@ -570,7 +570,7 @@ function SuccessScreen({ data }: { data: TechData }) {
           onClick={() => navigate("/")}
           className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
         >
-          Kembali ke Beranda
+          Kembali ke beranda
         </button>
       </div>
     </div>
@@ -670,8 +670,8 @@ export default function TechAuth() {
               <HardHat size={30} className="text-[#F59E42]" />
             </div>
             <div>
-              <p className="font-black text-[16px] text-white">Daftar sebagai Tukang</p>
-              <p className="text-[12px] text-white/60 mt-0.5">Terima pekerjaan plumbing & perawatan di Jakarta</p>
+              <p className="font-black text-[16px] text-white">Daftar sebagai tukang</p>
+              <p className="text-[12px] text-white/60 mt-0.5">Terima pekerjaan plumbing dan perawatan di Jakarta</p>
               <div className="flex gap-3 mt-2">
                 {["Gratis daftar", "Verifikasi KTP", "Langsung dapat pekerjaan"].map((t) => (
                   <span key={t} className="text-[10px] font-bold text-[#F59E42]">✓ {t}</span>
@@ -716,7 +716,7 @@ export default function TechAuth() {
                 : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
             }`}
           >
-            {step === STEPS.length - 1 ? "Selesai & Daftarkan Akun" : (
+            {step === STEPS.length - 1 ? "Selesai dan daftarkan akun" : (
               <>{step === 0 ? "Lanjutkan" : "Selanjutnya"} <ChevronRight size={16} /></>
             )}
           </button>

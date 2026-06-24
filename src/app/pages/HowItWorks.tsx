@@ -4,27 +4,35 @@ import { CheckCircle, Shield, Star, MessageSquare, Lock, ChevronRight } from "lu
 const STEPS = [
   {
     number: "1",
-    label: "Jelaskan",
-    heading: "Jelaskan masalahnya",
-    body: "Ceritakan apa yang perlu diperbaiki — kran bocor, saluran mampet, pipa pecah, atau perawatan umum. Tambahkan foto jika ada. Semakin jelas deskripsinya, semakin cepat Anda mendapat penawaran.",
+    label: "Ceritakan",
+    heading: "Ceritakan Masalahnya",
+    body: "Jelaskan apa yang perlu dibereskan di rumahmu.",
     emoji: "📝",
     from: "#ffe4e4", to: "#ffd0d0",
   },
   {
     number: "2",
-    label: "Anggaran",
-    heading: "Tentukan anggaran Anda",
-    body: "Tetapkan harga yang Anda mau bayar, atau minta tukang untuk mengajukan penawaran. Anggaran fleksibel — bisa disesuaikan kapan saja berdasarkan penawaran yang masuk. Tidak ada komitmen sebelum Anda setuju.",
+    label: "Budget",
+    heading: "Atur Budget",
+    body: "Tentukan kisaran biaya atau biarkan tukang memberi penawaran.",
     emoji: "💰",
     from: "#d1fae5", to: "#a7f3d0",
   },
   {
     number: "3",
-    label: "Pilih & Beres",
-    heading: "Pilih tukang. Masalah beres.",
-    body: "Tinjau profil tukang plumbing dan perawatan, rating bintang, lisensi, dan ulasan terverifikasi. Terima penawaran terbaik dan tukang akan datang ke lokasi — pembayaran hanya dicairkan saat Anda puas.",
+    label: "Penawaran",
+    heading: "Pilih Penawaran",
+    body: "Bandingkan harga, profil, rating, dan ulasan tukang.",
     emoji: "✅",
     from: "#fef3c7", to: "#fde68a",
+  },
+  {
+    number: "4",
+    label: "Dikerjain",
+    heading: "Dikerjain",
+    body: "Tukang datang sesuai jadwal dan pekerjaan mulai dibereskan.",
+    emoji: "🔧",
+    from: "#dbeafe", to: "#bfdbfe",
   },
 ];
 
@@ -42,26 +50,26 @@ const LAYANAN = [
 const FITUR_KEPERCAYAAN = [
   {
     icon: <Shield size={28} className="text-[#2E5090]" />,
-    heading: "Asuransi tanggung jawab umum",
-    body: "Pekerjaan yang memenuhi syarat dilindungi dari cedera tidak sengaja atau kerusakan properti selama pengerjaan berlangsung.",
+    heading: "Perlindungan untuk pekerjaan tertentu",
+    body: "Beberapa pekerjaan yang memenuhi syarat mendapat perlindungan tambahan jika terjadi kerusakan properti saat pengerjaan.",
     badge: "Diasuransikan",
   },
   {
     icon: <Star size={28} className="text-[#2E5090]" />,
-    heading: "Rating & ulasan terverifikasi",
-    body: "Setiap bintang berasal dari pekerjaan nyata yang sudah diselesaikan — tidak ada ulasan palsu. Cek tingkat penyelesaian sebagai indikator keandalan.",
+    heading: "Rating & ulasan asli",
+    body: "Lihat pengalaman pelanggan lain dari pekerjaan yang benar-benar sudah selesai. Kamu juga bisa melihat riwayat penyelesaian tukang.",
     badge: "100% terverifikasi",
   },
   {
     icon: <MessageSquare size={28} className="text-[#2E5090]" />,
-    heading: "Pesan aman dalam platform",
-    body: "Semua komunikasi tetap di dalam KerjaIn dari awal pasang pekerjaan hingga selesai. Pesan pribadi terbuka otomatis setelah penawaran diterima.",
+    heading: "Chat tetap di KerjaIn",
+    body: "Komunikasi pekerjaan tetap rapi di dalam KerjaIn, dari tanya jawab awal sampai pekerjaan selesai.",
     badge: "Selalu pribadi",
   },
   {
     icon: <Lock size={28} className="text-[#2E5090]" />,
-    heading: "Pembayaran terkunci & aman",
-    body: "KerjaIn Pay menahan dana Anda dengan aman sampai Anda mengonfirmasi pekerjaan selesai. Tanpa uang tunai — cepat, cashless, dan Anda selalu memegang kendali.",
+    heading: "Pembayaran aman",
+    body: "KerjaIn Pay menyimpan dana sampai pekerjaan selesai dikonfirmasi. Pembayaran jadi lebih jelas tanpa perlu uang tunai.",
     badge: "KerjaIn Pay",
   },
 ];
@@ -79,22 +87,22 @@ export default function HowItWorks() {
         <div className="relative max-w-[1400px] mx-auto px-6 py-20 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-[13px] text-white/70 font-semibold mb-6">
             <span className="w-2 h-2 rounded-full bg-[#F59E42] inline-block" />
-            Tukang Plumbing & Perawatan Terpercaya · Jakarta
+            Tukang plumbing & perawatan rumah di Jakarta
           </div>
           <h1 className="font-black text-[52px] sm:text-[68px] leading-none tracking-tight text-white mb-4 max-w-3xl">
-            Pasang pekerjaan.<br />
+            Post Kerjaan.<br />
             <span className="text-[#F59E42]">Terima penawaran.</span><br />
             Masalah beres!
           </h1>
           <p className="text-white/70 text-[17px] mb-10 max-w-xl">
-            KerjaIn menghubungkan Anda dengan tukang plumbing dan perawatan rumah terverifikasi di Jakarta — penawaran cepat, pembayaran aman, dan kualitas terjamin.
+            KerjaIn membantu kamu menemukan tukang plumbing dan perawatan rumah di Jakarta dengan penawaran cepat dan pembayaran aman.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               to="/tasks"
               className="bg-[#2E5090] text-white font-bold text-[15px] px-8 py-3.5 rounded-full hover:bg-[#1e3d7a] transition-colors"
             >
-              Pasang pekerjaan gratis
+              Post Kerjaan gratis
             </Link>
             <Link
               to="/tasks"
@@ -110,7 +118,7 @@ export default function HowItWorks() {
       <section className="py-20 max-w-[1400px] mx-auto px-6">
         <div className="text-center mb-14">
           <p className="text-[#2E5090] font-bold text-[13px] uppercase tracking-widest mb-3">Cara kerja</p>
-          <h2 className="font-black text-[40px] text-[#1a2d4a] leading-tight">Tiga langkah untuk<br />menyelesaikan masalah rumah</h2>
+          <h2 className="font-black text-[40px] text-[#1a2d4a] leading-tight">Empat langkah simpel<br />untuk membereskan pekerjaan rumah</h2>
         </div>
 
         <div className="flex flex-col gap-6">
@@ -137,7 +145,7 @@ export default function HowItWorks() {
                   to="/tasks"
                   className="inline-flex items-center gap-2 bg-[#2E5090] text-white font-bold text-[13px] px-6 py-2.5 rounded-full hover:bg-[#1e3d7a] transition-colors"
                 >
-                  Pasang pekerjaan gratis <ChevronRight size={14} />
+                  Post Kerjaan gratis <ChevronRight size={14} />
                 </Link>
               </div>
             </div>
@@ -148,9 +156,9 @@ export default function HowItWorks() {
       {/* ── LAYANAN ── */}
       <section className="py-16 bg-[#F5F1E8] overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 mb-10 text-center">
-          <h2 className="font-black text-[34px] text-[#1a2d4a] mb-2">Semua layanan dalam satu platform</h2>
+          <h2 className="font-black text-[34px] text-[#1a2d4a] mb-2">Semua urusan rumah, bisa di-KerjaIn.</h2>
           <p className="text-[#3d6b5e] text-[16px]">
-            Dari panggilan darurat hingga perawatan rutin — semua tukang plumbing dan perawatan ada di KerjaIn.
+            Cari tukang, bandingkan penawaran, dan jadwalkan pekerjaan langsung dari satu tempat.
           </p>
         </div>
         <div className="flex gap-4 overflow-x-auto px-6 pb-2" style={{ scrollbarWidth: "none" }}>
@@ -172,10 +180,10 @@ export default function HowItWorks() {
       {/* ── KEPERCAYAAN & KEAMANAN ── */}
       <section className="py-20 max-w-[1400px] mx-auto px-6">
         <div className="text-center mb-14">
-          <p className="text-[#2E5090] font-bold text-[13px] uppercase tracking-widest mb-3">Keamanan terjamin</p>
-          <h2 className="font-black text-[38px] text-[#1a2d4a] leading-tight">Kami melindungi Anda</h2>
+          <p className="text-[#2E5090] font-bold text-[13px] uppercase tracking-widest mb-3">Lebih tenang</p>
+          <h2 className="font-black text-[38px] text-[#1a2d4a] leading-tight">Ada perlindungan di setiap langkah</h2>
           <p className="text-[#3d6b5e] text-[16px] mt-3 max-w-lg mx-auto">
-            Saat memesan tukang plumbing atau perawatan, KerjaIn memiliki perlindungan bawaan di setiap langkah.
+            Dari memilih tukang sampai membayar pekerjaan, KerjaIn membantu prosesnya tetap jelas dan aman.
           </p>
         </div>
 
@@ -211,17 +219,17 @@ export default function HowItWorks() {
       {/* ── CTA AKHIR ── */}
       <section className="py-20 max-w-[1400px] mx-auto px-6 text-center">
         <h2 className="font-black text-[42px] text-[#1a2d4a] mb-4 leading-tight">
-          Siap mengatasi masalah?
+          Siap membereskan pekerjaan rumah?
         </h2>
         <p className="text-[#3d6b5e] text-[17px] mb-10 max-w-md mx-auto">
-          Pasang pekerjaan sekarang dan dapatkan penawaran dari tukang plumbing & perawatan terpercaya di Jakarta.
+          Post Kerjaan sekarang dan dapatkan penawaran dari tukang plumbing dan perawatan rumah di Jakarta.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
             to="/tasks"
             className="bg-[#2E5090] text-white font-bold text-[15px] px-9 py-4 rounded-full hover:bg-[#1e3d7a] transition-colors"
           >
-            Pasang pekerjaan gratis
+            Post Kerjaan gratis
           </Link>
           <Link
             to="/tasks"
@@ -233,10 +241,10 @@ export default function HowItWorks() {
 
         <div className="flex flex-wrap justify-center gap-6 mt-14 pt-10 border-t border-[#c8dfd8]">
           {[
-            "Gratis pasang pekerjaan",
+            "Post Kerjaan gratis",
             "Tanpa kontrak mengikat",
-            "Tukang berlisensi & diasuransikan",
-            "Ulasan terverifikasi",
+            "Tukang terverifikasi",
+            "Ulasan asli",
             "Pembayaran aman",
           ].map((item) => (
             <div key={item} className="flex items-center gap-2 text-[14px] text-[#1a3d5c] font-semibold">

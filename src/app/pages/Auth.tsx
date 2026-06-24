@@ -144,10 +144,10 @@ function SuccessScreen({
 
       {mode === "daftar" && (
         <div className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-5 w-full text-left">
-          <p className="font-bold text-[13px] text-[#0f2035] mb-3">Apa yang bisa Anda lakukan sekarang?</p>
+          <p className="font-bold text-[13px] text-[#0f2035] mb-3">Kamu bisa mulai dari sini:</p>
           <div className="space-y-2.5">
             {[
-              { emoji: "🔧", text: "Pasang pekerjaan plumbing atau perawatan gratis" },
+              { emoji: "🔧", text: "Post Kerjaan plumbing atau perawatan gratis" },
               { emoji: "👷", text: "Tinjau profil & ulasan tukang terpercaya" },
               { emoji: "🔒", text: "Bayar dengan aman — uang dicairkan setelah selesai" },
             ].map((item) => (
@@ -165,13 +165,13 @@ function SuccessScreen({
           onClick={() => navigate("/post-job")}
           className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
         >
-          Pasang Pekerjaan Sekarang <ArrowRight size={16} />
+          Post Kerjaan sekarang <ArrowRight size={16} />
         </button>
         <button
           onClick={() => navigate("/")}
           className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
         >
-          Lihat Beranda
+          Lihat beranda
         </button>
       </div>
     </div>
@@ -311,7 +311,7 @@ function EmailForm({
 
       {mode === "daftar" && (
         <p className="text-[12px] text-[#3d6b5e]">
-          Dengan mendaftar, Anda menyetujui{" "}
+          Dengan mendaftar, kamu menyetujui{" "}
           <span className="text-[#2E5090] font-semibold cursor-pointer hover:underline">Syarat & Ketentuan</span>{" "}
           dan{" "}
           <span className="text-[#2E5090] font-semibold cursor-pointer hover:underline">Kebijakan Privasi</span> kami.
@@ -333,7 +333,7 @@ function EmailForm({
             {mode === "daftar" ? "Membuat akun…" : "Masuk…"}
           </>
         ) : mode === "daftar" ? (
-          "Buat Akun"
+          "Buat akun"
         ) : (
           "Masuk"
         )}
@@ -416,8 +416,8 @@ export default function Auth() {
           {/* Screen: role picker */}
           {screen === "role" ? (
             <div className="p-8">
-              <h2 className="font-black text-[24px] text-[#1a2d4a] mb-2">Anda mendaftar sebagai?</h2>
-              <p className="text-[#3d6b5e] text-[14px] mb-6">Pilih peran Anda di KerjaIn</p>
+              <h2 className="font-black text-[24px] text-[#1a2d4a] mb-2">Mau daftar sebagai apa?</h2>
+              <p className="text-[#3d6b5e] text-[14px] mb-6">Pilih peran yang sesuai di KerjaIn.</p>
               <div className="flex flex-col gap-4">
                 <button
                   onClick={() => setScreen("main")}
@@ -442,7 +442,7 @@ export default function Auth() {
                   </div>
                   <div className="flex-1">
                     <p className="font-black text-[16px] text-[#1a2d4a] group-hover:text-white">Tukang / Teknisi</p>
-                    <p className="text-[13px] text-[#3d6b5e] group-hover:text-white/70 mt-0.5">Saya ingin menawarkan jasa plumbing & perawatan</p>
+                    <p className="text-[13px] text-[#3d6b5e] group-hover:text-white/70 mt-0.5">Saya ingin menawarkan jasa plumbing dan perawatan</p>
                   </div>
                   <ChevronRight size={18} className="text-[#7a9a8f] group-hover:text-white/70 shrink-0" />
                 </Link>
@@ -501,8 +501,8 @@ export default function Auth() {
                   </h1>
                   <p className="text-[#3d6b5e] text-[14px]">
                     {mode === "masuk"
-                      ? "Masuk untuk mengelola pekerjaan Anda di Jakarta"
-                      : "Bergabung dan temukan tukang terpercaya di Jakarta"}
+                      ? "Masuk untuk mengelola pekerjaanmu di Jakarta"
+                      : "Buat akun untuk menemukan tukang terpercaya di Jakarta"}
                   </p>
                 </div>
 
@@ -585,12 +585,12 @@ export default function Auth() {
         {/* What you get — shown only on main/email screens */}
         {screen !== "success" && (
           <div className="hidden lg:flex flex-col gap-4 ml-8 mt-2 max-w-[280px]">
-            <p className="font-black text-[16px] text-[#1a2d4a]">Dengan bergabung KerjaIn:</p>
+            <p className="font-black text-[16px] text-[#1a2d4a]">Dengan KerjaIn, kamu bisa:</p>
             {[
-              { emoji: "🏠", title: "Pasang pekerjaan gratis", desc: "Deskripsikan masalah & tetapkan anggaran" },
+              { emoji: "🏠", title: "Post Kerjaan gratis", desc: "Ceritakan masalah dan atur anggaran" },
               { emoji: "⚡", title: "Dapat penawaran cepat", desc: "Tukang Jakarta merespons dalam 15–30 menit" },
-              { emoji: "🔒", title: "Bayar dengan aman", desc: "Uang dicairkan hanya jika pekerjaan selesai" },
-              { emoji: "⭐", title: "Tukang terverifikasi", desc: "Semua tukang berlisensi & diasuransikan" },
+              { emoji: "🔒", title: "Bayar dengan aman", desc: "Dana diteruskan setelah pekerjaan selesai" },
+              { emoji: "⭐", title: "Tukang terverifikasi", desc: "Profil tukang dicek sebelum menerima pekerjaan" },
             ].map((item) => (
               <div key={item.emoji} className="flex items-start gap-3 bg-white rounded-2xl border border-[#c8dfd8] p-4">
                 <span className="text-[24px] shrink-0">{item.emoji}</span>

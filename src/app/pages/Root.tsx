@@ -3,14 +3,14 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { label: "Lihat Pekerjaan", href: "/tasks" },
+  { label: "Cari Pekerjaan", href: "/tasks" },
   { label: "Cara Kerja", href: "/how-it-works" },
 ];
 
 const FOOTER_COLS = [
   {
-    heading: "Temukan",
-    links: ["Cara Kerja", "Cari Pekerjaan", "Panduan Biaya", "Panduan Plumbing", "FAQ Pengguna Baru"],
+    heading: "Mulai di sini",
+    links: ["Cara Kerja", "Cari Pekerjaan", "Panduan Biaya", "Panduan Plumbing", "Pertanyaan Umum"],
   },
   {
     heading: "Perusahaan",
@@ -18,7 +18,7 @@ const FOOTER_COLS = [
   },
   {
     heading: "Tautan Cepat",
-    links: ["Pasang Pekerjaan", "Lihat Pekerjaan", "Masuk", "Pusat Bantuan"],
+    links: ["Post Kerjaan", "Cari Pekerjaan", "Masuk", "Pusat Bantuan"],
   },
   {
     heading: "Layanan Kami",
@@ -53,7 +53,7 @@ export default function Root() {
             to="/post-job"
             className="hidden md:flex items-center bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap mr-1"
           >
-            Pasang Pekerjaan
+            Post Kerjaan
           </Link>
 
           {/* Center nav */}
@@ -98,7 +98,7 @@ export default function Root() {
         {mobileOpen && (
           <div className="md:hidden bg-white border-t border-[#f5eded] px-6 py-4 flex flex-col gap-3">
             <Link to="/post-job" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
-              Pasang Pekerjaan
+              Post Kerjaan
             </Link>
             {NAV_LINKS.map((item) => (
               <Link key={item.label} to={item.href} className="text-[14px] font-semibold text-[#1a3d5c] py-2 border-b border-[#f0f7f4]" onClick={() => setMobileOpen(false)}>

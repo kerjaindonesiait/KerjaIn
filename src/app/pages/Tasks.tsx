@@ -366,8 +366,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             <div className="flex items-start gap-3 bg-[#F5F1E8] rounded-xl p-4">
               <Shield size={16} className="text-[#2E5090] shrink-0 mt-0.5" />
               <div>
-                <p className="text-[13px] font-bold text-[#0f2035]">Pembayaran Anda terlindungi</p>
-                <p className="text-[12px] text-[#3d6b5e] mt-0.5">Dana hanya dicairkan setelah Anda konfirmasi pekerjaan selesai.</p>
+                <p className="text-[13px] font-bold text-[#0f2035]">Pembayaran terlindungi</p>
+                <p className="text-[12px] text-[#3d6b5e] mt-0.5">Dana baru dicairkan setelah pekerjaan selesai dikonfirmasi.</p>
               </div>
             </div>
           </div>

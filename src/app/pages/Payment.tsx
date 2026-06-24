@@ -51,7 +51,7 @@ const METHODS: {
         <text x="50%" y="67%" textAnchor="middle" fill="white" fontWeight="900" fontSize="13" fontFamily="Manrope,sans-serif">GO</text>
       </svg>
     ),
-    desc: "Saldo GoPay Anda",
+    desc: "Bayar dari saldo GoPay",
     instant: true,
   },
   {
@@ -66,7 +66,7 @@ const METHODS: {
         <text x="50%" y="67%" textAnchor="middle" fill="white" fontWeight="900" fontSize="11" fontFamily="Manrope,sans-serif">OVO</text>
       </svg>
     ),
-    desc: "Saldo OVO Anda",
+    desc: "Bayar dari saldo OVO",
     instant: true,
   },
   {
@@ -81,7 +81,7 @@ const METHODS: {
         <text x="50%" y="67%" textAnchor="middle" fill="white" fontWeight="900" fontSize="10" fontFamily="Manrope,sans-serif">DANA</text>
       </svg>
     ),
-    desc: "Saldo DANA Anda",
+    desc: "Bayar dari saldo DANA",
     instant: true,
   },
   {
@@ -96,7 +96,7 @@ const METHODS: {
         <text x="50%" y="67%" textAnchor="middle" fill="white" fontWeight="900" fontSize="8" fontFamily="Manrope,sans-serif">SPAY</text>
       </svg>
     ),
-    desc: "Saldo ShopeePay Anda",
+    desc: "Bayar dari saldo ShopeePay",
     instant: true,
   },
   {
@@ -176,7 +176,7 @@ function VAPendingScreen({ method }: { method: PayMethod }) {
       'Pilih menu "Transfer" → "Virtual Account"',
       `Masukkan nomor VA: ${vaNumber}`,
       `Transfer tepat ${formatRp(TOTAL)}`,
-      "Simpan bukti transfer Anda",
+      "Simpan bukti transfer",
     ],
     mandiri: [
       "Buka aplikasi Livin' by Mandiri atau ATM Mandiri",
@@ -392,8 +392,8 @@ function SuccessScreen() {
         <CheckCircle size={44} className="text-[#20bf6f]" fill="#20bf6f" />
       </div>
       <div>
-        <h2 className="font-black text-[26px] text-[#1a2d4a] mb-1">Pembayaran Berhasil!</h2>
-        <p className="text-[#3d6b5e] text-[14px]">Dana Anda tersimpan aman hingga pekerjaan selesai</p>
+        <h2 className="font-black text-[26px] text-[#1a2d4a] mb-1">Pembayaran berhasil!</h2>
+        <p className="text-[#3d6b5e] text-[14px]">Dana tersimpan aman sampai pekerjaan selesai</p>
       </div>
 
       {/* Receipt card */}
@@ -446,7 +446,7 @@ function SuccessScreen() {
             </div>
             <div className="flex-1">
               <p className="font-bold text-[13px] text-[#0f2035]">{JOB.tasker.name}</p>
-              <p className="text-[11px] text-[#7a9a8f]">Tukang Anda · Dalam perjalanan</p>
+              <p className="text-[11px] text-[#7a9a8f]">Tukang pilihanmu · Dalam perjalanan</p>
             </div>
             <div className="flex items-center gap-1 text-[#f59e0b]">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -459,16 +459,16 @@ function SuccessScreen() {
       <div className="w-full bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 flex items-start gap-3">
         <Shield size={16} className="text-[#20bf6f] shrink-0 mt-0.5" />
         <p className="text-[12px] text-[#166534] font-semibold">
-          Dana sebesar <span className="font-black">{formatRp(TOTAL)}</span> ditahan aman oleh KerjaIn Pay dan hanya dicairkan ke tukang setelah Anda konfirmasi pekerjaan selesai.
+          Dana sebesar <span className="font-black">{formatRp(TOTAL)}</span> ditahan aman oleh KerjaIn Pay dan baru dicairkan setelah pekerjaan selesai dikonfirmasi.
         </p>
       </div>
 
       <div className="flex flex-col gap-3 w-full">
         <button onClick={() => navigate("/tasks")} className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors">
-          Lacak Pekerjaan
+          Lacak pekerjaan
         </button>
         <button onClick={() => navigate("/")} className="w-full border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all">
-          Kembali ke Beranda
+          Kembali ke beranda
         </button>
       </div>
     </div>

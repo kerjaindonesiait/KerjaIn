@@ -55,7 +55,7 @@ function StepPilihLayanan({ data, onChange }: { data: FormData; onChange: (d: Pa
   return (
     <div>
       <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Apa yang perlu diperbaiki?</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-6">Pilih kategori yang paling sesuai dengan masalah Anda.</p>
+      <p className="text-[#3d6b5e] text-[15px] mb-6">Pilih kategori yang paling dekat dengan masalahmu.</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {LAYANAN.map((l) => (
           <button
@@ -98,8 +98,8 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
           <span className="font-bold text-[14px] text-[#2E5090]">{layanan.label}</span>
         </div>
       )}
-      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Jelaskan masalahnya</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-5">Semakin detail deskripsi Anda, semakin tepat penawaran yang diterima.</p>
+      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Ceritakan masalahnya</h2>
+      <p className="text-[#3d6b5e] text-[15px] mb-5">Semakin jelas detailnya, semakin mudah tukang memberi penawaran yang pas.</p>
 
       <textarea
         value={data.deskripsi}
@@ -150,7 +150,7 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
         <ul className="text-[12px] text-[#3d6b5e] space-y-1">
           <li>• Sebutkan lokasi masalah (dapur, kamar mandi, dll.)</li>
           <li>• Sudah berapa lama masalah terjadi</li>
-          <li>• Apa yang sudah Anda coba sebelumnya</li>
+          <li>• Apa yang sudah kamu coba sebelumnya</li>
           <li>• Jenis/merek alat jika relevan (misal: Ariston 50L)</li>
         </ul>
       </div>
@@ -163,7 +163,7 @@ function StepLokasi({ data, onChange }: { data: FormData; onChange: (d: Partial<
   return (
     <div>
       <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Di mana lokasinya?</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-6">Tukang akan datang ke lokasi Anda. Pilih area dan masukkan alamat.</p>
+      <p className="text-[#3d6b5e] text-[15px] mb-6">Tukang akan datang ke lokasimu. Pilih area dan masukkan alamat.</p>
 
       {true && (
         <div className="space-y-4">
@@ -190,7 +190,7 @@ function StepLokasi({ data, onChange }: { data: FormData; onChange: (d: Partial<
               placeholder="Jl. Sudirman No. 123, RT 01/RW 02"
               className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] text-[#0f2035] placeholder-[#7a9a8f] bg-[#F5F1E8] outline-none focus:border-[#2E5090] transition-all"
             />
-            <p className="text-[12px] text-[#7a9a8f] mt-1.5">Alamat lengkap hanya dibagikan ke tukang yang Anda pilih</p>
+            <p className="text-[12px] text-[#7a9a8f] mt-1.5">Alamat lengkap hanya dibagikan ke tukang yang kamu pilih</p>
           </div>
         </div>
       )}
@@ -202,7 +202,7 @@ function StepWaktu({ data, onChange }: { data: FormData; onChange: (d: Partial<F
   return (
     <div>
       <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Kapan dibutuhkan?</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-6">Beri tahu tukang seberapa mendesak pekerjaan ini.</p>
+      <p className="text-[#3d6b5e] text-[15px] mb-6">Beri tahu tukang kapan pekerjaan ini perlu ditangani.</p>
 
       <div className="flex flex-col gap-3 mb-6">
         {WAKTU_OPTIONS.map((opt) => (
@@ -252,13 +252,13 @@ function StepAnggaran({ data, onChange }: { data: FormData; onChange: (d: Partia
 
   return (
     <div>
-      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Berapa anggaran Anda?</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-6">Tetapkan anggaran atau biarkan tukang mengajukan harga mereka sendiri.</p>
+      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Berapa anggarannya?</h2>
+      <p className="text-[#3d6b5e] text-[15px] mb-6">Isi kisaran harga atau biarkan tukang mengajukan penawaran.</p>
 
       {/* Toggle */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         {[
-          { id: "tetap",  label: "Saya tetapkan harga", emoji: "💰" },
+          { id: "tetap",  label: "Tetapkan harga", emoji: "💰" },
           { id: "minta",  label: "Minta tukang mengajukan harga", emoji: "📋" },
         ].map((opt) => (
           <button
@@ -317,7 +317,7 @@ function StepAnggaran({ data, onChange }: { data: FormData; onChange: (d: Partia
         <div className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4">
           <p className="text-[14px] text-[#1a3d5c] font-semibold mb-1">Apa artinya ini?</p>
           <p className="text-[13px] text-[#3d6b5e]">
-            Tukang akan melihat pekerjaan Anda dan mengajukan harga sesuai keahlian mereka. Anda bisa membandingkan dan memilih penawaran terbaik.
+            Tukang akan melihat detail pekerjaan dan mengajukan harga sesuai keahlian mereka. Kamu bisa membandingkan lalu memilih penawaran yang paling cocok.
           </p>
         </div>
       )}
@@ -334,7 +334,7 @@ function StepReview({ data }: { data: FormData }) {
 
   return (
     <div>
-      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Tinjau sebelum posting</h2>
+      <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Cek dulu sebelum dipasang</h2>
       <p className="text-[#3d6b5e] text-[15px] mb-6">Pastikan semua detail sudah benar.</p>
 
       <div className="space-y-3">
@@ -407,8 +407,8 @@ function StepReview({ data }: { data: FormData }) {
       <div className="mt-5 bg-[#f0f7f4] border border-[#F59E42] rounded-xl p-4 flex items-start gap-3">
         <AlertCircle size={16} className="text-[#2E5090] shrink-0 mt-0.5" />
         <p className="text-[12px] text-[#1a3d5c]">
-          Dengan memposting pekerjaan ini, Anda menyetujui <span className="font-bold text-[#2E5090]">Syarat & Ketentuan</span> dan <span className="font-bold text-[#2E5090]">Kebijakan Privasi</span> KerjaIn.
-          Informasi kontak Anda hanya dibagikan ke tukang yang Anda pilih.
+          Dengan memasang pekerjaan ini, kamu menyetujui <span className="font-bold text-[#2E5090]">Syarat & Ketentuan</span> dan <span className="font-bold text-[#2E5090]">Kebijakan Privasi</span> KerjaIn.
+          Informasi kontak hanya dibagikan ke tukang yang kamu pilih.
         </p>
       </div>
     </div>
@@ -442,9 +442,9 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
         <div className="w-20 h-20 rounded-full bg-[#f0f7f4] border-4 border-[#F59E42] flex items-center justify-center mx-auto mb-4">
           <CheckCircle size={40} className="text-[#2E5090]" fill="#2E5090" />
         </div>
-        <h2 className="font-black text-[32px] text-[#1a2d4a] mb-2">Pekerjaan berhasil diposting!</h2>
+        <h2 className="font-black text-[32px] text-[#1a2d4a] mb-2">Pekerjaan berhasil dipasang!</h2>
         <p className="text-[#3d6b5e] text-[16px]">
-          Tukang di Jakarta sedang melihat pekerjaan Anda. Penawaran biasanya masuk dalam <span className="font-bold text-[#2E5090]">15–30 menit</span>.
+          Tukang di Jakarta sedang melihat pekerjaanmu. Penawaran biasanya masuk dalam <span className="font-bold text-[#2E5090]">15–30 menit</span>.
         </p>
       </div>
 
@@ -548,12 +548,12 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
 
         {/* What happens next */}
         <div className="px-6 py-5">
-          <p className="font-bold text-[13px] text-[#0f2035] mb-3">Apa yang terjadi selanjutnya?</p>
+          <p className="font-bold text-[13px] text-[#0f2035] mb-3">Setelah ini apa?</p>
           <div className="space-y-3">
             {[
-              { icon: "🔔", text: "Anda akan dapat notifikasi saat penawaran masuk" },
+              { icon: "🔔", text: "Kamu akan dapat notifikasi saat penawaran masuk" },
               { icon: "👀", text: "Tinjau profil, rating, dan harga dari setiap tukang" },
-              { icon: "✅", text: "Pilih tukang terbaik dan setujui pekerjaan" },
+              { icon: "✅", text: "Pilih tukang yang paling cocok dan setujui pekerjaan" },
               { icon: "🔒", text: "Bayar dengan aman — uang dicairkan setelah selesai" },
             ].map((item) => (
               <div key={item.icon} className="flex items-center gap-3 text-[13px] text-[#1a3d5c]">
@@ -571,7 +571,7 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
           onClick={() => navigate("/tasks")}
           className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors"
         >
-          Lihat semua pekerjaan
+          Lihat pekerjaan lainnya
         </button>
         <div className="flex gap-3">
           <button
@@ -690,7 +690,7 @@ export default function PostJob() {
           </Link>
           <div>
             <p className="text-[12px] text-[#7a9a8f] font-semibold">Langkah {step + 1} dari {STEPS.length}</p>
-            <p className="font-black text-[15px] text-[#1a2d4a]">Pasang Pekerjaan</p>
+            <p className="font-black text-[15px] text-[#1a2d4a]">Post Kerjaan</p>
           </div>
         </div>
 
@@ -727,7 +727,7 @@ export default function PostJob() {
             }`}
           >
             {step === STEPS.length - 1 ? (
-              <>Posting Sekarang <Star size={16} /></>
+              <>Pasang sekarang <Star size={16} /></>
             ) : (
               <>Lanjut <ChevronRight size={16} /></>
             )}
