@@ -373,6 +373,8 @@ export default function Auth() {
       ? "Facebook tidak mengembalikan email. Pastikan akun Facebook Anda memiliki email terverifikasi."
       : oauthError === "oauth_denied"
         ? "Login dibatalkan. Silakan coba lagi."
+        : oauthError === "oauth_unavailable"
+          ? "Login Facebook belum tersedia. Silakan gunakan Google atau email."
         : oauthError === "oauth_failed"
           ? "Login gagal. Silakan coba lagi atau gunakan email."
           : null;

@@ -1,93 +1,74 @@
 import { API_URL } from "../constants";
-import type { AuthTokens, Job, Offer, PostJobFormData, TechProfileData, User } from "../types";
+import type { Job, LoginResponse, Offer, PostJobFormData, RegisterResponse, TechProfileData, User } from "../types";
 
-const TOKEN_KEY = "kerjain_access";
-const REFRESH_KEY = "kerjain_refresh";
+const LEGACY_ACCESS_KEY = "kerjain_access";
+const LEGACY_REFRESH_KEY = "kerjain_refresh";
 
-export function getAccessToken() {
-  return localStorage.getItem(TOKEN_KEY);
+/** Remove tokens from the old localStorage auth model. */
+export function clearLegacyTokens() {
+  localStorage.removeItem(LEGACY_ACCESS_KEY);
+  localStorage.removeItem(LEGACY_REFRESH_KEY);
 }
 
-export function getRefreshToken() {
-  return localStorage.getItem(REFRESH_KEY);
+async function parseError(res: Response): Promise<string> {
+  const err = await res.json().catch(() => ({}));
+  return (err as { error?: string }).error ?? `Request failed (${res.status})`;
 }
 
-export function setTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_KEY, refreshToken);
-}
-
-export function clearTokens() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REFRESH_KEY);
-}
-
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getAccessToken();
+async function request<T>(path: string, options: RequestInit = {}, retryOn401 = true): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
 
-  if (res.status === 401 && getRefreshToken()) {
+  if (res.status === 401 && retryOn401 && path !== "/api/auth/refresh") {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
-      headers.Authorization = `Bearer ${getAccessToken()}`;
-      const retry = await fetch(`${API_URL}${path}`, { ...options, headers });
-      if (!retry.ok) {
-        const err = await retry.json().catch(() => ({}));
-        throw new Error(err.error ?? "Request failed");
-      }
+      const retry = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+      if (!retry.ok) throw new Error(await parseError(retry));
       return retry.json();
     }
   }
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? `Request failed (${res.status})`);
-  }
-
+  if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
 
 export async function refreshAccessToken(): Promise<boolean> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return false;
   try {
     const res = await fetch(`${API_URL}/api/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      credentials: "include",
     });
-    if (!res.ok) {
-      clearTokens();
-      return false;
-    }
-    const data = await res.json();
-    setTokens(data.accessToken, refreshToken);
-    return true;
+    return res.ok;
   } catch {
-    clearTokens();
     return false;
   }
 }
 
 export const api = {
   register(email: string, password: string, fullName: string, role: "user" | "technician" = "user") {
-    return request<AuthTokens>("/api/auth/register", {
+    return request<RegisterResponse>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password, fullName, role }),
-    });
+    }, false);
   },
 
   login(email: string, password: string) {
-    return request<AuthTokens>("/api/auth/login", {
+    return request<LoginResponse>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
-    });
+    }, false);
   },
 
   me() {
@@ -95,23 +76,15 @@ export const api = {
   },
 
   logout() {
-    return request<{ ok: boolean }>("/api/auth/logout", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: getRefreshToken() }),
-    });
+    return request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }, false);
   },
 
-  googleAuthUrl() {
-    return `${API_URL}/auth/google`;
-  },
-
-  facebookAuthUrl() {
-    return `${API_URL}/auth/facebook`;
-  },
-
-  oauthAuthUrl(provider: "google" | "facebook", opts?: { role?: "user" | "technician" }) {
-    const qs = opts?.role === "technician" ? "?role=technician" : "";
-    return `${API_URL}/auth/${provider}${qs}`;
+  oauthAuthUrl(provider: "google" | "facebook", opts?: { role?: "user" | "technician"; next?: string }) {
+    const params = new URLSearchParams();
+    if (opts?.role === "technician") params.set("role", "technician");
+    if (opts?.next) params.set("next", opts.next);
+    const qs = params.toString();
+    return `${API_URL}/auth/${provider}${qs ? `?${qs}` : ""}`;
   },
 
   getJobs(params?: { search?: string; area?: string }) {
@@ -170,21 +143,21 @@ export const api = {
     return request<{ ok: boolean; message: string; devResetLink?: string }>("/api/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify({ email }),
-    });
+    }, false);
   },
 
   resetPassword(token: string, password: string) {
     return request<{ ok: boolean }>("/api/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, password }),
-    });
+    }, false);
   },
 
   verifyEmail(token: string) {
     return request<{ ok: boolean; user: User | null }>("/api/auth/verify-email", {
       method: "POST",
       body: JSON.stringify({ token }),
-    });
+    }, false);
   },
 
   resendVerification() {
@@ -193,7 +166,7 @@ export const api = {
     });
   },
 
-  updateProfile(body: { fullName?: string; avatarUrl?: string }) {
+  updateProfile(body: { fullName?: string; avatarUrl?: string; phone?: string }) {
     return request<{ user: User }>("/api/auth/profile", {
       method: "PATCH",
       body: JSON.stringify(body),

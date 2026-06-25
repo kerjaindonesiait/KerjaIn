@@ -7,7 +7,7 @@ import { useAuth } from "../../lib/auth";
 export default function VerifyEmail() {
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
-  const { refreshUser, user } = useAuth();
+  const { refreshUser } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
@@ -41,12 +41,12 @@ export default function VerifyEmail() {
           <>
             <CheckCircle size={48} className="text-[#1D4196] mx-auto mb-4" />
             <h1 className="font-black text-[22px] text-[#172E4D] mb-2">Email terverifikasi!</h1>
-            <p className="text-[14px] text-[#58708D] mb-6">Akun Anda siap digunakan.</p>
+            <p className="text-[14px] text-[#58708D] mb-6">Email Anda sudah diverifikasi. Silakan masuk untuk melanjutkan.</p>
             <Link
-              to={user?.role === "technician" ? "/dasbor-tukang" : "/"}
+              to="/masuk"
               className="inline-block bg-[#1D4196] text-white font-bold text-[14px] px-6 py-3 rounded-2xl hover:bg-[#173577]"
             >
-              Lanjutkan
+              Masuk sekarang
             </Link>
           </>
         )}

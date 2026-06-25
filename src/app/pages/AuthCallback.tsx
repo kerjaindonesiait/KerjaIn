@@ -1,29 +1,29 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../lib/auth";
-import { api, setTokens } from "../../lib/api";
 
 export default function AuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { setSession } = useAuth();
+  const { refreshUser } = useAuth();
 
   useEffect(() => {
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
     const error = params.get("error");
+    const oauth = params.get("oauth");
 
     if (error) {
       navigate("/masuk?error=oauth_failed", { replace: true });
       return;
     }
 
-    if (accessToken && refreshToken) {
+    if (oauth === "success") {
       (async () => {
         try {
-          setTokens(accessToken, refreshToken);
-          const { user } = await api.me();
-          setSession(accessToken, refreshToken, user);
+          const user = await refreshUser();
+          if (!user) {
+            navigate("/masuk?error=oauth_failed", { replace: true });
+            return;
+          }
           const next = params.get("next");
           if (next) {
             navigate(next, { replace: true });
@@ -34,10 +34,11 @@ export default function AuthCallback() {
           navigate("/masuk?error=oauth_failed", { replace: true });
         }
       })();
-    } else {
-      navigate("/masuk", { replace: true });
+      return;
     }
-  }, [params, navigate, setSession]);
+
+    navigate("/masuk", { replace: true });
+  }, [params, navigate, refreshUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>

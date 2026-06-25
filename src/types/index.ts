@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   avatarUrl: string | null;
   emailVerified: boolean;
+  phone?: string | null;
   createdAt: string;
 }
 
@@ -84,9 +85,12 @@ export interface TechProfileData {
   bio: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
+export interface RegisterResponse {
+  ok: boolean;
   user: User;
   devVerifyLink?: string;
+}
+
+export interface LoginResponse {
+  user: User;
 }

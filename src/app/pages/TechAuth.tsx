@@ -620,6 +620,7 @@ export default function TechAuth() {
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
@@ -656,7 +657,11 @@ export default function TechAuth() {
     try {
       if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
         await register(data.email, data.password, data.nama, "technician");
-      } else if (!isLoggedInTechnician && !user) {
+        setPendingEmailVerify(true);
+        setSubmitted(true);
+        return;
+      }
+      if (!isLoggedInTechnician && !user) {
         throw new Error("Silakan buat akun terlebih dahulu di langkah 1");
       }
       await api.saveTechnicianProfile({
@@ -687,7 +692,28 @@ export default function TechAuth() {
               <BrandLogo imgClassName="h-10" />
             </div>
           </div>
-          <SuccessScreen data={data} />
+          {pendingEmailVerify ? (
+            <div className="flex flex-col items-center text-center gap-5 py-4">
+              <div className="w-24 h-24 rounded-full bg-[#EEF3FB] border-4 border-[#D8E2F0] flex items-center justify-center">
+                <CheckCircle size={52} className="text-[#1D4196]" />
+              </div>
+              <div>
+                <h2 className="font-black text-[26px] text-[#172E4D] mb-1">Cek email kamu</h2>
+                <p className="text-[#58708D] text-[14px] max-w-xs mx-auto">
+                  Kami mengirim tautan verifikasi ke <span className="font-bold text-[#172E4D]">{data.email}</span>.
+                  Setelah verifikasi, masuk dan lanjutkan pendaftaran profil tukang.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/masuk")}
+                className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors"
+              >
+                Ke halaman masuk
+              </button>
+            </div>
+          ) : (
+            <SuccessScreen data={data} />
+          )}
         </div>
       </div>
     );
