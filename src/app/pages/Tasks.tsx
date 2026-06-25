@@ -310,7 +310,11 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[14px] text-[#172E4D]">{offer.technicianName}</p>
+                        <p className="font-bold text-[14px] text-[#172E4D]">
+                          <Link to={`/tukang/${offer.technicianId}`} className="hover:underline text-[#1D4196]">
+                            {offer.technicianName}
+                          </Link>
+                        </p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-black text-[16px] text-[#172E4D]">{offer.priceFormatted}</p>

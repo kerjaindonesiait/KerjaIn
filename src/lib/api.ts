@@ -1,5 +1,18 @@
 import { API_URL } from "../constants";
-import type { Job, LoginResponse, MineOffer, Offer, PostJobFormData, RegisterResponse, TechProfileData, User } from "../types";
+import type {
+  AppSettings,
+  AdminTechnician,
+  Job,
+  LoginResponse,
+  MineOffer,
+  Offer,
+  PostJobFormData,
+  RegisterResponse,
+  Review,
+  TechnicianPublic,
+  TechProfileData,
+  User,
+} from "../types";
 
 const LEGACY_ACCESS_KEY = "kerjain_access";
 const LEGACY_REFRESH_KEY = "kerjain_refresh";
@@ -214,6 +227,66 @@ export const api = {
     return request<{ ok: boolean }>("/api/auth/change-password", {
       method: "PATCH",
       body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  getTechnicianPublic(id: string) {
+    return request<{ technician: TechnicianPublic }>(`/api/technicians/${id}/public`);
+  },
+
+  getTechnicianReviews(id: string, limit = 10) {
+    return request<{ reviews: Review[] }>(`/api/reviews/technician/${id}?limit=${limit}`);
+  },
+
+  getJobReview(jobId: string) {
+    return request<{ review: Review | null }>(`/api/reviews/job/${jobId}`);
+  },
+
+  submitReview(jobId: string, body: { rating: number; comment?: string }) {
+    return request<{ review: Review }>(`/api/reviews/job/${jobId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  getAppConfig() {
+    return request<{ config: AppSettings }>("/api/app/config");
+  },
+
+  adminMe() {
+    return request<{ isAdmin: boolean }>("/api/admin/me");
+  },
+
+  adminStats() {
+    return request<{
+      stats: {
+        pendingVerification: number;
+        verifiedTechnicians: number;
+        totalTechnicians: number;
+        openJobs: number;
+      };
+    }>("/api/admin/stats");
+  },
+
+  adminTechnicians(filter: "pending" | "verified" | "unverified" | "all" = "pending") {
+    return request<{ technicians: AdminTechnician[] }>(`/api/admin/technicians?filter=${filter}`);
+  },
+
+  adminVerifyTechnician(userId: string, verified: boolean) {
+    return request<{ technician: AdminTechnician; devDashboardLink?: string }>(
+      `/api/admin/technicians/${userId}/verified`,
+      { method: "PATCH", body: JSON.stringify({ verified }) },
+    );
+  },
+
+  adminGetSettings() {
+    return request<{ settings: AppSettings }>("/api/admin/settings");
+  },
+
+  adminUpdateSettings(patch: Partial<AppSettings>) {
+    return request<{ settings: AppSettings }>("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify(patch),
     });
   },
 };
