@@ -34,56 +34,56 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#F5F1E8] flex items-center justify-center p-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-        <div className="bg-white rounded-3xl border border-[#c8dfd8] p-8 max-w-md text-center">
-          <p className="text-[#1a2d4a] font-semibold mb-4">Tautan tidak valid.</p>
-          <Link to="/lupa-sandi" className="text-[#2E5090] font-bold hover:underline">Minta tautan baru</Link>
+      <div className="min-h-screen bg-[#F7F9FC] flex items-center justify-center p-6" style={{ fontFamily: "Manrope, sans-serif" }}>
+        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-8 max-w-md text-center">
+          <p className="text-[#172E4D] font-semibold mb-4">Tautan tidak valid.</p>
+          <Link to="/lupa-sandi" className="text-[#1D4196] font-bold hover:underline">Minta tautan baru</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] flex flex-col" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="min-h-screen bg-[#F7F9FC] flex flex-col" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="px-6 py-4 max-w-[440px] mx-auto w-full">
-        <Link to="/masuk" className="flex items-center gap-1 text-[13px] font-semibold text-[#3d6b5e] hover:text-[#2E5090]">
+        <Link to="/masuk" className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196]">
           <ChevronLeft size={15} /> Kembali
         </Link>
       </div>
       <div className="flex-1 flex items-start justify-center px-4 py-6">
-        <div className="w-full max-w-[440px] bg-white rounded-3xl border border-[#c8dfd8] shadow-lg p-8">
+        <div className="w-full max-w-[440px] bg-white rounded-3xl border border-[#D8E2F0] shadow-lg p-8">
           {done ? (
             <div className="text-center py-6">
-              <CheckCircle size={40} className="text-[#2E5090] mx-auto mb-3" />
-              <h1 className="font-black text-[22px] text-[#1a2d4a]">Kata sandi diperbarui!</h1>
-              <p className="text-[14px] text-[#3d6b5e] mt-2">Mengalihkan ke halaman masuk…</p>
+              <CheckCircle size={40} className="text-[#1D4196] mx-auto mb-3" />
+              <h1 className="font-black text-[22px] text-[#172E4D]">Kata sandi diperbarui!</h1>
+              <p className="text-[14px] text-[#58708D] mt-2">Mengalihkan ke halaman masuk…</p>
             </div>
           ) : (
             <>
-              <h1 className="font-black text-[24px] text-[#1a2d4a] mb-2">Atur ulang kata sandi</h1>
-              <p className="text-[14px] text-[#3d6b5e] mb-6">Buat kata sandi baru untuk akun Anda.</p>
+              <h1 className="font-black text-[24px] text-[#172E4D] mb-2">Atur ulang kata sandi</h1>
+              <p className="text-[14px] text-[#58708D] mb-6">Buat kata sandi baru untuk akun Anda.</p>
               <form onSubmit={submit} className="space-y-4">
                 <div>
-                  <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Kata sandi baru</label>
+                  <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Kata sandi baru</label>
                   <div className="relative">
                     <input
                       type={showPw ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 pr-11 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                      className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 pr-11 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
                     />
-                    <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a9a8f]">
+                    <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7890AA]">
                       {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Konfirmasi kata sandi</label>
+                  <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Konfirmasi kata sandi</label>
                   <input
                     type="password"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                    className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
                   />
                 </div>
                 {error && (
@@ -94,7 +94,7 @@ export default function ResetPassword() {
                 <button
                   type="submit"
                   disabled={!valid || loading}
-                  className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] disabled:bg-[#c8dfd8] text-white font-bold text-[15px] py-3.5 rounded-2xl"
+                  className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:bg-[#D8E2F0] text-white font-bold text-[15px] py-3.5 rounded-2xl"
                 >
                   {loading ? "Menyimpan…" : "Simpan kata sandi"}
                 </button>

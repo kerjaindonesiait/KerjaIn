@@ -52,8 +52,8 @@ export default function AuthCallback() {
   }, [params, navigate, establishSession]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F1E8]" style={{ fontFamily: "Manrope, sans-serif" }}>
-      <p className="text-[#1a2d4a] font-semibold">Memproses masuk…</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
+      <p className="text-[#172E4D] font-semibold">Memproses masuk…</p>
     </div>
   );
 }

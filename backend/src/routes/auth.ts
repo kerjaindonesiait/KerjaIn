@@ -1,21 +1,11 @@
 import { Router } from "express";
 import { db, type UserRow } from "../db.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
-import { hashToken, signAccessToken, verifyAccessToken, verifyRefreshToken } from "../utils/jwt.js";
+import { hashToken, signAccessToken, verifyRefreshToken } from "../utils/jwt.js";
 import { findOrCreateOAuthUser, issueTokens } from "../utils/oauth.js";
 import { consumeToken, sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "../utils/authTokens.js";
-import { resolveCustomerPhone } from "../utils/phone.js";
 import { config } from "../config.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
-import { dbErrorMessage } from "../utils/dbErrors.js";
-import {
-  clearAuthCookies,
-  getAccessTokenFromRequest,
-  getRefreshTokenFromRequest,
-  oauthCallbackUrl,
-  setAccessCookie,
-  setAuthCookies,
-} from "../utils/cookies.js";
 
 const router = Router();
 
@@ -27,27 +17,16 @@ function publicUser(user: UserRow) {
     role: user.role,
     avatarUrl: user.avatar_url,
     emailVerified: user.email_verified,
-    phone: user.phone ?? null,
     createdAt: user.created_at,
   };
 }
 
-function buildAuthJson(user: UserRow, extras?: { devVerifyLink?: string }) {
-  return {
-    user: publicUser(user),
-    ...extras,
-  };
-}
-
-async function sendAuthResponse(
-  res: import("express").Response,
-  user: UserRow,
-  status = 200,
-  extras?: { devVerifyLink?: string },
-) {
-  const tokens = await issueTokens(user);
-  setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-  res.status(status).json(buildAuthJson(user, extras));
+function oauthRedirect(tokens: { accessToken: string; refreshToken: string }, next?: string) {
+  const redirect = new URL("/auth/callback", config.frontendUrl);
+  redirect.searchParams.set("access_token", tokens.accessToken);
+  redirect.searchParams.set("refresh_token", tokens.refreshToken);
+  if (next) redirect.searchParams.set("next", next);
+  return redirect.toString();
 }
 
 function parseOAuthState(stateParam: string | undefined): { role: "user" | "technician" } {
@@ -66,8 +45,7 @@ function encodeOAuthState(role: "user" | "technician") {
 
 router.post("/register", async (req, res) => {
   try {
-    const { password, fullName, role = "user" } = req.body;
-    const email = String(req.body.email ?? "").trim().toLowerCase();
+    const { email, password, fullName, role = "user" } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password required" });
     }
@@ -89,9 +67,7 @@ router.post("/register", async (req, res) => {
       .single();
 
     if (error) {
-      if (error.code === "23505") return res.status(409).json({ error: "Email sudah terdaftar" });
-      const dbMsg = dbErrorMessage(error);
-      if (dbMsg) return res.status(503).json({ error: dbMsg });
+      if (error.code === "23505") return res.status(409).json({ error: "Email already registered" });
       throw error;
     }
 
@@ -107,33 +83,31 @@ router.post("/register", async (req, res) => {
       console.error("Registration email failed:", e);
     }
 
-    await sendAuthResponse(res, user, 201, { devVerifyLink });
+    const tokens = await issueTokens(user);
+    res.status(201).json({ ...tokens, devVerifyLink });
   } catch (err) {
     console.error(err);
-    const dbMsg = dbErrorMessage(err);
-    res.status(dbMsg ? 503 : 500).json({ error: dbMsg ?? "Registration failed" });
+    res.status(500).json({ error: "Registration failed" });
   }
 });
 
 router.post("/login", async (req, res) => {
   try {
-    const { password } = req.body;
-    const email = String(req.body.email ?? "").trim().toLowerCase();
+    const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password required" });
     }
 
     const { data, error } = await db.from("users").select("*").eq("email", email).single();
     if (error || !data?.password_hash) {
-      const dbMsg = error ? dbErrorMessage(error) : null;
-      if (dbMsg) return res.status(503).json({ error: dbMsg });
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const valid = await verifyPassword(password, data.password_hash);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-    await sendAuthResponse(res, data as UserRow);
+    const tokens = await issueTokens(data as UserRow);
+    res.json(tokens);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Login failed" });
@@ -142,7 +116,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh", async (req, res) => {
   try {
-    const refreshToken = getRefreshTokenFromRequest(req);
+    const { refreshToken } = req.body;
     if (!refreshToken) return res.status(400).json({ error: "Refresh token required" });
 
     const payload = verifyRefreshToken(refreshToken);
@@ -162,8 +136,7 @@ router.post("/refresh", async (req, res) => {
     if (!user) return res.status(401).json({ error: "User not found" });
 
     const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
-    setAccessCookie(res, accessToken);
-    res.json({ user: publicUser(user as UserRow) });
+    res.json({ accessToken, user: publicUser(user as UserRow) });
   } catch {
     res.status(401).json({ error: "Invalid refresh token" });
   }
@@ -175,35 +148,15 @@ router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   res.json({ user: publicUser(data as UserRow) });
 });
 
-router.post("/logout", async (req, res) => {
-  const refreshToken = getRefreshTokenFromRequest(req);
-  const accessToken = getAccessTokenFromRequest(req);
-
-  let userId: string | null = null;
-  if (accessToken) {
-    try {
-      userId = verifyAccessToken(accessToken).sub;
-    } catch {
-      // access token may be expired
-    }
-  }
-  if (!userId && refreshToken) {
-    try {
-      userId = verifyRefreshToken(refreshToken).sub;
-    } catch {
-      // ignore
-    }
-  }
-
-  if (refreshToken && userId) {
+router.post("/logout", requireAuth, async (req: AuthedRequest, res) => {
+  const { refreshToken } = req.body;
+  if (refreshToken) {
     await db
       .from("refresh_tokens")
       .delete()
-      .eq("user_id", userId)
+      .eq("user_id", req.user!.id)
       .eq("token_hash", hashToken(refreshToken));
   }
-
-  clearAuthCookies(res);
   res.json({ ok: true });
 });
 
@@ -295,23 +248,10 @@ router.post("/reset-password", async (req, res) => {
 
 router.patch("/profile", requireAuth, async (req: AuthedRequest, res) => {
   try {
-    const { fullName, avatarUrl, phone } = req.body;
+    const { fullName, avatarUrl } = req.body;
     const updates: Record<string, string | null> = {};
     if (fullName !== undefined) updates.full_name = fullName || null;
     if (avatarUrl !== undefined) updates.avatar_url = avatarUrl || null;
-
-    if (phone !== undefined) {
-      if (req.user!.role !== "user") {
-        return res.status(400).json({ error: "Nomor telepon pelanggan hanya untuk akun pengguna" });
-      }
-      if (!phone || !String(phone).trim()) {
-        updates.phone = null;
-      } else {
-        const resolved = await resolveCustomerPhone(String(phone), req.user!.id);
-        if ("error" in resolved) return res.status(409).json({ error: resolved.error });
-        updates.phone = resolved.phone;
-      }
-    }
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No fields to update" });
@@ -324,12 +264,7 @@ router.patch("/profile", requireAuth, async (req: AuthedRequest, res) => {
       .select()
       .single();
 
-    if (error) {
-      if (error.code === "23505") {
-        return res.status(409).json({ error: "Nomor telepon ini sudah terdaftar untuk akun pelanggan lain" });
-      }
-      throw error;
-    }
+    if (error) throw error;
     res.json({ user: publicUser(data as UserRow) });
   } catch (err) {
     console.error(err);
@@ -366,7 +301,7 @@ router.patch("/change-password", requireAuth, async (req: AuthedRequest, res) =>
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
 
 router.get("/google", (req, res) => {
-  if (!config.google.clientId) {
+  if (!config.google.clientId || !config.google.clientSecret) {
     return res.status(503).json({ error: "Google OAuth not configured" });
   }
   const role = req.query.role === "technician" ? "technician" : "user";
@@ -417,9 +352,8 @@ router.get("/google/callback", async (req, res) => {
     }, { role });
 
     const tokens = await issueTokens(user);
-    const next = role === "technician" ? "/daftar-tukang?resume=1" : undefined;
-    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    res.redirect(oauthCallbackUrl(next));
+    const next = role === "technician" ? "/daftar-tukang?resume=1&provider=google" : undefined;
+    res.redirect(oauthRedirect(tokens, next));
   } catch (err) {
     console.error(err);
     res.redirect(`${config.frontendUrl}/masuk?error=oauth_failed`);
@@ -429,7 +363,7 @@ router.get("/google/callback", async (req, res) => {
 // ─── Facebook OAuth ───────────────────────────────────────────────────────────
 
 router.get("/facebook", (req, res) => {
-  if (!config.facebook.appId) {
+  if (!config.facebook.appId || !config.facebook.appSecret) {
     return res.status(503).json({ error: "Facebook OAuth not configured" });
   }
   const role = req.query.role === "technician" ? "technician" : "user";
@@ -496,9 +430,8 @@ router.get("/facebook/callback", async (req, res) => {
     }, { role });
 
     const tokens = await issueTokens(user);
-    const next = role === "technician" ? "/daftar-tukang?resume=1" : undefined;
-    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    res.redirect(oauthCallbackUrl(next));
+    const next = role === "technician" ? "/daftar-tukang?resume=1&provider=facebook" : undefined;
+    res.redirect(oauthRedirect(tokens, next));
   } catch (err) {
     console.error(err);
     res.redirect(`${config.frontendUrl}/masuk?error=oauth_failed`);

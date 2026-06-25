@@ -91,18 +91,18 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1E8] py-8 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="min-h-screen bg-[#F7F9FC] py-8 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="max-w-[560px] mx-auto">
-        <Link to="/" className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#3d6b5e] hover:text-[#2E5090] mb-6">
+        <Link to="/" className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] mb-6">
           <ChevronLeft size={15} /> Beranda
         </Link>
 
-        <div className="bg-white rounded-3xl border border-[#c8dfd8] shadow-lg overflow-hidden mb-6">
-          <div className="bg-[#1a2d4a] px-6 py-8 flex items-center gap-4">
+        <div className="bg-white rounded-3xl border border-[#D8E2F0] shadow-lg overflow-hidden mb-6">
+          <div className="bg-[#172E4D] px-6 py-8 flex items-center gap-4">
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="" className="w-16 h-16 rounded-full border-2 border-white object-cover" />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#2E5090] flex items-center justify-center text-white font-black text-[20px]">
+              <div className="w-16 h-16 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[20px]">
                 {initials}
               </div>
             )}
@@ -122,33 +122,33 @@ export default function AccountSettings() {
               <button
                 onClick={resendVerification}
                 disabled={verifyLoading}
-                className="text-[13px] font-bold text-[#2E5090] hover:underline disabled:opacity-50"
+                className="text-[13px] font-bold text-[#1D4196] hover:underline disabled:opacity-50"
               >
                 {verifyLoading ? "Mengirim…" : "Kirim ulang email verifikasi"}
               </button>
               {devVerifyLink && (
-                <p className="mt-2 text-[11px] text-[#3d6b5e] break-all">
-                  Dev: <a href={devVerifyLink} className="text-[#2E5090] underline">{devVerifyLink}</a>
+                <p className="mt-2 text-[11px] text-[#58708D] break-all">
+                  Dev: <a href={devVerifyLink} className="text-[#1D4196] underline">{devVerifyLink}</a>
                 </p>
               )}
             </div>
           )}
 
-          <form onSubmit={saveProfile} className="p-6 border-b border-[#c8dfd8]">
-            <h2 className="font-black text-[16px] text-[#1a2d4a] mb-4 flex items-center gap-2">
+          <form onSubmit={saveProfile} className="p-6 border-b border-[#D8E2F0]">
+            <h2 className="font-black text-[16px] text-[#172E4D] mb-4 flex items-center gap-2">
               <UserIcon size={18} /> Profil
             </h2>
             <div className="mb-4">
-              <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Nama lengkap</label>
+              <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nama lengkap</label>
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
               />
             </div>
             <div className="mb-4">
-              <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Email</label>
-              <input value={user.email} disabled className="w-full border-2 border-[#e8e8e8] rounded-xl px-4 py-3 text-[14px] bg-[#f5f5f5] text-[#7a9a8f]" />
+              <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Email</label>
+              <input value={user.email} disabled className="w-full border-2 border-[#e8e8e8] rounded-xl px-4 py-3 text-[14px] bg-[#f5f5f5] text-[#7890AA]" />
             </div>
             {user.role === "user" && (
               <div className="mb-4">
@@ -170,22 +170,22 @@ export default function AccountSettings() {
             <button
               type="submit"
               disabled={profileLoading}
-              className="bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[14px] px-5 py-2.5 rounded-xl disabled:opacity-50"
+              className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] px-5 py-2.5 rounded-xl disabled:opacity-50"
             >
               {profileLoading ? "Menyimpan…" : "Simpan profil"}
             </button>
           </form>
 
           <form onSubmit={changePassword} className="p-6">
-            <h2 className="font-black text-[16px] text-[#1a2d4a] mb-4">Ubah kata sandi</h2>
-            <p className="text-[12px] text-[#7a9a8f] mb-4">Hanya untuk akun yang mendaftar dengan email.</p>
+            <h2 className="font-black text-[16px] text-[#172E4D] mb-4">Ubah kata sandi</h2>
+            <p className="text-[12px] text-[#7890AA] mb-4">Hanya untuk akun yang mendaftar dengan email.</p>
             <div className="space-y-3 mb-4">
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Kata sandi saat ini"
-                className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
               />
               <div className="relative">
                 <input
@@ -193,9 +193,9 @@ export default function AccountSettings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Kata sandi baru (min. 6 karakter)"
-                  className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 pr-11 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                  className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 pr-11 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
                 />
-                <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a9a8f]">
+                <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7890AA]">
                   {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
@@ -213,7 +213,7 @@ export default function AccountSettings() {
             <button
               type="submit"
               disabled={pwLoading || !currentPassword || newPassword.length < 6}
-              className="border-2 border-[#2E5090] text-[#2E5090] font-bold text-[14px] px-5 py-2.5 rounded-xl hover:bg-[#f0f7f4] disabled:opacity-50"
+              className="border-2 border-[#1D4196] text-[#1D4196] font-bold text-[14px] px-5 py-2.5 rounded-xl hover:bg-[#EEF3FB] disabled:opacity-50"
             >
               {pwLoading ? "Menyimpan…" : "Ubah kata sandi"}
             </button>
@@ -222,7 +222,7 @@ export default function AccountSettings() {
 
         <div className="flex flex-col sm:flex-row gap-3">
           {user.role === "technician" && (
-            <Link to="/dasbor-tukang" className="flex-1 text-center border-2 border-[#b8d4c8] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] text-[#1a3d5c]">
+            <Link to="/dasbor-tukang" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
               Dasbor Tukang
             </Link>
           )}
