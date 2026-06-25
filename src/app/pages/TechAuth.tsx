@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   ChevronLeft, ChevronRight, CheckCircle, AlertCircle,
   Upload, Camera, Eye, EyeOff, HardHat, Clock,
@@ -25,14 +25,6 @@ function FacebookLogo() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
-
-function AppleLogo() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
     </svg>
   );
 }
@@ -84,7 +76,7 @@ const TARIF_OPTIONS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type OAuthProvider = "google" | "facebook" | "apple";
+type OAuthProvider = "google" | "facebook";
 
 interface TechData {
   authMethod: OAuthProvider | "email" | null;
@@ -137,15 +129,32 @@ function ProgressBar({ step }: { step: number }) {
 // ─── Step 0 — Auth method ─────────────────────────────────────────────────────
 
 function StepAuth({
-  data, onChange, onOAuth, oauthLoading,
+  data, onChange, onOAuth, oauthLoading, loggedInUser,
 }: {
   data: TechData;
   onChange: (d: Partial<TechData>) => void;
   onOAuth: (p: OAuthProvider) => void;
   oauthLoading: OAuthProvider | null;
+  loggedInUser?: { fullName: string | null; email: string } | null;
 }) {
   const [showEmail, setShowEmail] = useState(false);
   const [showPw, setShowPw] = useState(false);
+
+  if (loggedInUser) {
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-5 p-4 bg-[#EEF3FB] border border-[#D8E2F0] rounded-2xl">
+          <CheckCircle size={24} className="text-[#1D4196] shrink-0" />
+          <div>
+            <p className="font-black text-[15px] text-[#172E4D]">Akun terhubung</p>
+            <p className="text-[13px] text-[#58708D]">{loggedInUser.fullName ?? loggedInUser.email}</p>
+            <p className="text-[12px] text-[#7890AA]">{loggedInUser.email}</p>
+          </div>
+        </div>
+        <p className="text-[14px] text-[#58708D]">Lanjutkan mengisi profil tukang Anda.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -163,7 +172,6 @@ function StepAuth({
         {([
           { id: "google" as OAuthProvider,   label: "Lanjutkan dengan Google",   logo: <GoogleLogo />,   bg: "bg-white border border-[#D8E2F0] text-[#172E4D]" },
           { id: "facebook" as OAuthProvider, label: "Lanjutkan dengan Facebook", logo: <FacebookLogo />, bg: "bg-[#1877F2] text-white" },
-          { id: "apple" as OAuthProvider,    label: "Lanjutkan dengan Apple",    logo: <AppleLogo />,    bg: "bg-[#172E4D] text-white" },
         ]).map(({ id, label, logo, bg }) => (
           <button
             key={id}
@@ -582,8 +590,10 @@ function SuccessScreen({ data }: { data: TechData }) {
 
 // ─── can proceed logic ────────────────────────────────────────────────────────
 
-function canProceed(step: number, data: TechData): boolean {
-  if (step === 0) return !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
+function canProceed(step: number, data: TechData, isLoggedInTechnician: boolean): boolean {
+  if (step === 0) {
+    return isLoggedInTechnician || !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
+  }
   if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
   if (step === 2) return !!data.ktpPhoto && !!data.selfiePhoto;
   if (step === 3) return data.keahlian.length >= 1;
@@ -602,7 +612,8 @@ const INITIAL: TechData = {
 
 export default function TechAuth() {
   const navigate = useNavigate();
-  const { register, setSession } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, loading, register } = useAuth();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<TechData>(INITIAL);
   const [submitted, setSubmitted] = useState(false);
@@ -612,20 +623,27 @@ export default function TechAuth() {
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
-  const handleOAuth = (provider: OAuthProvider) => {
-    if (provider === "google") {
-      window.location.href = api.googleAuthUrl();
-      return;
-    }
-    setOauthLoading(provider);
-    setTimeout(() => {
-      const names: Record<OAuthProvider, string> = {
-        google: "Budi Santoso", facebook: "Sari Dewi", apple: "Ahmad Rizki",
-      };
-      setOauthLoading(null);
-      update({ authMethod: provider, nama: names[provider] });
+  const isLoggedInTechnician = user?.role === "technician";
+
+  useEffect(() => {
+    if (loading) return;
+    const resume = searchParams.get("resume");
+    if (user?.role === "technician" && resume === "1") {
+      const providerParam = searchParams.get("provider");
+      const authMethod: OAuthProvider = providerParam === "facebook" ? "facebook" : "google";
       setStep(1);
-    }, 1800);
+      setData((d) => ({
+        ...d,
+        nama: d.nama || user.fullName || "",
+        email: d.email || user.email,
+        authMethod: d.authMethod ?? authMethod,
+      }));
+    }
+  }, [loading, user, searchParams]);
+
+  const handleOAuth = (provider: OAuthProvider) => {
+    setOauthLoading(provider);
+    window.location.href = api.oauthAuthUrl(provider, { role: "technician" });
   };
 
   const handleNext = async () => {
@@ -636,9 +654,10 @@ export default function TechAuth() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      if (data.authMethod === "email" || data.email) {
-        const result = await api.register(data.email, data.password, data.nama, "technician");
-        setSession(result.accessToken, result.refreshToken, result.user);
+      if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
+        await register(data.email, data.password, data.nama, "technician");
+      } else if (!isLoggedInTechnician && !user) {
+        throw new Error("Silakan buat akun terlebih dahulu di langkah 1");
       }
       await api.saveTechnicianProfile({
         phone: data.phone,
@@ -718,7 +737,13 @@ export default function TechAuth() {
         {/* Step content */}
         <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px]">
           {step === 0 && (
-            <StepAuth data={data} onChange={update} onOAuth={handleOAuth} oauthLoading={oauthLoading} />
+            <StepAuth
+              data={data}
+              onChange={update}
+              onOAuth={handleOAuth}
+              oauthLoading={oauthLoading}
+              loggedInUser={isLoggedInTechnician ? user : null}
+            />
           )}
           {step === 1 && <StepProfil data={data} onChange={update} />}
           {step === 2 && <StepKTP data={data} onChange={update} />}
@@ -740,17 +765,27 @@ export default function TechAuth() {
         {!(step === 0 && oauthLoading) && (
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data)}
+            disabled={!canProceed(step, data, isLoggedInTechnician) || submitting}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data)
+              canProceed(step, data, isLoggedInTechnician) && !submitting
                 ? "bg-[#172E4D] hover:opacity-90 text-white"
                 : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}
           >
-            {step === STEPS.length - 1 ? "Selesai dan daftarkan akun" : (
+            {submitting ? (
+              "Mendaftarkan…"
+            ) : step === STEPS.length - 1 ? (
+              "Selesai & Daftarkan Akun"
+            ) : (
               <>{step === 0 ? "Lanjutkan" : "Selanjutnya"} <ChevronRight size={16} /></>
             )}
           </button>
+        )}
+
+        {submitError && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-3 text-[13px] text-red-600">
+            <AlertCircle size={15} /> {submitError}
+          </div>
         )}
 
         {/* Trust strip */}

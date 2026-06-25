@@ -10,6 +10,10 @@ import AuthCallback from "./pages/AuthCallback";
 import Payment from "./pages/Payment";
 import TechAuth from "./pages/TechAuth";
 import TechDashboard from "./pages/TechDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import AccountSettings from "./pages/AccountSettings";
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +41,17 @@ export const router = createBrowserRouter([
       },
       { path: "masuk", Component: Auth },
       { path: "daftar", Component: Auth },
+      { path: "lupa-sandi", Component: ForgotPassword },
+      { path: "atur-ulang-sandi", Component: ResetPassword },
+      { path: "verifikasi-email", Component: VerifyEmail },
+      {
+        path: "akun",
+        element: (
+          <ProtectedRoute>
+            <AccountSettings />
+          </ProtectedRoute>
+        ),
+      },
       { path: "auth/callback", Component: AuthCallback },
       { path: "daftar-tukang", Component: TechAuth },
       {

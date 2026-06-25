@@ -24,7 +24,12 @@ export default function AuthCallback() {
           setTokens(accessToken, refreshToken);
           const { user } = await api.me();
           setSession(accessToken, refreshToken, user);
-          navigate(user.role === "technician" ? "/dasbor-tukang" : "/", { replace: true });
+          const next = params.get("next");
+          if (next) {
+            navigate(next, { replace: true });
+          } else {
+            navigate(user.role === "technician" ? "/dasbor-tukang" : "/", { replace: true });
+          }
         } catch {
           navigate("/masuk?error=oauth_failed", { replace: true });
         }

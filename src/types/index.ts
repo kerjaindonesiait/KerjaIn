@@ -6,6 +6,7 @@ export interface User {
   fullName: string | null;
   role: UserRole;
   avatarUrl: string | null;
+  emailVerified: boolean;
   createdAt: string;
 }
 
@@ -87,4 +88,5 @@ export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   user: User;
+  devVerifyLink?: string;
 }

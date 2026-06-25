@@ -23,4 +23,13 @@ export const config = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     redirectUri: process.env.GOOGLE_REDIRECT_URI ?? "http://localhost:3000/auth/google/callback",
   },
+  facebook: {
+    appId: process.env.FACEBOOK_APP_ID ?? "",
+    appSecret: process.env.FACEBOOK_APP_SECRET ?? "",
+    redirectUri: process.env.FACEBOOK_REDIRECT_URI ?? "http://localhost:3000/auth/facebook/callback",
+  },
+  email: {
+    from: process.env.EMAIL_FROM ?? "KerjaIn <onboarding@resend.dev>",
+    resendApiKey: process.env.RESEND_API_KEY ?? "",
+  },
 };
