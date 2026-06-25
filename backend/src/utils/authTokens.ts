@@ -59,6 +59,17 @@ export async function sendPasswordResetEmail(userId: string, email: string) {
   return sent ? undefined : url;
 }
 
+export async function sendTechnicianVerifiedEmail(email: string, fullName: string | null) {
+  const sent = await sendAuthEmail({
+    to: email,
+    subject: "Identitas tukang Anda terverifikasi — KerjaIn",
+    body: `Halo${fullName ? ` ${fullName}` : ""}, identitas Anda telah diverifikasi oleh tim KerjaIn. Badge terverifikasi kini aktif di profil Anda dan Anda dapat mengajukan penawaran pekerjaan.`,
+    actionUrl: `${config.frontendUrl}/dasbor-tukang`,
+    actionLabel: "Buka dasbor tukang",
+  });
+  return sent ? undefined : `${config.frontendUrl}/dasbor-tukang`;
+}
+
 export async function consumeToken(raw: string, type: "email_verify" | "password_reset") {
   const tokenHash = hashToken(raw);
   const { data, error } = await db

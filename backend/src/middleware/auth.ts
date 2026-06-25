@@ -1,31 +1,31 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.js";
+import { isAdminEmail } from "../utils/admin.js";
+import { getAccessTokenFromRequest } from "../utils/cookies.js";
 
 export type AuthedRequest = Request & { user?: { id: string; email: string; role: string } };
 
-export function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+function attachUser(req: AuthedRequest, token: string): boolean {
   try {
-    const payload = verifyAccessToken(header.slice(7));
+    const payload = verifyAccessToken(token);
     req.user = { id: payload.sub, email: payload.email, role: payload.role };
-    next();
+    return true;
   } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
+    return false;
   }
 }
 
-export function optionalAuth(req: AuthedRequest, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) return next();
-  try {
-    const payload = verifyAccessToken(header.slice(7));
-    req.user = { id: payload.sub, email: payload.email, role: payload.role };
-  } catch {
-    // ignore invalid token — public endpoints stay public
+export function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+  const token = getAccessTokenFromRequest(req);
+  if (!token || !attachUser(req, token)) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
+  next();
+}
+
+export function optionalAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+  const token = getAccessTokenFromRequest(req);
+  if (token) attachUser(req, token);
   next();
 }
 
@@ -37,4 +37,12 @@ export function requireRole(...roles: string[]) {
     }
     next();
   };
+}
+
+export function requireAdmin(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  if (!isAdminEmail(req.user.email)) {
+    return res.status(403).json({ error: "Akses admin ditolak" });
+  }
+  next();
 }

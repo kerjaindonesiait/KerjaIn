@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import type { Job } from "../../types";
+import type { Job, TechnicianOffer } from "../../types";
 
 type ApiJob = {
   id: string;
@@ -43,109 +43,20 @@ function mapJob(j: Job): ApiJob {
   };
 }
 
-// ─── Job data (static tabs) ───────────────────────────────────────────────────
-
-const ALL_JOBS = [
-  {
-    id: 1, category: "darurat",
-    title: "Pipa pecah – butuh perbaikan segera",
-    budget: "Rp 500rb", budgetRaw: 500000,
-    area: "Jakarta Selatan", urgency: "Segera",
-    date: "Hari ini", time: "Sekarang",
-    posterName: "Rina K.", posterRating: 4.9,
-    offers: 5,
-    description: "Pipa pecah di bawah wastafel dapur dan air terus mengalir. Sudah menutup kran utama dan butuh tukang ledeng darurat untuk memeriksa dan memperbaiki secepatnya.\n\n• Pipa di bawah wastafel (retak terlihat)\n• Lantai lemari dapur ikut basah\n• Perlu perbaikan + inspeksi pipa sekitarnya\n\nMohon tersedia hari ini. Akses mudah — apartemen lantai dasar, ada parkir di depan.",
-  },
-  {
-    id: 2, category: "kran",
-    title: "Kran bocor – dapur, menetes pelan",
-    budget: "Rp 150rb", budgetRaw: 150000,
-    area: "Jakarta Pusat", urgency: "Normal",
-    date: "Fleksibel", time: "Kapan saja",
-    posterName: "Dewi M.", posterRating: 4.7,
-    offers: 9,
-    description: "Kran mixer dapur sudah menetes sekitar dua minggu. Tetesannya pelan tapi terus-menerus dan khawatir tagihan air membengkak.\n\nTidak tahu apakah perlu ganti seal atau kran baru — happy to go dengan rekomendasi tukang. Semua akses mudah.",
-  },
-  {
-    id: 3, category: "mampet",
-    title: "Saluran shower mampet – tidak bisa bersih",
-    budget: "Rp 200rb", budgetRaw: 200000,
-    area: "Tangerang Selatan", urgency: "Normal",
-    date: "Sebelum Sabtu, 5 Jul", time: "Pagi",
-    posterName: "Tono W.", posterRating: 4.8,
-    offers: 7,
-    description: "Shower kamar mandi utama hampir tidak mengalir — sudah sangat mampet. Sudah coba cairan pembersih dua kali tapi tidak mempan.\n\nCari tukang dengan drain snake atau hydro-jet. Bisa booking Sabtu pagi. Apartemen dengan lift.",
-  },
-  {
-    id: 4, category: "water",
-    title: "Water heater tidak berfungsi",
-    budget: "Rp 350rb", budgetRaw: 350000,
-    area: "Bekasi", urgency: "Normal",
-    date: "Sebelum Kamis, 3 Jul", time: "Kapan saja",
-    posterName: "Hana S.", posterRating: 5.0,
-    offers: 4,
-    description: "Water heater listrik tidak menghasilkan air panas lagi. Unit sudah berumur sekitar 8 tahun (Ariston 50L).\n\nTidak tahu apakah elemen, termostat, atau masalah lain. Cari tukang untuk diagnosa dan perbaikan.",
-  },
-  {
-    id: 5, category: "kloset",
-    title: "Kloset terus mengalir – tidak berhenti",
-    budget: "Rp 175rb", budgetRaw: 175000,
-    area: "Jakarta Timur", urgency: "Normal",
-    date: "Fleksibel", time: "Kapan saja",
-    posterName: "Agus P.", posterRating: 4.6,
-    offers: 6,
-    description: "Tangki kloset terus mengalir setelah disiram — terdengar suara air mengalir terus-menerus. Awalnya sesekali, sekarang tidak pernah berhenti.\n\nKemungkinan perlu ganti katup inlet atau flapper. Tukang cukup diagnosa di tempat dan perbaiki sesuai kebutuhan.",
-  },
-  {
-    id: 6, category: "bathroom",
-    title: "Ganti kran kamar mandi & pasang wastafel baru",
-    budget: "Rp 650rb", budgetRaw: 650000,
-    area: "Jakarta Barat", urgency: "Normal",
-    date: "Sebelum Senin, 7 Jul", time: "Pagi",
-    posterName: "Bowo S.", posterRating: 4.9,
-    offers: 3,
-    description: "Sedang renovasi kamar mandi utama. Butuh tukang ledeng untuk melepas kran dan wastafel lama, pasang wastafel gantung baru dan set kran mixer baru (sudah dibeli).\n\nKerja keramik sudah selesai. Hanya perlu penyambungan plumbing. Perkiraan 2–3 jam.",
-  },
-  {
-    id: 7, category: "maintenance",
-    title: "Perbaikan pintu depan – tidak bisa menutup",
-    budget: "Rp 140rb", budgetRaw: 140000,
-    area: "Depok", urgency: "Normal",
-    date: "Fleksibel", time: "Kapan saja",
-    posterName: "Laras F.", posterRating: 4.7,
-    offers: 11,
-    description: "Pintu depan mengembang dan sekarang menyeret lantai saat ditutup. Harus didorong keras dan kunci tidak mengait — jadi masalah keamanan.\n\nCari tukang untuk menyerut/memotong pintu dan menyetel engsel. Rumah satu lantai, akses mudah.",
-  },
-  {
-    id: 8, category: "pipa",
-    title: "Ganti pipa PVC bocor – kamar mandi belakang",
-    budget: "Rp 280rb", budgetRaw: 280000,
-    area: "Jakarta Utara", urgency: "Normal",
-    date: "Sebelum Jumat, 4 Jul", time: "Sore",
-    posterName: "Mira R.", posterRating: 4.5,
-    offers: 2,
-    description: "Pipa PVC di kamar mandi belakang bocor di sambungan — sudah ditambal sendiri dengan selotip tapi tidak tahan lama.\n\nPerlu ganti pipa sekitar 1 meter dan sambungan. Material bisa disediakan tukang atau saya beli.",
-  },
-  {
-    id: 9, category: "mampet",
-    title: "Tekanan air lemah di seluruh rumah",
-    budget: "Rp 250rb", budgetRaw: 250000,
-    area: "Tangerang", urgency: "Normal",
-    date: "Sebelum Rabu, 2 Jul", time: "Kapan saja",
-    posterName: "Citra N.", posterRating: 4.8,
-    offers: 4,
-    description: "Tekanan air di rumah kami turun drastis beberapa minggu terakhir. Tetangga tidak ada masalah jadi sepertinya ada masalah di dalam properti.\n\nCari tukang ledeng berlisensi untuk diagnosa (kemungkinan pressure regulator) dan perbaikan.",
-  },
-];
-
-const FILTER_TABS = [
-  { id: "semua",       label: "Semua" },
-  { id: "darurat",     label: "Darurat" },
-  { id: "mampet",      label: "Saluran Mampet" },
-  { id: "water",       label: "Pemanas Air" },
-  { id: "pipa",        label: "Ganti Pipa" },
-  { id: "bathroom",    label: "Kamar Mandi" },
+const CATEGORY_FILTERS = [
+  { id: "semua", label: "Semua" },
+  { id: "darurat", label: "Darurat" },
+  { id: "deteksi", label: "Deteksi" },
+  { id: "mampet", label: "Saluran Mampet" },
+  { id: "water", label: "Pemanas Air" },
+  { id: "pipa", label: "Ganti Pipa" },
+  { id: "bathroom", label: "Kamar Mandi" },
   { id: "maintenance", label: "Perawatan" },
+  { id: "handyman", label: "Tukang Serba Bisa" },
+  { id: "pintu", label: "Pintu" },
+  { id: "talang", label: "Talang" },
+  { id: "keramik", label: "Keramik" },
+  { id: "atap", label: "Atap" },
 ];
 
 const NAV_TABS = [
@@ -163,6 +74,41 @@ const WAKTU_OPTIONS = [
   { id: "besok",     label: "Besok",                    emoji: "📅" },
   { id: "pilih",     label: "Pilih tanggal & waktu",    emoji: "🗓️" },
 ];
+
+function formatTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "baru saja";
+  if (mins < 60) return `${mins} menit lalu`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours === 1 ? "1 jam lalu" : `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Kemarin";
+  if (days < 7) return `${days} hari lalu`;
+  return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+}
+
+function offerStatusLabel(status: string): string {
+  if (status === "accepted") return "Diterima";
+  if (status === "rejected") return "Ditolak";
+  return "Menunggu";
+}
+
+const OFFER_STATUS_STYLE: Record<string, string> = {
+  Menunggu: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  Diterima: "bg-[#f0fdf4] text-[#20bf6f] border-[#bbf7d0]",
+  Ditolak: "bg-red-50 text-red-600 border-red-200",
+};
+
+function quotedJobIdsFromOffers(offers: TechnicianOffer[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const o of offers) {
+    if (o.status === "pending" || o.status === "accepted") {
+      map[o.jobId] = o.price;
+    }
+  }
+  return map;
+}
 
 function Avatar({ initials, color, size = "sm" }: { initials: string; color: string; size?: "sm" | "md" | "lg" }) {
   const sz = size === "lg" ? "w-14 h-14 text-[18px]" : size === "md" ? "w-10 h-10 text-[13px]" : "w-8 h-8 text-[11px]";
@@ -238,15 +184,26 @@ function JobCard({ job, selected, quoted, onClick }: {
 
 // ─── Quote Form ───────────────────────────────────────────────────────────────
 
-function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number) => void }) {
+function QuoteForm({
+  job,
+  onSuccess,
+  canQuote,
+  quoteBlockReason,
+}: {
+  job: ApiJob;
+  onSuccess: (price: number) => void;
+  canQuote: boolean;
+  quoteBlockReason?: string;
+}) {
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
   const [waktu, setWaktu] = useState("segera");
   const [jam, setJam] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const priceNum = parseInt(price.replace(/\D/g, "")) || 0;
-  const valid = priceNum >= 50000 && note.trim().length >= 20;
+  const valid = priceNum >= 50000 && note.trim().length >= 20 && canQuote;
 
   const formatRp = (v: string) => {
     const n = v.replace(/\D/g, "");
@@ -255,6 +212,7 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
 
   const submit = async () => {
     if (!valid) return;
+    setSubmitError("");
     setLoading(true);
     try {
       await api.createOffer(job.id, {
@@ -264,8 +222,8 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
         scheduledTime: jam || undefined,
       });
       onSuccess(priceNum);
-    } catch {
-      // show error silently for now
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Gagal mengirim penawaran");
     } finally {
       setLoading(false);
     }
@@ -273,6 +231,12 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
 
   return (
     <div className="space-y-5">
+      {!canQuote && quoteBlockReason && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <Shield size={16} className="text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-[12px] text-amber-900 font-semibold leading-relaxed">{quoteBlockReason}</p>
+        </div>
+      )}
       <div>
         <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Harga yang Anda tawarkan</label>
         <div className="relative">
@@ -360,6 +324,10 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
         </ul>
       </div>
 
+      {submitError && (
+        <p className="text-[13px] text-red-600 font-semibold">{submitError}</p>
+      )}
+
       <button
         onClick={submit}
         disabled={!valid || loading}
@@ -446,11 +414,13 @@ function QuoteSuccess({ job, price, onBack }: { job: ApiJob; price: number; onBa
 
 // ─── Job Detail Panel ─────────────────────────────────────────────────────────
 
-function JobDetail({ job, quoted, quotedPrice, onQuote }: {
+function JobDetail({ job, quoted, quotedPrice, onQuote, canQuote, quoteBlockReason }: {
   job: ApiJob;
   quoted: boolean;
   quotedPrice: number;
   onQuote: (price: number) => void;
+  canQuote: boolean;
+  quoteBlockReason?: string;
 }) {
   const [tab, setTab] = useState<"detail" | "ajukan">("detail");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -564,11 +534,21 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
               </div>
 
               <button
-                onClick={() => setTab("ajukan")}
-                className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[14px] py-3.5 rounded-2xl transition-colors"
+                onClick={() => canQuote && setTab("ajukan")}
+                disabled={quoted || !canQuote}
+                className={`w-full font-bold text-[14px] py-3.5 rounded-2xl transition-colors ${
+                  quoted
+                    ? "bg-[#f0fdf4] text-[#20bf6f] border border-[#bbf7d0] cursor-default"
+                    : canQuote
+                      ? "bg-[#2E5090] hover:bg-[#1e3d7a] text-white"
+                      : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
+                }`}
               >
-                {quoted ? "✓ Penawaran sudah terkirim" : "Ajukan Penawaran →"}
+                {quoted ? "✓ Penawaran sudah terkirim" : canQuote ? "Ajukan Penawaran →" : "Verifikasi diperlukan"}
               </button>
+              {!canQuote && !quoted && quoteBlockReason && (
+                <p className="text-[12px] text-amber-800 font-semibold">{quoteBlockReason}</p>
+              )}
             </div>
           )}
 
@@ -583,7 +563,12 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
                 <p className="text-[12px] text-[#7a9a8f] mt-2">Tunggu konfirmasi dari pelanggan</p>
               </div>
             ) : (
-              <QuoteForm job={job} onSuccess={handleSuccess} />
+              <QuoteForm
+                job={job}
+                onSuccess={handleSuccess}
+                canQuote={canQuote}
+                quoteBlockReason={quoteBlockReason}
+              />
             )
           )}
         </div>
@@ -592,37 +577,19 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
   );
 }
 
-// ─── My Offers tab ────────────────────────────────────────────────────────────
-
-const MY_OFFERS = [
-  { job: "Pipa pecah – butuh perbaikan segera",  price: "Rp 450rb", status: "Menunggu", area: "Jakarta Selatan", time: "2 jam lalu" },
-  { job: "Kran bocor – dapur, menetes pelan",    price: "Rp 130rb", status: "Diterima",  area: "Jakarta Pusat",  time: "Kemarin" },
-  { job: "Water heater tidak berfungsi",          price: "Rp 300rb", status: "Ditolak",   area: "Bekasi",         time: "3 hari lalu" },
-];
-
-const STATUS_STYLE: Record<string, string> = {
-  "Menunggu": "bg-yellow-50 text-yellow-700 border-yellow-200",
-  "Diterima":  "bg-[#f0fdf4] text-[#20bf6f] border-[#bbf7d0]",
-  "Ditolak":   "bg-red-50 text-red-600 border-red-200",
-};
-
-// ─── Active Jobs tab ──────────────────────────────────────────────────────────
-
-const ACTIVE_JOBS = [
-  {
-    job: "Kran bocor – dapur, menetes pelan",
-    customer: "Dewi M.", customerRating: 4.7,
-    price: "Rp 130rb", area: "Jakarta Pusat",
-    schedule: "Hari ini, 14:00 WIB",
-    status: "Konfirmasi jadwal",
-  },
-];
-
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function TechDashboard() {
   const { user, logout } = useAuth();
   const [jobs, setJobs] = useState<ApiJob[]>([]);
+  const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
+  const [myOffers, setMyOffers] = useState<TechnicianOffer[]>([]);
+  const [techArea, setTechArea] = useState<string | null>(null);
+  const [techVerified, setTechVerified] = useState(false);
+  const [requireVerifiedToQuote, setRequireVerifiedToQuote] = useState(false);
+  const [areaScope, setAreaScope] = useState<"my-area" | "all">("my-area");
+  const [loadingAssigned, setLoadingAssigned] = useState(false);
+  const [loadingOffers, setLoadingOffers] = useState(true);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [navTab, setNavTab] = useState<"lowongan" | "penawaran" | "aktif" | "selesai">("lowongan");
   const [filterTab, setFilterTab] = useState("semua");
@@ -630,30 +597,104 @@ export default function TechDashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [quotedJobs, setQuotedJobs] = useState<Record<string, number>>({});
 
+  const loadMyOffers = (showLoading = false) => {
+    if (showLoading) setLoadingOffers(true);
+    return api
+      .getMyOffers()
+      .then(({ offers }) => {
+        setMyOffers(offers);
+        setQuotedJobs(quotedJobIdsFromOffers(offers));
+      })
+      .catch(() => {
+        setMyOffers([]);
+        setQuotedJobs({});
+      })
+      .finally(() => {
+        if (showLoading) setLoadingOffers(false);
+      });
+  };
+
   useEffect(() => {
-    api.getJobs({ search: search || undefined })
+    api.getTechnicianProfile()
+      .then(({ profile }) => {
+        if (profile?.area) {
+          setTechArea(profile.area);
+          setAreaScope("my-area");
+        } else {
+          setAreaScope("all");
+        }
+        setTechVerified(profile?.verified ?? false);
+      })
+      .catch(() => setAreaScope("all"));
+
+    api.getAppConfig()
+      .then(({ config }) => setRequireVerifiedToQuote(config.requireVerifiedToQuote))
+      .catch(() => {});
+
+    loadMyOffers(true);
+  }, []);
+
+  useEffect(() => {
+    setLoadingJobs(true);
+    api
+      .getJobs({
+        search: search || undefined,
+        area: areaScope === "my-area" && techArea ? techArea : undefined,
+      })
       .then(({ jobs: data }) => setJobs(data.map(mapJob)))
       .catch(() => setJobs([]))
       .finally(() => setLoadingJobs(false));
-  }, [search]);
+  }, [search, areaScope, techArea]);
 
-  const filtered = jobs.filter((j) => {
+  useEffect(() => {
+    if (navTab !== "aktif") return;
+    setLoadingAssigned(true);
+    api.getAssignedJobs()
+      .then(({ jobs: data }) => setAssignedJobs(data))
+      .catch(() => setAssignedJobs([]))
+      .finally(() => setLoadingAssigned(false));
+  }, [navTab]);
+
+  useEffect(() => {
+    if (navTab === "penawaran") loadMyOffers(true);
+  }, [navTab]);
+
+  const unquotedJobs = jobs.filter((j) => !(j.id in quotedJobs));
+
+  const filtered = unquotedJobs.filter((j) => {
     const matchCat = filterTab === "semua" || j.category === filterTab;
-    const matchSearch = j.title.toLowerCase().includes(search.toLowerCase()) || j.area.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch =
+      !q || j.title.toLowerCase().includes(q) || j.area.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { semua: unquotedJobs.length };
+    for (const j of unquotedJobs) {
+      counts[j.category] = (counts[j.category] ?? 0) + 1;
+    }
+    return counts;
+  }, [unquotedJobs]);
+
   const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
+
+  const pendingOffers = myOffers.filter((o) => o.status === "pending").length;
+
+  const canQuote = !requireVerifiedToQuote || techVerified;
+  const quoteBlockReason = canQuote
+    ? undefined
+    : "Akun Anda belum diverifikasi admin. Upload KTP di profil dan tunggu persetujuan sebelum mengajukan penawaran.";
 
   const TUKANG = {
     name: user?.fullName ?? "Tukang",
     initials: (user?.fullName ?? "T").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-    area: "Jakarta",
+    area: techArea ?? "Jakarta",
     keahlian: ["Pipa Bocor Darurat", "Saluran Mampet"],
     rating: 4.9,
     reviews: 0,
     selesai: 0,
-    penawaran_aktif: Object.keys(quotedJobs).length,
+    penawaran_aktif: pendingOffers,
     penghasilan: "Rp 0",
   };
 
@@ -684,8 +725,14 @@ export default function TechDashboard() {
               <div className="hidden sm:block">
                 <p className="font-bold text-[13px] text-white leading-none">{TUKANG.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <CheckCircle size={10} className="text-[#20bf6f]" />
-                  <span className="text-[10px] text-[#20bf6f] font-bold">Terverifikasi</span>
+                  {techVerified ? (
+                    <>
+                      <CheckCircle size={10} className="text-[#20bf6f]" />
+                      <span className="text-[10px] text-[#20bf6f] font-bold">Terverifikasi</span>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-amber-300 font-bold">⏳ Menunggu verifikasi</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -712,6 +759,14 @@ export default function TechDashboard() {
           </div>
         </div>
       </header>
+
+      {!techVerified && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-center">
+          <p className="text-[12px] text-amber-900 font-semibold">
+            Identitas Anda sedang ditinjau. Setelah disetujui admin, badge terverifikasi akan muncul di profil Anda.
+          </p>
+        </div>
+      )}
 
       {/* ── Nav tabs ── */}
       <div className="bg-white border-b border-[#f5eded] shrink-0">
@@ -751,33 +806,72 @@ export default function TechDashboard() {
               </div>
             </div>
 
-            {/* Category filter tabs */}
+            {/* Area + category filters */}
+            <div className="px-4 py-2.5 border-b border-[#c8dfd8] flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAreaScope("my-area")}
+                disabled={!techArea}
+                className={`flex-1 text-[11px] font-bold py-2 rounded-lg transition-all ${
+                  areaScope === "my-area"
+                    ? "bg-[#2E5090] text-white"
+                    : "bg-[#f0f7f4] text-[#3d6b5e] hover:bg-[#e8f4ef] disabled:opacity-40"
+                }`}
+              >
+                {techArea ? `Area saya · ${techArea}` : "Area saya"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAreaScope("all")}
+                className={`flex-1 text-[11px] font-bold py-2 rounded-lg transition-all ${
+                  areaScope === "all"
+                    ? "bg-[#2E5090] text-white"
+                    : "bg-[#f0f7f4] text-[#3d6b5e] hover:bg-[#e8f4ef]"
+                }`}
+              >
+                Semua Jabodetabek
+              </button>
+            </div>
+
             <div className="flex gap-2 px-4 py-2.5 overflow-x-auto border-b border-[#c8dfd8]" style={{ scrollbarWidth: "none" }}>
-              {FILTER_TABS.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFilterTab(f.id)}
-                  className={`text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
-                    filterTab === f.id
-                      ? "bg-[#2E5090] text-white"
-                      : "bg-[#f0f7f4] text-[#3d6b5e] hover:bg-[#ffe0e0]"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+              {CATEGORY_FILTERS.map((f) => {
+                const count = categoryCounts[f.id] ?? 0;
+                if (f.id !== "semua" && count === 0) return null;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFilterTab(f.id)}
+                    className={`text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                      filterTab === f.id
+                        ? "bg-[#2E5090] text-white"
+                        : "bg-[#f0f7f4] text-[#3d6b5e] hover:bg-[#ffe0e0]"
+                    }`}
+                  >
+                    {f.label}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${filterTab === f.id ? "bg-white/20" : "bg-white"}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Job count */}
             <div className="px-4 py-2 border-b border-[#c8dfd8]">
               <p className="text-[11px] text-[#7a9a8f] font-semibold">
-                {filtered.length} pekerjaan tersedia di area Anda
+                {loadingJobs
+                  ? "Memuat lowongan…"
+                  : `${filtered.length} lowongan baru · ${Object.keys(quotedJobs).length} sudah Anda tawari`}
               </p>
             </div>
 
             {/* Job list */}
             <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2.5">
-              {filtered.map((job) => (
+              {loadingJobs && (
+                <p className="text-center py-12 text-[#7a9a8f] text-[13px]">Memuat…</p>
+              )}
+              {!loadingJobs && filtered.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
@@ -786,7 +880,7 @@ export default function TechDashboard() {
                   onClick={() => setSelectedId(selectedId === job.id ? null : job.id)}
                 />
               ))}
-              {filtered.length === 0 && (
+              {!loadingJobs && filtered.length === 0 && (
                 <div className="text-center py-16 text-[#7a9a8f]">
                   <p className="text-[32px] mb-3">🔍</p>
                   <p className="font-bold text-[14px]">Tidak ada pekerjaan</p>
@@ -803,7 +897,13 @@ export default function TechDashboard() {
                 job={selectedJob}
                 quoted={selectedJob.id in quotedJobs}
                 quotedPrice={quotedJobs[selectedJob.id] ?? 0}
-                onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
+                canQuote={canQuote}
+                quoteBlockReason={quoteBlockReason}
+                onQuote={(price) => {
+                  setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }));
+                  loadMyOffers();
+                  setSelectedId(null);
+                }}
               />
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-[#7a9a8f] gap-3">
@@ -820,27 +920,45 @@ export default function TechDashboard() {
       {navTab === "penawaran" && (
         <div className="flex-1 overflow-y-auto p-6 max-w-[860px] mx-auto w-full">
           <h2 className="font-black text-[22px] text-[#1a2d4a] mb-5">Penawaran Saya</h2>
+          {loadingOffers && (
+            <p className="text-[#7a9a8f] text-[14px]">Memuat penawaran…</p>
+          )}
+          {!loadingOffers && myOffers.length === 0 && (
+            <div className="bg-white rounded-2xl border border-[#c8dfd8] p-8 text-center">
+              <p className="text-[#7a9a8f] text-[14px]">Belum ada penawaran. Kirim penawaran dari tab Lowongan.</p>
+            </div>
+          )}
           <div className="flex flex-col gap-3">
-            {MY_OFFERS.map((offer, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-[#c8dfd8] p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <p className="font-bold text-[15px] text-[#1a2d4a] leading-snug">{offer.job}</p>
-                  <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[offer.status]}`}>
-                    {offer.status}
-                  </span>
+            {myOffers.map((offer) => {
+              const statusLabel = offerStatusLabel(offer.status);
+              return (
+                <div key={offer.id} className="bg-white rounded-2xl border border-[#c8dfd8] p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <p className="font-bold text-[15px] text-[#1a2d4a] leading-snug">
+                      {offer.job?.title ?? "Pekerjaan"}
+                    </p>
+                    <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full shrink-0 ${OFFER_STATUS_STYLE[statusLabel]}`}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-[12px] text-[#3d6b5e]">
+                    {offer.job?.area && (
+                      <span className="flex items-center gap-1"><MapPin size={11} className="text-[#2E5090]"/>{offer.job.area}</span>
+                    )}
+                    <span className="flex items-center gap-1"><Clock size={11}/>{formatTimeAgo(offer.createdAt)}</span>
+                    <span className="font-bold text-[#1a2d4a]">{offer.priceFormatted}</span>
+                  </div>
+                  {offer.status === "accepted" && offer.job?.id && (
+                    <Link
+                      to={`/pekerjaan/${offer.job.id}`}
+                      className="mt-3 block w-full text-center bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                    >
+                      Buka Pekerjaan →
+                    </Link>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-3 text-[12px] text-[#3d6b5e]">
-                  <span className="flex items-center gap-1"><MapPin size={11} className="text-[#2E5090]"/>{offer.area}</span>
-                  <span className="flex items-center gap-1"><Clock size={11}/>{offer.time}</span>
-                  <span className="font-bold text-[#1a2d4a]">{offer.price}</span>
-                </div>
-                {offer.status === "Diterima" && (
-                  <button className="mt-3 w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors">
-                    Hubungi Pelanggan →
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -849,42 +967,57 @@ export default function TechDashboard() {
       {navTab === "aktif" && (
         <div className="flex-1 overflow-y-auto p-6 max-w-[860px] mx-auto w-full">
           <h2 className="font-black text-[22px] text-[#1a2d4a] mb-5">Pekerjaan Aktif</h2>
-          {ACTIVE_JOBS.map((job, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#c8dfd8] overflow-hidden">
-              <div className="bg-[#1a2d4a] px-5 py-3 flex items-center justify-between">
-                <p className="font-bold text-[14px] text-white">{job.job}</p>
-                <span className="text-[11px] font-bold bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 px-2.5 py-0.5 rounded-full">{job.status}</span>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2E5090]/20 flex items-center justify-center text-[#2E5090] font-black text-[13px]">
-                    {job.customer[0]}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[14px] text-[#0f2035]">{job.customer}</p>
-                    <StarRow rating={job.customerRating} />
-                  </div>
-                  <div className="ml-auto text-right">
-                    <p className="font-black text-[18px] text-[#2E5090]">{job.price}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 text-[13px] text-[#3d6b5e]">
-                  <span className="flex items-center gap-1"><MapPin size={13} className="text-[#2E5090]"/>{job.area}</span>
-                  <span className="flex items-center gap-1"><Clock size={13}/>{job.schedule}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button className="bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-3 rounded-xl transition-colors">
-                    Hubungi Pelanggan
-                  </button>
-                  <button className="border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors">
-                    Tandai Selesai ✓
-                  </button>
-                </div>
-              </div>
+          {loadingAssigned && (
+            <p className="text-[#7a9a8f] text-[14px]">Memuat pekerjaan aktif…</p>
+          )}
+          {!loadingAssigned && assignedJobs.length === 0 && (
+            <div className="bg-white rounded-2xl border border-[#c8dfd8] p-8 text-center">
+              <p className="text-[#7a9a8f] text-[14px]">Belum ada pekerjaan aktif. Penawaran yang diterima akan muncul di sini.</p>
             </div>
-          ))}
+          )}
+          {assignedJobs.map((job) => {
+            const statusLabel =
+              job.status === "in_progress" ? "Sedang dikerjakan" : "Menunggu pembayaran";
+            const schedule = job.scheduledAt
+              ? new Date(job.scheduledAt).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+              : job.date ?? "Jadwal fleksibel";
+            return (
+              <div key={job.id} className="bg-white rounded-2xl border border-[#c8dfd8] overflow-hidden mb-4">
+                <div className="bg-[#1a2d4a] px-5 py-3 flex items-center justify-between gap-3">
+                  <p className="font-bold text-[14px] text-white line-clamp-1">{job.title}</p>
+                  <span className="text-[11px] font-bold bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 px-2.5 py-0.5 rounded-full shrink-0">
+                    {statusLabel}
+                  </span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#2E5090]/20 flex items-center justify-center text-[#2E5090] font-black text-[13px]">
+                      {(job.poster?.name ?? "P")[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-[14px] text-[#0f2035]">{job.poster?.name ?? "Pelanggan"}</p>
+                      {job.poster?.rating != null && <StarRow rating={job.poster.rating} />}
+                    </div>
+                    <div className="ml-auto text-right">
+                      <p className="font-black text-[18px] text-[#2E5090]">{job.price}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-[13px] text-[#3d6b5e]">
+                    <span className="flex items-center gap-1"><MapPin size={13} className="text-[#2E5090]"/>{job.area}</span>
+                    <span className="flex items-center gap-1"><Clock size={13}/>{schedule}</span>
+                  </div>
+
+                  <Link
+                    to={`/pekerjaan/${job.id}`}
+                    className="block w-full text-center bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-3 rounded-xl transition-colors"
+                  >
+                    Buka Pekerjaan →
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

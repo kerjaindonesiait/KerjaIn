@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X, LogOut, User as UserIcon, Briefcase } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { tasksUrl } from "../../lib/paths";
+import { Toaster } from "../components/ui/sonner";
 
 const NAV_LINKS = [
   { label: "Lihat Pekerjaan", href: "/tasks" },
@@ -84,6 +85,7 @@ export default function Root() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F5F1E8]" style={{ fontFamily: "Manrope, sans-serif" }}>
+      <Toaster position="top-center" richColors />
       {/* NAV */}
       <header className="bg-white border-b border-[#f5eded] sticky top-0 z-50">
         <div className="flex items-center h-[57px] px-6 max-w-[1400px] mx-auto w-full">

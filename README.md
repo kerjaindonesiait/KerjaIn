@@ -1,11 +1,29 @@
+# KerjaIn
 
-  # Replicate Airtasker Web Version
+Marketplace web app for home services (Indonesia).
 
-  This is a code bundle for Replicate Airtasker Web Version. The original project is available at https://www.figma.com/design/rM365hiSONsiAOQD3T7oec/Replicate-Airtasker-Web-Version.
+## Local development
 
-  ## Running the code
+```bash
+npm install
+cp .env.example .env   # fill in secrets
+npm run dev            # frontend → http://localhost:5173
+npm run dev:api        # backend  → http://localhost:3000
+# or: npm run dev:all
+```
 
-  Run `npm i` to install the dependencies.
+## Production deployment
 
-  Run `npm run dev` to start the development server.
-  
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+- **Frontend:** Vercel (`kerjaindonesia.com`) — set `VITE_API_URL` and `VITE_GOOGLE_MAPS_API_KEY` in Vercel env
+- **Backend:** separate API host (`api.kerjaindonesia.com`) — set all backend vars + `NODE_ENV=production`
+
+```bash
+# Frontend (Vercel runs this automatically)
+npm run build
+
+# Backend (on your API server)
+npm run build:api
+npm run start:api
+```

@@ -8,6 +8,59 @@ const BUCKET = "job-photos";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"]);
 
+router.post("/progress-photo", requireAuth, requireRole("technician"), async (req: AuthedRequest, res) => {
+  try {
+    const { fileBase64, contentType = "image/jpeg", jobId } = req.body as {
+      fileBase64?: string;
+      contentType?: string;
+      jobId?: string;
+    };
+
+    if (!fileBase64 || !jobId) {
+      return res.status(400).json({ error: "File foto dan jobId wajib diisi" });
+    }
+
+    const { data: job } = await db
+      .from("jobs")
+      .select("id, assigned_technician_id, status")
+      .eq("id", jobId)
+      .single();
+
+    if (!job || job.assigned_technician_id !== req.user!.id || job.status !== "in_progress") {
+      return res.status(403).json({ error: "Tidak diizinkan mengunggah foto untuk pekerjaan ini" });
+    }
+
+    const mime = contentType.toLowerCase();
+    if (!ALLOWED.has(mime)) {
+      return res.status(400).json({ error: "Format foto harus JPEG, PNG, atau WebP" });
+    }
+
+    const buffer = Buffer.from(fileBase64, "base64");
+    if (buffer.length > MAX_BYTES) {
+      return res.status(400).json({ error: "Ukuran foto maksimal 5 MB" });
+    }
+
+    const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
+    const path = `progress/${jobId}/${randomUUID()}.${ext}`;
+
+    const { error } = await db.storage.from(BUCKET).upload(path, buffer, {
+      contentType: mime,
+      upsert: false,
+    });
+
+    if (error) {
+      console.error("Storage upload error:", error);
+      return res.status(500).json({ error: "Gagal mengunggah foto" });
+    }
+
+    const { data } = db.storage.from(BUCKET).getPublicUrl(path);
+    res.status(201).json({ url: data.publicUrl, path });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Gagal mengunggah foto" });
+  }
+});
+
 router.post("/job-photo", requireAuth, requireRole("user"), async (req: AuthedRequest, res) => {
   try {
     const { fileBase64, contentType = "image/jpeg" } = req.body as {

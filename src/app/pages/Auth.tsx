@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Wrench, ArrowRight, HardHat, User } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
@@ -9,6 +9,24 @@ import { api } from "../../lib/api";
 type AuthMode = "masuk" | "daftar";
 type OAuthProvider = "google" | "facebook";
 type Screen = "role" | "main" | "loading" | "success" | "email-form";
+
+function modeFromPath(pathname: string): AuthMode {
+  return pathname.endsWith("/daftar") ? "daftar" : "masuk";
+}
+
+function authErrorMessage(err: unknown, mode: AuthMode): string {
+  const msg = err instanceof Error ? err.message : "Autentikasi gagal";
+  if (msg === "Email already registered" || msg === "Email sudah terdaftar") {
+    return "Email sudah terdaftar. Silakan masuk dengan email ini.";
+  }
+  if (msg === "Invalid credentials") {
+    return mode === "daftar"
+      ? "Email sudah digunakan atau kata sandi tidak valid."
+      : "Email atau kata sandi salah. Belum punya akun? Daftar dulu.";
+  }
+  if (msg.includes("Tidak dapat terhubung ke database")) return msg;
+  return msg;
+}
 
 // ─── Brand SVG logos ──────────────────────────────────────────────────────────
 
@@ -217,7 +235,7 @@ function EmailForm({
         onSuccess(name || email.split("@")[0], email);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Autentikasi gagal");
+      setError(authErrorMessage(err, mode));
     } finally {
       setLoading(false);
     }
@@ -356,8 +374,11 @@ function EmailForm({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Auth() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
-  const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
+  const routeMode = modeFromPath(location.pathname);
+  const initialMode = (params.get("mode") as AuthMode) || routeMode;
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
@@ -392,7 +413,18 @@ export default function Auth() {
     setMode(m);
     setScreen(m === "daftar" ? "role" : "main");
     setActiveProvider(null);
+    navigate(m === "daftar" ? "/daftar" : "/masuk", { replace: true });
   };
+
+  useEffect(() => {
+    const m = modeFromPath(location.pathname);
+    setMode(m);
+    setScreen((prev) => {
+      if (m === "daftar" && (prev === "main" || prev === "role")) return "role";
+      if (m === "masuk" && prev === "role") return "main";
+      return prev;
+    });
+  }, [location.pathname]);
 
   return (
     <div

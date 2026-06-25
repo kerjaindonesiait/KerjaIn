@@ -18,4 +18,13 @@ export const AREA_JAKARTA = [
   "Depok", "Tangerang", "Tangerang Selatan", "Bekasi", "Bogor",
 ];
 
-export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+/** API base URL — from Vite env. Dev: .env · Prod build: .env.production */
+const viteApi = import.meta.env.VITE_API_URL as string | undefined;
+
+if (import.meta.env.PROD && !viteApi) {
+  console.error(
+    "VITE_API_URL is not set for production build. Add it to .env.production or your CI/host env.",
+  );
+}
+
+export const API_URL = viteApi?.replace(/\/+$/, "") ?? "http://localhost:3000";

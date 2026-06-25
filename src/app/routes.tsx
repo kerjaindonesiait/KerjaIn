@@ -16,6 +16,8 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AccountSettings from "./pages/AccountSettings";
 import MyJobs from "./pages/MyJobs";
+import JobWorkspace from "./pages/JobWorkspace";
+import AdminPanel from "./pages/AdminPanel";
 
 export const router = createBrowserRouter([
   {
@@ -63,7 +65,16 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "pekerjaan/:jobId",
+        element: (
+          <ProtectedRoute>
+            <JobWorkspace />
+          </ProtectedRoute>
+        ),
+      },
       { path: "auth/callback", Component: AuthCallback },
+      { path: "admin", Component: AdminPanel },
       { path: "daftar-tukang", Component: TechAuth },
       {
         path: "dasbor-tukang",

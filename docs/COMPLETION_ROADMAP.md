@@ -143,14 +143,14 @@ flowchart TD
 |---|------|--------|-------|
 | 4.1 | Job list from API (`GET /api/jobs`) | ✅ | |
 | 4.2 | Search filter (title) | ✅ | Client + server |
-| 4.3 | Location / price / sort filters | ❌ | UI only, no logic |
-| 4.4 | Real map with job pins | ❌ | SVG placeholder |
+| 4.3 | Location / price / sort filters | ✅ | Area, price range, sort dropdowns on `/tasks`; `filterAndSortJobs` |
+| 4.4 | Real map with job pins | ✅ | Google Maps; **area-only pins** (no exact address); full address after assignment |
 | 4.5 | Job detail panel | ✅ | Detail / Penawaran / Pemilik tabs; `?id=` opens job from URL |
 | 4.6 | Fetch offers for job (`GET /api/offers/job/:id`) | ✅ | |
 | 4.7 | Accept offer (`POST /api/offers/:id/accept`) | ✅ | Updates job → `assigned` |
-| 4.8 | Real-time new offer notifications | ❌ | No Supabase Realtime / push |
-| 4.9 | Compare offers side-by-side | ❌ | |
-| 4.10 | View technician profile before accepting | ❌ | Only name shown |
+| 4.8 | Real-time new offer notifications | 🟡 | Poll every 20s on Penawaran tab + sonner toast (no WebSocket yet) |
+| 4.9 | Compare offers side-by-side | ✅ | Bandingkan mode — select up to 3, comparison table |
+| 4.10 | View technician profile before accepting | ✅ | `GET /api/technicians/:id/public` + profile modal |
 | 4.11 | Customer sees only their own jobs in a "My Jobs" view | ✅ | `/pekerjaan-saya` via `GET /api/jobs/mine`; `/tasks` still lists all open marketplace jobs |
 
 #### 5. Pay (escrow)
@@ -170,22 +170,22 @@ flowchart TD
 #### 6. Job in progress
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 6.1 | Job status `in_progress` after payment | 🟡 | Backend sets on payment success |
-| 6.2 | Customer dashboard: active jobs | 🟡 | "Aktif" tab on `/pekerjaan-saya` (open / assigned / in_progress) |
-| 6.3 | In-app messaging with technician | ❌ | "Hubungi" buttons have no handler |
-| 6.4 | Schedule / reschedule appointment | ❌ | |
-| 6.5 | Photo updates from technician on-site | ❌ | |
-| 6.6 | Customer confirms job complete | ❌ | No API `POST /api/jobs/:id/complete` |
-| 6.7 | Auto-release escrow after N days | ❌ | |
+| 6.1 | Job status `in_progress` after payment | ✅ | Payment success sets `in_progress` + `escrow_release_at` |
+| 6.2 | Customer dashboard: active jobs | ✅ | `/pekerjaan-saya` → **Kelola Pekerjaan** links to `/pekerjaan/:id` |
+| 6.3 | In-app messaging with technician | ✅ | `job_messages` + chat UI on workspace |
+| 6.4 | Schedule / reschedule appointment | ✅ | `PATCH /api/jobs/:id/schedule` + datetime picker |
+| 6.5 | Photo updates from technician on-site | ✅ | `job_progress_photos` + upload on workspace |
+| 6.6 | Customer confirms job complete | ✅ | `POST /api/jobs/:id/complete` (tech marks done → customer confirms) |
+| 6.7 | Auto-release escrow after N days | ✅ | 7-day lazy auto-release on workspace load |
 
 #### 7. Reviews & history
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 7.1 | `reviews` table in DB | ❌ | |
-| 7.2 | Leave star rating + text review | ❌ | |
-| 7.3 | Update technician `rating` / `review_count` | ❌ | Columns exist, never updated |
-| 7.4 | Completed jobs history for customer | 🟡 | "Selesai" tab on `/pekerjaan-saya` (when jobs reach `completed` / `cancelled`) |
-| 7.5 | Home page "completed tasks" carousel from real data | ❌ | Static mock |
+| 7.1 | `reviews` table in DB | ✅ | `job_id` unique; migration applied |
+| 7.2 | Leave star rating + text review | ✅ | `POST /api/reviews/job/:id` + form on workspace |
+| 7.3 | Update technician `rating` / `review_count` | ✅ | Recalculated on each new review |
+| 7.4 | Completed jobs history for customer | ✅ | Selesai tab + completed date + **Lihat & Ulasan** |
+| 7.5 | Home page "completed tasks" carousel from real data | ✅ | `GET /api/jobs/completed/feed?tab=` |
 
 ---
 
@@ -275,20 +275,20 @@ flowchart TD
 #### 2. Verification
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | `verified` flag on profile | 🟡 | Column exists, always `false` for new signups |
-| 2.2 | Admin panel to review KTP submissions | ❌ | |
-| 2.3 | Email notification when verified | ❌ | |
-| 2.4 | Block quoting until verified (optional policy) | ❌ | |
-| 2.5 | Verified badge on dashboard + offers | ❌ | |
+| 2.1 | `verified` flag on profile | ✅ | Admin toggles `technician_profiles.verified` |
+| 2.2 | Admin panel to review KTP submissions | ✅ | `/admin` — KTP review, approve/revoke |
+| 2.3 | Email notification when verified | ✅ | Resend email on approve (dev: console link) |
+| 2.4 | Block quoting until verified (optional policy) | ✅ | Toggle **Wajib verifikasi** in admin settings |
+| 2.5 | Verified badge on dashboard + offers | ✅ | Dasbor header + penawaran list + profil modal |
 
 #### 3. Browse jobs (Lowongan tab)
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 3.1 | Job feed from API | ✅ | |
-| 3.2 | Category filter tabs | 🟡 | Filters local mock categories against API `category` field |
-| 3.3 | Area-based filtering (match technician's area) | ❌ | |
-| 3.4 | Hide jobs already quoted | 🟡 | `quotedJobs` local state only — resets on refresh |
-| 3.5 | Persist quoted state from DB (`GET /api/offers/mine`) | ❌ | API exists, dashboard doesn't fetch |
+| 3.2 | Category filter tabs | ✅ | All API `category` values + live counts per tab |
+| 3.3 | Area-based filtering (match technician's area) | ✅ | Profile area · **Area saya** / **Semua Jabodetabek** toggle |
+| 3.4 | Hide jobs already quoted | ✅ | Quoted jobs hidden from Lowongan list |
+| 3.5 | Persist quoted state from DB (`GET /api/offers/mine`) | ✅ | Loaded on mount; Penawaran Saya tab from API |
 | 3.6 | Job detail + description panel | ✅ | |
 | 3.7 | Exclude own posted jobs (if user has both roles) | ✅ | `GET /api/jobs` filters own jobs for technicians; offers blocked on own jobs |
 
@@ -299,18 +299,18 @@ flowchart TD
 | 4.2 | Submit offer (`POST /api/offers/job/:id`) | ✅ | |
 | 4.3 | Duplicate offer prevention | ✅ | Unique `(job_id, technician_id)` |
 | 4.4 | Edit / withdraw pending offer | ❌ | |
-| 4.5 | "Penawaran Saya" tab from API | ❌ | Static `MY_OFFERS` mock data |
+| 4.5 | "Penawaran Saya" tab from API | ✅ | `GET /api/offers/mine` with job summary + status labels |
 | 4.6 | Offer status updates (accepted/rejected) | ❌ | No realtime poll or push |
 
 #### 5. Active jobs (Pekerjaan Aktif tab)
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 5.1 | List jobs where offer accepted + paid | ❌ | Static `ACTIVE_JOBS` mock |
-| 5.2 | `GET /api/jobs?status=assigned&technician_id=me` | ❌ | Endpoint doesn't filter by technician |
-| 5.3 | "Hubungi Pelanggan" messaging | ❌ | Button has no handler |
-| 5.4 | Navigation to job address (maps link) | ❌ | |
-| 5.5 | Mark job complete (`POST /api/jobs/:id/complete`) | ❌ | Button has no handler |
-| 5.6 | Upload completion photos | ❌ | |
+| 5.1 | List jobs where offer accepted + paid | ✅ | `GET /api/jobs/assigned` + Dasbor **Pekerjaan Aktif** tab |
+| 5.2 | `GET /api/jobs?status=assigned&technician_id=me` | ✅ | `GET /api/jobs/assigned` |
+| 5.3 | "Hubungi Pelanggan" messaging | ✅ | In-app chat + WhatsApp on `/pekerjaan/:id` |
+| 5.4 | Navigation to job address (maps link) | ✅ | Full address + Google Maps for assigned tech |
+| 5.5 | Mark job complete (`POST /api/jobs/:id/complete`) | ✅ | Workspace **Tandai Selesai** |
+| 5.6 | Upload completion photos | ✅ | Progress photos on workspace |
 
 #### 6. Completed & earnings (Selesai tab)
 | # | Task | Status | Notes |
@@ -325,7 +325,7 @@ flowchart TD
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 7.1 | Public technician profile page | ❌ | |
-| 7.2 | Display reviews from customers | ❌ | |
+| 7.2 | Display reviews from customers | 🟡 | Recent reviews in profile modal; no public page yet |
 | 7.3 | Edit profile after registration | ❌ | API exists (`POST /api/technicians/profile`), no UI |
 | 7.4 | Availability calendar | ❌ | |
 | 7.5 | Portfolio / past work photos | ❌ | |
@@ -338,7 +338,7 @@ flowchart TD
 
 | Table | Purpose |
 |-------|---------|
-| `reviews` | `job_id`, `reviewer_id`, `reviewee_id`, `rating`, `comment` |
+| `reviews` | `job_id`, `reviewer_id`, `reviewee_id`, `rating`, `comment` | ✅ |
 | `messages` | In-app chat between customer and technician per job |
 | `notifications` | In-app + push notification queue |
 | `job_status_history` | Audit trail of status changes |
@@ -352,14 +352,14 @@ flowchart TD
 |----------|---------|--------|
 | `PATCH /api/jobs/:id` | Edit job | ❌ |
 | `POST /api/jobs/:id/cancel` | Cancel job | ❌ |
-| `POST /api/jobs/:id/complete` | Mark complete (customer or tech) | ❌ |
+| `POST /api/jobs/:id/complete` | Mark complete (customer or tech) | ✅ |
 | `GET /api/jobs/mine` | Customer's jobs | ✅ | UI at `/pekerjaan-saya` |
-| `GET /api/jobs/assigned` | Technician's active jobs | ❌ |
+| `GET /api/jobs/assigned` | Technician's active jobs | ✅ |
 | `DELETE /api/offers/:id` | Withdraw offer | ❌ |
 | `POST /api/upload` | Presigned URL for Storage | ❌ |
 | `GET/POST /api/messages/:jobId` | Chat | ❌ |
 | `GET /api/notifications` | Notification feed | ❌ |
-| `POST /api/reviews` | Submit review | ❌ |
+| `POST /api/reviews/job/:id` | Submit review | ✅ |
 | `POST /api/auth/forgot-password` | Password reset | ✅ | `/lupa-sandi`, `/atur-ulang-sandi`; Resend or dev link |
 | Webhook `/api/webhooks/midtrans` | Payment events | ❌ |
 
@@ -400,7 +400,7 @@ flowchart TD
 | Route | Page | Backend wired | Remaining work |
 |-------|------|---------------|----------------|
 | `/` | Home | 🟡 | Search, service links, footer wired; carousel still static |
-| `/tasks` | Tasks | ✅ | `?id=` & `?search=` & `?area=`; filters, map still partial |
+| `/tasks` | Tasks | ✅ | Filters, OSM map pins, offer compare, tech profile, offer poll toasts |
 | `/post-job` | PostJob | ✅ | Photo upload, geocode, share link, validation errors |
 | `/bayar` | Payment | 🟡 | Real gateway, fix static sidebar components |
 | `/masuk` `/daftar` | Auth | ✅ | Google OAuth; forgot password; email verification |
@@ -465,7 +465,7 @@ Use this to verify the full pipeline works after each phase:
 1. [ ] Register at `/daftar` with email
 2. [x] Post job at `/post-job` (with real photo)
 3. [ ] See job appear on `/tasks`
-4. [ ] Receive notification when technician quotes
+4. [x] Receive notification when technician quotes (poll + toast on Penawaran tab)
 5. [ ] View offers on job detail → Penawaran tab
 6. [ ] Accept an offer
 7. [ ] Pay at `/bayar` (real or sandbox gateway)

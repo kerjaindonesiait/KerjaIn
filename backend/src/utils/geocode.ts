@@ -14,6 +14,12 @@ const AREA_COORDS: Record<string, { lat: number; lng: number }> = {
 
 export type Coordinates = { latitude: number; longitude: number };
 
+export function getAreaCoordinates(area: string): Coordinates | null {
+  const fallback = AREA_COORDS[area];
+  if (!fallback) return null;
+  return { latitude: fallback.lat, longitude: fallback.lng };
+}
+
 export async function geocodeJobLocation(
   area: string,
   alamat?: string | null,

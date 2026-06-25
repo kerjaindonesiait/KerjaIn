@@ -34,6 +34,19 @@ function isActiveJob(status: string) {
 function JobCard({ job, onCancelled }: { job: Job; onCancelled: (id: string) => void }) {
   const [cancelling, setCancelling] = useState(false);
   const meta = statusMeta(job.status);
+  const inWorkspace = job.status === "assigned" || job.status === "in_progress";
+  const detailLink =
+    job.status === "completed" || inWorkspace
+      ? `/pekerjaan/${job.id}`
+      : `/tasks?id=${job.id}`;
+  const detailLabel =
+    job.status === "open"
+      ? "Lihat Penawaran"
+      : job.status === "completed"
+        ? "Lihat & Ulasan"
+        : inWorkspace
+          ? "Kelola Pekerjaan"
+          : "Lihat Detail";
 
   const handleCancel = async () => {
     if (!window.confirm("Batalkan pekerjaan ini? Tindakan ini tidak dapat dibatalkan.")) return;
@@ -83,7 +96,10 @@ function JobCard({ job, onCancelled }: { job: Job; onCancelled: (id: string) => 
         <div>
           <p className="text-[13px] font-bold text-[#2E5090]">{job.price}</p>
           <p className="text-[11px] text-[#7a9a8f] mt-0.5">
-            {job.offers} penawaran · diposting {new Date(job.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+            {job.offers} penawaran
+            {job.completedAt
+              ? ` · selesai ${new Date(job.completedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`
+              : ` · diposting ${new Date(job.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -98,10 +114,10 @@ function JobCard({ job, onCancelled }: { job: Job; onCancelled: (id: string) => 
             </button>
           )}
           <Link
-            to={`/tasks?id=${job.id}`}
+            to={detailLink}
             className="flex items-center gap-1 text-[12px] font-bold text-[#2E5090] hover:text-[#1e3d7a] whitespace-nowrap"
           >
-            {job.status === "open" ? "Lihat Penawaran" : "Lihat Detail"}
+            {detailLabel}
             <ChevronRight size={14} />
           </Link>
         </div>

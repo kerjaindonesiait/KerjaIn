@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { escrowReleaseAtFromNow } from "../utils/jobWorkspace.js";
 
 const router = Router();
 
@@ -58,7 +59,10 @@ router.post("/", requireAuth, async (req: AuthedRequest, res) => {
     if (error) throw error;
 
     if (!isVa) {
-      await db.from("payments").update({ status: "success" }).eq("id", payment.id);
+      await db.from("payments").update({
+        status: "success",
+        escrow_release_at: escrowReleaseAtFromNow(),
+      }).eq("id", payment.id);
       await db.from("jobs").update({ status: "in_progress" }).eq("id", jobId);
       payment.status = "success";
     }
@@ -92,7 +96,10 @@ router.post("/:id/confirm", requireAuth, async (req: AuthedRequest, res) => {
     if (error || !payment) return res.status(404).json({ error: "Payment not found" });
     if (payment.payer_id !== req.user!.id) return res.status(403).json({ error: "Forbidden" });
 
-    await db.from("payments").update({ status: "success" }).eq("id", payment.id);
+    await db.from("payments").update({
+      status: "success",
+      escrow_release_at: escrowReleaseAtFromNow(),
+    }).eq("id", payment.id);
     await db.from("jobs").update({ status: "in_progress" }).eq("id", payment.job_id);
 
     res.json({ payment: { ...payment, status: "success" } });

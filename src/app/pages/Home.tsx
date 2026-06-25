@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
 import { tasksUrl } from "../../lib/paths";
+import { api } from "../../lib/api";
+import type { CompletedFeedJob } from "../../types";
+
+const AVATAR_COLORS = ["#2E5090", "#6c47d9", "#e85d26", "#20bf6f", "#f59e0b", "#ec4899", "#14b8a6", "#8b5cf6"];
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -131,18 +135,23 @@ function ServiceCard({ label, desc }: { label: string; desc: string }) {
   );
 }
 
-function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
+function TaskCard({ t }: { t: CompletedFeedJob }) {
+  const colorIdx = t.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
+  const initials = t.categoryLabel.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  const stars = t.rating ?? 5;
+
   return (
     <div className="flex-shrink-0 w-[220px] bg-white rounded-2xl border border-[#c8dfd8] p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0" style={{ background: t.color }}>
-          {t.avatar}
+        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0" style={{ background: color }}>
+          {initials}
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-bold text-[#7a9a8f] uppercase tracking-wider">{t.category}</p>
+          <p className="text-[10px] font-bold text-[#7a9a8f] uppercase tracking-wider truncate">{t.categoryLabel}</p>
           <div className="flex">
-            {[1,2,3,4,5].map((i) => (
-              <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= t.rating ? "#f59e0b" : "#e5e7eb"}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= stars ? "#f59e0b" : "#e5e7eb"}>
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
             ))}
@@ -165,8 +174,18 @@ export default function Home() {
   const [taskTab, setTaskTab] = useState("plumbing");
   const [activeTab, setActiveTab] = useState("Plumbing");
   const [searchQuery, setSearchQuery] = useState("");
+  const [feedJobs, setFeedJobs] = useState<CompletedFeedJob[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
 
-  const tasks = COMPLETED_TASKS[taskTab] ?? [];
+  useEffect(() => {
+    setFeedLoading(true);
+    api.getCompletedFeed(taskTab, 12)
+      .then(({ jobs }) => setFeedJobs(jobs))
+      .catch(() => setFeedJobs([]))
+      .finally(() => setFeedLoading(false));
+  }, [taskTab]);
+
+  const tasks = feedJobs.length > 0 ? feedJobs : [];
 
   const goSearch = () => {
     navigate(tasksUrl({ search: searchQuery }));
@@ -323,11 +342,19 @@ export default function Home() {
 
         {/* Scrolling task cards */}
         <div className="overflow-hidden">
-          <div className="kj-tasks flex gap-4 w-max px-6">
-            {[...tasks, ...tasks].map((t, i) => (
-              <TaskCard key={i} t={t} />
-            ))}
-          </div>
+          {feedLoading ? (
+            <p className="text-center text-[#7a9a8f] py-8 text-[14px]">Memuat pekerjaan selesai…</p>
+          ) : tasks.length === 0 ? (
+            <p className="text-center text-[#7a9a8f] py-8 text-[14px] px-6">
+              Belum ada pekerjaan selesai di kategori ini. Jadilah yang pertama!
+            </p>
+          ) : (
+            <div className="kj-tasks flex gap-4 w-max px-6">
+              {[...tasks, ...tasks].map((t, i) => (
+                <TaskCard key={`${t.id}-${i}`} t={t} />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="max-w-[1400px] mx-auto px-6 mt-7">

@@ -1,12 +1,21 @@
 import { Router } from "express";
 import { db, type UserRow } from "../db.js";
 import { hashPassword, verifyPassword } from "../utils/password.js";
-import { hashToken, signAccessToken, verifyRefreshToken } from "../utils/jwt.js";
+import { hashToken, signAccessToken, verifyAccessToken, verifyRefreshToken } from "../utils/jwt.js";
 import { findOrCreateOAuthUser, issueTokens } from "../utils/oauth.js";
 import { consumeToken, sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "../utils/authTokens.js";
 import { resolveCustomerPhone } from "../utils/phone.js";
 import { config } from "../config.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { dbErrorMessage } from "../utils/dbErrors.js";
+import {
+  clearAuthCookies,
+  getAccessTokenFromRequest,
+  getRefreshTokenFromRequest,
+  oauthCallbackUrl,
+  setAccessCookie,
+  setAuthCookies,
+} from "../utils/cookies.js";
 
 const router = Router();
 
@@ -23,12 +32,22 @@ function publicUser(user: UserRow) {
   };
 }
 
-function oauthRedirect(tokens: { accessToken: string; refreshToken: string }, next?: string) {
-  const redirect = new URL("/auth/callback", config.frontendUrl);
-  redirect.searchParams.set("access_token", tokens.accessToken);
-  redirect.searchParams.set("refresh_token", tokens.refreshToken);
-  if (next) redirect.searchParams.set("next", next);
-  return redirect.toString();
+function buildAuthJson(user: UserRow, extras?: { devVerifyLink?: string }) {
+  return {
+    user: publicUser(user),
+    ...extras,
+  };
+}
+
+async function sendAuthResponse(
+  res: import("express").Response,
+  user: UserRow,
+  status = 200,
+  extras?: { devVerifyLink?: string },
+) {
+  const tokens = await issueTokens(user);
+  setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+  res.status(status).json(buildAuthJson(user, extras));
 }
 
 function parseOAuthState(stateParam: string | undefined): { role: "user" | "technician" } {
@@ -47,7 +66,8 @@ function encodeOAuthState(role: "user" | "technician") {
 
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, fullName, role = "user" } = req.body;
+    const { password, fullName, role = "user" } = req.body;
+    const email = String(req.body.email ?? "").trim().toLowerCase();
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password required" });
     }
@@ -69,7 +89,9 @@ router.post("/register", async (req, res) => {
       .single();
 
     if (error) {
-      if (error.code === "23505") return res.status(409).json({ error: "Email already registered" });
+      if (error.code === "23505") return res.status(409).json({ error: "Email sudah terdaftar" });
+      const dbMsg = dbErrorMessage(error);
+      if (dbMsg) return res.status(503).json({ error: dbMsg });
       throw error;
     }
 
@@ -85,31 +107,33 @@ router.post("/register", async (req, res) => {
       console.error("Registration email failed:", e);
     }
 
-    const tokens = await issueTokens(user);
-    res.status(201).json({ ...tokens, devVerifyLink });
+    await sendAuthResponse(res, user, 201, { devVerifyLink });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Registration failed" });
+    const dbMsg = dbErrorMessage(err);
+    res.status(dbMsg ? 503 : 500).json({ error: dbMsg ?? "Registration failed" });
   }
 });
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = String(req.body.email ?? "").trim().toLowerCase();
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password required" });
     }
 
     const { data, error } = await db.from("users").select("*").eq("email", email).single();
     if (error || !data?.password_hash) {
+      const dbMsg = error ? dbErrorMessage(error) : null;
+      if (dbMsg) return res.status(503).json({ error: dbMsg });
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const valid = await verifyPassword(password, data.password_hash);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-    const tokens = await issueTokens(data as UserRow);
-    res.json(tokens);
+    await sendAuthResponse(res, data as UserRow);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Login failed" });
@@ -118,7 +142,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh", async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = getRefreshTokenFromRequest(req);
     if (!refreshToken) return res.status(400).json({ error: "Refresh token required" });
 
     const payload = verifyRefreshToken(refreshToken);
@@ -138,7 +162,8 @@ router.post("/refresh", async (req, res) => {
     if (!user) return res.status(401).json({ error: "User not found" });
 
     const accessToken = signAccessToken({ sub: user.id, email: user.email, role: user.role });
-    res.json({ accessToken, user: publicUser(user as UserRow) });
+    setAccessCookie(res, accessToken);
+    res.json({ user: publicUser(user as UserRow) });
   } catch {
     res.status(401).json({ error: "Invalid refresh token" });
   }
@@ -150,15 +175,35 @@ router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   res.json({ user: publicUser(data as UserRow) });
 });
 
-router.post("/logout", requireAuth, async (req: AuthedRequest, res) => {
-  const { refreshToken } = req.body;
-  if (refreshToken) {
+router.post("/logout", async (req, res) => {
+  const refreshToken = getRefreshTokenFromRequest(req);
+  const accessToken = getAccessTokenFromRequest(req);
+
+  let userId: string | null = null;
+  if (accessToken) {
+    try {
+      userId = verifyAccessToken(accessToken).sub;
+    } catch {
+      // access token may be expired
+    }
+  }
+  if (!userId && refreshToken) {
+    try {
+      userId = verifyRefreshToken(refreshToken).sub;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (refreshToken && userId) {
     await db
       .from("refresh_tokens")
       .delete()
-      .eq("user_id", req.user!.id)
+      .eq("user_id", userId)
       .eq("token_hash", hashToken(refreshToken));
   }
+
+  clearAuthCookies(res);
   res.json({ ok: true });
 });
 
@@ -373,7 +418,8 @@ router.get("/google/callback", async (req, res) => {
 
     const tokens = await issueTokens(user);
     const next = role === "technician" ? "/daftar-tukang?resume=1" : undefined;
-    res.redirect(oauthRedirect(tokens, next));
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    res.redirect(oauthCallbackUrl(next));
   } catch (err) {
     console.error(err);
     res.redirect(`${config.frontendUrl}/masuk?error=oauth_failed`);
@@ -451,7 +497,8 @@ router.get("/facebook/callback", async (req, res) => {
 
     const tokens = await issueTokens(user);
     const next = role === "technician" ? "/daftar-tukang?resume=1" : undefined;
-    res.redirect(oauthRedirect(tokens, next));
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    res.redirect(oauthCallbackUrl(next));
   } catch (err) {
     console.error(err);
     res.redirect(`${config.frontendUrl}/masuk?error=oauth_failed`);

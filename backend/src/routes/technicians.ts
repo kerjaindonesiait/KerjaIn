@@ -5,6 +5,66 @@ import { resolveTechnicianPhone } from "../utils/phone.js";
 
 const router = Router();
 
+router.get("/:id/public", async (req, res) => {
+  try {
+    const { data: user, error: userErr } = await db
+      .from("users")
+      .select("id, full_name, avatar_url, created_at")
+      .eq("id", req.params.id)
+      .eq("role", "technician")
+      .maybeSingle();
+
+    if (userErr || !user) {
+      return res.status(404).json({ error: "Tukang tidak ditemukan" });
+    }
+
+    const { data: profile } = await db
+      .from("technician_profiles")
+      .select("area, keahlian, pengalaman, tarif, bio, rating, review_count, verified")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const { count: completedJobs } = await db
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("assigned_technician_id", user.id)
+      .eq("status", "completed");
+
+    const { count: assignedJobs } = await db
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("assigned_technician_id", user.id)
+      .in("status", ["assigned", "in_progress", "completed"]);
+
+    const completionRate =
+      assignedJobs && assignedJobs > 0
+        ? Math.round(((completedJobs ?? 0) / assignedJobs) * 100)
+        : null;
+
+    res.json({
+      technician: {
+        id: user.id,
+        name: user.full_name ?? "Tukang",
+        avatarUrl: user.avatar_url,
+        memberSince: new Date(user.created_at).getFullYear().toString(),
+        area: profile?.area ?? null,
+        keahlian: profile?.keahlian ?? [],
+        pengalaman: profile?.pengalaman ?? null,
+        tarif: profile?.tarif ?? null,
+        bio: profile?.bio ?? null,
+        completedJobs: completedJobs ?? 0,
+        completionRate,
+        rating: profile?.rating != null ? Number(profile.rating) : 0,
+        reviewCount: profile?.review_count ?? 0,
+        verified: profile?.verified ?? false,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Gagal memuat profil tukang" });
+  }
+});
+
 router.get("/profile", requireAuth, requireRole("technician"), async (req: AuthedRequest, res) => {
   const { data, error } = await db
     .from("technician_profiles")
@@ -13,7 +73,22 @@ router.get("/profile", requireAuth, requireRole("technician"), async (req: Authe
     .maybeSingle();
 
   if (error) return res.status(500).json({ error: "Failed to fetch profile" });
-  res.json({ profile: data });
+  const p = data;
+  res.json({
+    profile: p
+      ? {
+          area: p.area,
+          keahlian: p.keahlian ?? [],
+          pengalaman: p.pengalaman,
+          tarif: p.tarif,
+          bio: p.bio,
+          verified: p.verified ?? false,
+          ktpPhotoUrl: p.ktp_photo_url,
+          selfiePhotoUrl: p.selfie_photo_url,
+          nik: p.nik,
+        }
+      : null,
+  });
 });
 
 router.post("/profile", requireAuth, requireRole("technician"), async (req: AuthedRequest, res) => {

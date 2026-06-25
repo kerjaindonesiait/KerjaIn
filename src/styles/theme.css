@@ -179,3 +179,17 @@
     line-height: 1.5;
   }
 }
+
+/* Google Maps job preview popup */
+.gm-style-iw {
+  padding: 0 !important;
+}
+.gm-style-iw-d {
+  overflow: hidden !important;
+  max-height: none !important;
+}
+.gm-style-iw-chr {
+  position: absolute !important;
+  right: 2px !important;
+  top: 2px !important;
+}

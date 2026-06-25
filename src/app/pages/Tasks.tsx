@@ -1,22 +1,118 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
-  Plus, Minus, Crosshair, SlidersHorizontal, Shield,
-  CheckCircle, Heart, Share2, ChevronLeft,
+  Shield, CheckCircle, Heart, Share2, ChevronLeft,
 } from "lucide-react";
+import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { JobsMap } from "../components/JobsMap";
+import { TechnicianProfileModal } from "../components/TechnicianProfileModal";
+import {
+  JAKARTA_AREAS,
+  PRICE_FILTER_LABELS,
+  SORT_LABELS,
+  filterAndSortJobs,
+  googleMapsSearchUrl,
+  type PriceFilter,
+  type SortOption,
+} from "../../lib/jobFilters";
 import type { Job, Offer } from "../../types";
 
 type Task = Job & { status: string };
 
 const AVATAR_COLORS = ["#2E5090", "#6c47d9", "#e85d26", "#20bf6f", "#f59e0b", "#ec4899", "#14b8a6", "#8b5cf6"];
 
-const MAP_PINS = [
-  { x: "28%", y: "35%" }, { x: "42%", y: "22%" }, { x: "55%", y: "42%" },
-  { x: "35%", y: "55%" }, { x: "65%", y: "30%" }, { x: "72%", y: "60%" },
-  { x: "18%", y: "62%" }, { x: "50%", y: "65%" }, { x: "80%", y: "45%" },
-];
+function FilterMenu<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { id: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0, minWidth: 200 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !btnRef.current) return;
+    const update = () => {
+      const rect = btnRef.current!.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        minWidth: Math.max(200, rect.width),
+      });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const current = options.find((o) => o.id === value)?.label ?? label;
+
+  const menu =
+    open &&
+    createPortal(
+      <div
+        ref={menuRef}
+        className="fixed z-[200] bg-white border border-[#c8dfd8] rounded-xl shadow-lg py-1 max-h-64 overflow-y-auto"
+        style={{ top: menuPos.top, left: menuPos.left, minWidth: menuPos.minWidth }}
+      >
+        {options.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => {
+              onChange(opt.id);
+              setOpen(false);
+            }}
+            className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-[#f0f7f4] transition-colors ${
+              value === opt.id ? "font-bold text-[#2E5090]" : "text-[#1a3d5c]"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>,
+      document.body,
+    );
+
+  return (
+    <div className="shrink-0">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] bg-white border border-[#b8d4c8] rounded-lg px-4 py-[9px] hover:border-[#2E5090] hover:text-[#2E5090] transition-all whitespace-nowrap"
+      >
+        {current} <ChevronDown size={13} className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+      </button>
+      {menu}
+    </div>
+  );
+}
 function Avatar({ initials, id, size = "sm" }: { initials: string | null | undefined; id: string; size?: "sm" | "lg" }) {
   const colorIdx = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
@@ -112,16 +208,52 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [profileTechId, setProfileTechId] = useState<string | null>(null);
+  const offerCountRef = useRef(0);
+
+  const loadOffers = (silent = false) => {
+    if (!silent) setLoadingOffers(true);
+    return api
+      .getOffers(task.id)
+      .then(({ offers: data }) => {
+        if (silent && data.length > offerCountRef.current) {
+          const n = data.length - offerCountRef.current;
+          toast.success(n === 1 ? "1 penawaran baru masuk" : `${n} penawaran baru masuk`);
+        }
+        offerCountRef.current = data.length;
+        setOffers(data);
+      })
+      .catch(() => {
+        if (!silent) setOffers([]);
+      })
+      .finally(() => {
+        if (!silent) setLoadingOffers(false);
+      });
+  };
 
   useEffect(() => {
     if (tab === "penawaran") {
-      setLoadingOffers(true);
-      api.getOffers(task.id)
-        .then(({ offers: data }) => setOffers(data))
-        .catch(() => setOffers([]))
-        .finally(() => setLoadingOffers(false));
+      loadOffers();
     }
   }, [tab, task.id]);
+
+  useEffect(() => {
+    if (tab !== "penawaran") return;
+    const interval = setInterval(() => loadOffers(true), 20_000);
+    return () => clearInterval(interval);
+  }, [tab, task.id]);
+
+  const toggleCompare = (offerId: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(offerId)) return prev.filter((id) => id !== offerId);
+      if (prev.length >= 3) return prev;
+      return [...prev, offerId];
+    });
+  };
+
+  const comparedOffers = offers.filter((o) => compareIds.includes(o.id));
 
   const handleAcceptOffer = async (offerId: string) => {
     try {
@@ -227,9 +359,27 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   <Clock size={13} className="text-[#2E5090]" /> {task.time}
                 </div>
               )}
-              <div className="flex items-center gap-1.5 bg-[#F5F1E8] rounded-lg px-3 py-2 text-[13px] text-[#1a3d5c] font-medium">
-                <MapPin size={13} className="text-[#2E5090]" /> Di lokasi · Jakarta
-              </div>
+              <a
+                href={googleMapsSearchUrl(task)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 bg-[#F5F1E8] rounded-lg px-3 py-2 text-[13px] text-[#1a3d5c] font-medium hover:bg-[#ebe4d4] transition-colors"
+                title="Lokasi perkiraan — area saja untuk privasi"
+              >
+                <MapPin size={13} className="text-[#2E5090] shrink-0" />
+                <span>
+                  {task.remote ? (
+                    "Jarak Jauh"
+                  ) : task.locationPrivate === false && task.alamat ? (
+                    `${task.area} · ${task.alamat}`
+                  ) : (
+                    <>
+                      {task.area}
+                      <span className="text-[#7a9a8f] font-normal"> · perkiraan lokasi</span>
+                    </>
+                  )}
+                </span>
+              </a>
             </div>
 
             <h3 className="font-bold text-[12px] text-[#7a9a8f] uppercase tracking-wider mb-3">Deskripsi pekerjaan</h3>
@@ -260,24 +410,96 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-wider mb-1">
-                  {offers.length} penawaran masuk
-                </p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-wider">
+                    {offers.length} penawaran masuk
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompareMode((m) => !m);
+                      setCompareIds([]);
+                    }}
+                    className={`text-[12px] font-bold px-3 py-1 rounded-full border transition-colors ${
+                      compareMode
+                        ? "bg-[#2E5090] text-white border-[#2E5090]"
+                        : "border-[#b8d4c8] text-[#2E5090] hover:border-[#2E5090]"
+                    }`}
+                  >
+                    {compareMode ? "Batal bandingkan" : "Bandingkan"}
+                  </button>
+                </div>
+
+                {compareMode && comparedOffers.length >= 2 && (
+                  <div className="bg-white border-2 border-[#2E5090] rounded-2xl p-4 mb-2 overflow-x-auto">
+                    <p className="text-[11px] font-bold text-[#7a9a8f] uppercase tracking-wider mb-3">
+                      Perbandingan ({comparedOffers.length})
+                    </p>
+                    <table className="w-full text-[12px] min-w-[280px]">
+                      <thead>
+                        <tr className="text-[#7a9a8f]">
+                          <th className="text-left pb-2 font-semibold">Tukang</th>
+                          <th className="text-right pb-2 font-semibold">Harga</th>
+                          <th className="text-left pb-2 pl-3 font-semibold">Ketersediaan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparedOffers.map((o) => (
+                          <tr key={o.id} className="border-t border-[#f0f7f4]">
+                            <td className="py-2 font-semibold text-[#0f2035]">{o.technicianName}</td>
+                            <td className="py-2 text-right font-black text-[#1a2d4a]">{o.priceFormatted}</td>
+                            <td className="py-2 pl-3 text-[#3d6b5e] capitalize">{o.availability}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
                 {offers.map((offer) => {
                   const initials = offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
                   const colorIdx = offer.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+                  const isCompared = compareIds.includes(offer.id);
                   return (
-                  <div key={offer.id} className="bg-[#F5F1E8] border border-[#c8dfd8] rounded-2xl p-4">
+                  <div
+                    key={offer.id}
+                    className={`bg-[#F5F1E8] border rounded-2xl p-4 transition-all ${
+                      isCompared ? "border-[#2E5090] ring-1 ring-[#2E5090]/20" : "border-[#c8dfd8]"
+                    }`}
+                  >
                     <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0"
-                        style={{ background: AVATAR_COLORS[colorIdx % AVATAR_COLORS.length] }}
+                      {compareMode && (
+                        <input
+                          type="checkbox"
+                          checked={isCompared}
+                          onChange={() => toggleCompare(offer.id)}
+                          disabled={!isCompared && compareIds.length >= 3}
+                          className="w-4 h-4 accent-[#2E5090] shrink-0"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setProfileTechId(offer.technicianId)}
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80"
                       >
-                        {initials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[14px] text-[#0f2035]">{offer.technicianName}</p>
-                      </div>
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0"
+                          style={{ background: AVATAR_COLORS[colorIdx % AVATAR_COLORS.length] }}
+                        >
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-[14px] text-[#0f2035]">{offer.technicianName}</p>
+                            {offer.technicianVerified && (
+                              <span className="text-[9px] font-bold text-[#20bf6f] bg-[#f0fdf4] border border-[#bbf7d0] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                <CheckCircle size={9} /> Verified
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-[#2E5090] font-semibold">Lihat profil →</p>
+                        </div>
+                      </button>
                       <div className="text-right shrink-0">
                         <p className="font-black text-[16px] text-[#1a2d4a]">{offer.priceFormatted}</p>
                       </div>
@@ -285,17 +507,21 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     {offer.message && (
                       <p className="text-[12px] text-[#3d6b5e] leading-relaxed mb-3 italic">"{offer.message}"</p>
                     )}
-                    <button
-                      onClick={() => handleAcceptOffer(offer.id)}
-                      className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                    >
-                      Terima penawaran ini
-                    </button>
+                    {!compareMode && (
+                      <button
+                        type="button"
+                        onClick={() => handleAcceptOffer(offer.id)}
+                        className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                      >
+                        Terima penawaran ini
+                      </button>
+                    )}
                   </div>
                   );
                 })}
               </div>
             )}
+            <TechnicianProfileModal technicianId={profileTechId} onClose={() => setProfileTechId(null)} />
           </div>
         )}
 
@@ -383,69 +609,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   );
 }
 
-function MapPlaceholder({ selectedId }: { selectedId: string | null }) {
-  return (
-    <div className="relative w-full h-full overflow-hidden bg-[#f8eded]">
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0">
-        <rect width="100%" height="100%" fill="#f8eded" />
-        {["20%", "38%", "56%", "72%", "87%"].map((y) => (
-          <line key={y} x1="0" y1={y} x2="100%" y2={y} stroke="#F5F1E8" strokeWidth="10" />
-        ))}
-        {["18%", "35%", "52%", "68%", "83%"].map((x) => (
-          <line key={x} x1={x} y1="0" x2={x} y2="100%" stroke="#F5F1E8" strokeWidth="10" />
-        ))}
-        {[
-          {x:"2%",y:"3%",w:"14%",h:"15%"},{x:"20%",y:"3%",w:"13%",h:"15%"},{x:"37%",y:"3%",w:"13%",h:"15%"},
-          {x:"54%",y:"3%",w:"12%",h:"15%"},{x:"70%",y:"3%",w:"11%",h:"15%"},{x:"85%",y:"3%",w:"13%",h:"15%"},
-          {x:"2%",y:"22%",w:"14%",h:"14%"},{x:"20%",y:"22%",w:"13%",h:"14%"},{x:"37%",y:"22%",w:"13%",h:"14%"},
-          {x:"54%",y:"22%",w:"12%",h:"14%"},{x:"70%",y:"22%",w:"11%",h:"14%"},{x:"85%",y:"22%",w:"13%",h:"14%"},
-          {x:"2%",y:"40%",w:"14%",h:"14%"},{x:"20%",y:"40%",w:"13%",h:"14%"},{x:"37%",y:"40%",w:"13%",h:"14%"},
-          {x:"54%",y:"40%",w:"12%",h:"14%"},{x:"70%",y:"40%",w:"11%",h:"14%"},{x:"85%",y:"40%",w:"13%",h:"14%"},
-          {x:"2%",y:"58%",w:"14%",h:"12%"},{x:"20%",y:"58%",w:"13%",h:"12%"},{x:"37%",y:"58%",w:"13%",h:"12%"},
-          {x:"54%",y:"58%",w:"12%",h:"12%"},{x:"70%",y:"58%",w:"11%",h:"12%"},{x:"85%",y:"58%",w:"13%",h:"12%"},
-          {x:"2%",y:"74%",w:"14%",h:"23%"},{x:"20%",y:"74%",w:"13%",h:"23%"},{x:"37%",y:"74%",w:"13%",h:"23%"},
-          {x:"54%",y:"74%",w:"12%",h:"23%"},{x:"70%",y:"74%",w:"11%",h:"23%"},{x:"85%",y:"74%",w:"13%",h:"23%"},
-        ].map((b, i) => <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill="#f0d8d8" opacity="0.85" />)}
-        <rect x="37%" y="40%" width="13%" height="14%" rx="4" fill="#c8e6c9" opacity="0.6" />
-        <rect x="2%" y="58%" width="14%" height="12%" rx="4" fill="#c8e6c9" opacity="0.5" />
-        {/* Jakarta label */}
-        <text x="50%" y="92%" textAnchor="middle" fontFamily="Manrope,sans-serif" fontSize="12" fill="#7a9a8f" fontWeight="600">Jakarta, Indonesia</text>
-      </svg>
-
-      {MAP_PINS.map((pin, i) => {
-        const active = selectedId !== null && i === 0;
-        return (
-          <div key={i} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: pin.x, top: pin.y }}>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 transition-all ${
-              active ? "bg-[#2E5090] border-white scale-125" : "bg-white border-[#2E5090] hover:scale-110"
-            }`}>
-              <MapPin size={13} className={active ? "text-white" : "text-[#2E5090]"} fill={active ? "currentColor" : "none"} />
-            </div>
-            {active && <div className="w-2 h-2 bg-[#2E5090] rotate-45 mx-auto -mt-[3px]" />}
-          </div>
-        );
-      })}
-
-      <div className="absolute right-4 bottom-10 flex flex-col gap-1.5">
-        <button className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-[#F5F1E8] border border-[#b8d4c8]">
-          <Crosshair size={15} className="text-[#3d6b5e]" />
-        </button>
-        <div className="w-9 bg-white rounded-lg shadow-md border border-[#b8d4c8] overflow-hidden mt-0.5">
-          <button className="w-full h-9 flex items-center justify-center hover:bg-[#F5F1E8] border-b border-[#b8d4c8]">
-            <Plus size={15} className="text-[#3d6b5e]" />
-          </button>
-          <button className="w-full h-9 flex items-center justify-center hover:bg-[#F5F1E8]">
-            <Minus size={15} className="text-[#3d6b5e]" />
-          </button>
-        </div>
-      </div>
-      <div className="absolute bottom-2 right-3 text-[10px] text-[#7a9a8f] bg-white/80 px-2 py-0.5 rounded-full">
-        MapLibre | © OpenStreetMap
-      </div>
-    </div>
-  );
-}
-
 export default function Tasks() {
   const [searchParams] = useSearchParams();
   const idFromUrl = searchParams.get("id");
@@ -453,20 +616,33 @@ export default function Tasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(idFromUrl);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") ?? "");
+  const [areaFilter, setAreaFilter] = useState(() =>
+    areaFromUrl && JAKARTA_AREAS.includes(areaFromUrl as (typeof JAKARTA_AREAS)[number])
+      ? areaFromUrl
+      : "Semua area",
+  );
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   useEffect(() => {
     const q = searchParams.get("search");
     if (q !== null) setSearchQuery(q);
+    const area = searchParams.get("area");
+    if (area && JAKARTA_AREAS.includes(area as (typeof JAKARTA_AREAS)[number])) {
+      setAreaFilter(area);
+    }
   }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
-    api.getJobs({ search: searchQuery || undefined, area: areaFromUrl || undefined })
+    api
+      .getJobs()
       .then(({ jobs }) => setTasks(jobs.map((j) => ({ ...j, status: j.status === "open" ? "Terbuka" : j.status }))))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
-  }, [searchQuery, areaFromUrl]);
+  }, []);
 
   useEffect(() => {
     if (!idFromUrl) return;
@@ -482,17 +658,34 @@ export default function Tasks() {
       .catch(() => {});
   }, [idFromUrl]);
 
-  const filtered = tasks.filter((t) =>
-    t.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = useMemo(
+    () =>
+      filterAndSortJobs(tasks, {
+        search: searchQuery,
+        area: areaFilter,
+        price: priceFilter,
+        sort: sortBy,
+      }),
+    [tasks, searchQuery, areaFilter, priceFilter, sortBy],
   );
 
   const selectedTask = tasks.find((t) => t.id === selectedId) ?? null;
 
+  const areaOptions = JAKARTA_AREAS.map((a) => ({ id: a as string, label: a === "Semua area" ? "Jakarta & sekitarnya" : a }));
+  const priceOptions = (Object.keys(PRICE_FILTER_LABELS) as PriceFilter[]).map((id) => ({
+    id,
+    label: PRICE_FILTER_LABELS[id],
+  }));
+  const sortOptions = (Object.keys(SORT_LABELS) as SortOption[]).map((id) => ({
+    id,
+    label: SORT_LABELS[id],
+  }));
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Filter bar */}
-      <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
-        <div className="flex items-center gap-2 px-6 py-3 max-w-[1400px] mx-auto w-full overflow-x-auto">
+      <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm overflow-visible relative z-[60]">
+        <div className="flex flex-wrap items-center gap-2 px-6 py-3 max-w-[1400px] mx-auto w-full">
           <div className="flex items-center gap-2 bg-[#F5F1E8] rounded-lg px-3 py-[9px] min-w-[200px] border border-transparent focus-within:border-[#2E5090] focus-within:bg-white transition-all">
             <Search size={15} className="text-[#7a9a8f] shrink-0" />
             <input
@@ -503,19 +696,10 @@ export default function Tasks() {
             />
           </div>
           <div className="w-px h-6 bg-[#f5eded] shrink-0" />
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] bg-white border border-[#b8d4c8] rounded-lg px-4 py-[9px] hover:border-[#2E5090] hover:text-[#2E5090] transition-all whitespace-nowrap shrink-0">
-            <MapPin size={13} className="text-[#2E5090]" /> Jakarta & sekitarnya <ChevronDown size={13} />
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] bg-white border border-[#b8d4c8] rounded-lg px-4 py-[9px] hover:border-[#2E5090] hover:text-[#2E5090] transition-all whitespace-nowrap shrink-0">
-            Semua Harga <ChevronDown size={13} />
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] bg-white border border-[#b8d4c8] rounded-lg px-4 py-[9px] hover:border-[#2E5090] hover:text-[#2E5090] transition-all whitespace-nowrap shrink-0">
-            <SlidersHorizontal size={13} /> Filter Lainnya <ChevronDown size={13} />
-          </button>
+          <FilterMenu label="Area" value={areaFilter} options={areaOptions} onChange={setAreaFilter} />
+          <FilterMenu label="Harga" value={priceFilter} options={priceOptions} onChange={setPriceFilter} />
           <div className="ml-auto shrink-0">
-            <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] px-3 py-[9px] transition-colors whitespace-nowrap">
-              Urutkan <ChevronDown size={13} />
-            </button>
+            <FilterMenu label="Urutkan" value={sortBy} options={sortOptions} onChange={setSortBy} />
           </div>
         </div>
       </div>
@@ -534,8 +718,11 @@ export default function Tasks() {
               <TaskCard
                 key={task.id}
                 task={task}
-                selected={selectedId === task.id}
-                onClick={() => setSelectedId(selectedId === task.id ? null : task.id)}
+                selected={selectedId === task.id || mapPreviewId === task.id}
+                onClick={() => {
+                  setMapPreviewId(null);
+                  setSelectedId(selectedId === task.id ? null : task.id);
+                }}
               />
             ))}
             {filtered.length === 0 && (
@@ -549,13 +736,22 @@ export default function Tasks() {
         {/* Right panel: detail or map */}
         <div className="flex-1 min-w-0 relative">
           <div className={`absolute inset-0 transition-opacity duration-300 ${selectedTask ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-            <MapPlaceholder selectedId={selectedId} />
+            <JobsMap
+              jobs={filtered}
+              previewId={mapPreviewId}
+              onPinClick={(id) => setMapPreviewId((prev) => (prev === id ? null : id))}
+              onPreviewClose={() => setMapPreviewId(null)}
+              onViewTask={(id) => {
+                setMapPreviewId(null);
+                setSelectedId(id);
+              }}
+            />
           </div>
           <div className={`absolute inset-0 transition-all duration-300 ${
             selectedTask ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0 pointer-events-none"
           }`}>
             {selectedTask && (
-              <TaskDetail task={selectedTask} onClose={() => setSelectedId(null)} />
+              <TaskDetail task={selectedTask} onClose={() => { setSelectedId(null); setMapPreviewId(null); }} />
             )}
           </div>
         </div>

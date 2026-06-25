@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { getAppSettings } from "../utils/settings.js";
 
 const router = Router();
 
@@ -14,6 +15,18 @@ router.get("/job/:jobId", async (req, res) => {
 
     if (error) throw error;
 
+    const techIds = [...new Set((data ?? []).map((o) => o.technician_id as string))];
+    const verifiedByTech: Record<string, boolean> = {};
+    if (techIds.length > 0) {
+      const { data: profiles } = await db
+        .from("technician_profiles")
+        .select("user_id, verified")
+        .in("user_id", techIds);
+      for (const p of profiles ?? []) {
+        verifiedByTech[p.user_id] = p.verified;
+      }
+    }
+
     const offers = (data ?? []).map((o) => ({
       id: o.id,
       jobId: o.job_id,
@@ -25,6 +38,7 @@ router.get("/job/:jobId", async (req, res) => {
       scheduledTime: o.scheduled_time,
       status: o.status,
       technicianName: o.technician?.full_name ?? "Tukang",
+      technicianVerified: verifiedByTech[o.technician_id] ?? false,
       createdAt: o.created_at,
     }));
 
@@ -52,6 +66,20 @@ router.post("/job/:jobId", requireAuth, requireRole("technician"), async (req: A
     }
     if (job.status !== "open") {
       return res.status(400).json({ error: "Job is no longer open for offers" });
+    }
+
+    const settings = await getAppSettings();
+    if (settings.requireVerifiedToQuote) {
+      const { data: profile } = await db
+        .from("technician_profiles")
+        .select("verified")
+        .eq("user_id", req.user!.id)
+        .maybeSingle();
+      if (!profile?.verified) {
+        return res.status(403).json({
+          error: "Akun tukang belum terverifikasi. Tunggu persetujuan admin sebelum mengajukan penawaran.",
+        });
+      }
     }
 
     const { data, error } = await db
@@ -84,12 +112,52 @@ router.get("/mine", requireAuth, requireRole("technician"), async (req: AuthedRe
   try {
     const { data, error } = await db
       .from("offers")
-      .select("*, job:jobs(*)")
+      .select("id, job_id, technician_id, price, message, availability, scheduled_time, status, created_at")
       .eq("technician_id", req.user!.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    res.json({ offers: data ?? [] });
+
+    const jobIds = [...new Set((data ?? []).map((o) => o.job_id))];
+    const jobsById: Record<string, Record<string, unknown>> = {};
+    if (jobIds.length > 0) {
+      const { data: jobs } = await db.from("jobs").select("id, title, area, status, job_number").in("id", jobIds);
+      for (const j of jobs ?? []) {
+        jobsById[j.id] = j;
+      }
+    }
+
+    const formatPrice = (amount: number) => {
+      if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}jt`;
+      if (amount >= 1000) return `Rp ${Math.round(amount / 1000)}rb`;
+      return `Rp ${amount}`;
+    };
+
+    const offers = (data ?? []).map((o) => {
+      const job = jobsById[o.job_id];
+      return {
+        id: o.id,
+        jobId: o.job_id,
+        price: o.price,
+        priceFormatted: formatPrice(o.price),
+        message: o.message,
+        availability: o.availability,
+        scheduledTime: o.scheduled_time,
+        status: o.status,
+        createdAt: o.created_at,
+        job: job
+          ? {
+              id: job.id,
+              title: job.title,
+              area: job.area,
+              status: job.status,
+              jobNumber: job.job_number,
+            }
+          : null,
+      };
+    });
+
+    res.json({ offers });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch offers" });
