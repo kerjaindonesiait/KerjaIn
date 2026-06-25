@@ -1,5 +1,5 @@
 import { API_URL } from "../constants";
-import type { Job, LoginResponse, Offer, PostJobFormData, RegisterResponse, TechProfileData, User } from "../types";
+import type { Job, LoginResponse, MineOffer, Offer, PostJobFormData, RegisterResponse, TechProfileData, User } from "../types";
 
 const LEGACY_ACCESS_KEY = "kerjain_access";
 const LEGACY_REFRESH_KEY = "kerjain_refresh";
@@ -97,6 +97,43 @@ export const api = {
 
   getJob(id: string) {
     return request<{ job: Job }>(`/api/jobs/${id}`);
+  },
+
+  getMyJobs() {
+    return request<{ jobs: Job[] }>("/api/jobs/mine");
+  },
+
+  getAssignedJobs(params?: { status?: string }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set("status", params.status);
+    const q = qs.toString();
+    return request<{ jobs: Job[] }>(`/api/jobs/assigned${q ? `?${q}` : ""}`);
+  },
+
+  cancelJob(id: string) {
+    return request<{ job: Job }>(`/api/jobs/${id}/cancel`, { method: "POST" });
+  },
+
+  completeJob(id: string) {
+    return request<{ job: Job }>(`/api/jobs/${id}/complete`, { method: "POST" });
+  },
+
+  getOffersMine() {
+    return request<{ offers: MineOffer[] }>("/api/offers/mine");
+  },
+
+  uploadJobPhoto(fileBase64: string, contentType: string) {
+    return request<{ url: string; path: string }>("/api/upload/job-photo", {
+      method: "POST",
+      body: JSON.stringify({ fileBase64, contentType }),
+    });
+  },
+
+  deleteJobPhoto(path: string) {
+    return request<{ ok: boolean }>("/api/upload/job-photo", {
+      method: "DELETE",
+      body: JSON.stringify({ path }),
+    });
   },
 
   createJob(data: PostJobFormData) {

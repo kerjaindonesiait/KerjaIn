@@ -3,11 +3,11 @@ import { Link } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronDown, Bell, Star, SlidersHorizontal, Send,
-  Briefcase, FileText, TrendingUp, LogOut, Filter,
+  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import type { Job } from "../../types";
+import type { Job, MineOffer } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
 
 type ApiJob = {
@@ -593,31 +593,35 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
   );
 }
 
-// ─── My Offers tab ────────────────────────────────────────────────────────────
+// ─── Offer / assigned job helpers ─────────────────────────────────────────────
 
-const MY_OFFERS = [
-  { job: "Pipa pecah – butuh perbaikan segera",  price: "Rp 450rb", status: "Menunggu", area: "Jakarta Selatan", time: "2 jam lalu" },
-  { job: "Kran bocor – dapur, menetes pelan",    price: "Rp 130rb", status: "Diterima",  area: "Jakarta Pusat",  time: "Kemarin" },
-  { job: "Water heater tidak berfungsi",          price: "Rp 300rb", status: "Ditolak",   area: "Bekasi",         time: "3 hari lalu" },
-];
-
-const STATUS_STYLE: Record<string, string> = {
-  "Menunggu": "bg-yellow-50 text-yellow-700 border-yellow-200",
-  "Diterima":  "bg-[#f0fdf4] text-[#20bf6f] border-[#bbf7d0]",
-  "Ditolak":   "bg-red-50 text-red-600 border-red-200",
+const OFFER_STATUS_LABEL: Record<string, string> = {
+  pending: "Menunggu",
+  accepted: "Diterima",
+  rejected: "Ditolak",
 };
 
-// ─── Active Jobs tab ──────────────────────────────────────────────────────────
+function jobTitleFromOffer(o: MineOffer) {
+  const j = o.job as { title?: string } | null | undefined;
+  return j?.title ?? "Pekerjaan";
+}
 
-const ACTIVE_JOBS = [
-  {
-    job: "Kran bocor – dapur, menetes pelan",
-    customer: "Dewi M.", customerRating: 4.7,
-    price: "Rp 130rb", area: "Jakarta Pusat",
-    schedule: "Hari ini, 14:00 WIB",
-    status: "Konfirmasi jadwal",
-  },
-];
+function jobAreaFromOffer(o: MineOffer) {
+  const j = o.job as { area?: string } | null | undefined;
+  return j?.area ?? "";
+}
+
+function formatPrice(n: number) {
+  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1)}jt`;
+  if (n >= 1000) return `Rp ${Math.round(n / 1000)}rb`;
+  return `Rp ${n.toLocaleString("id-ID")}`;
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  Menunggu: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  Diterima: "bg-[#f0fdf4] text-[#20bf6f] border-[#bbf7d0]",
+  Ditolak: "bg-red-50 text-red-600 border-red-200",
+};
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
@@ -630,6 +634,64 @@ export default function TechDashboard() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [quotedJobs, setQuotedJobs] = useState<Record<string, number>>({});
+  const [myOffers, setMyOffers] = useState<MineOffer[]>([]);
+  const [activeJobs, setActiveJobs] = useState<Job[]>([]);
+  const [completedJobs, setCompletedJobs] = useState<Job[]>([]);
+  const [loadingTab, setLoadingTab] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .getOffersMine()
+      .then(({ offers }) => {
+        const q: Record<string, number> = {};
+        for (const o of offers) {
+          if (o.status === "pending" || o.status === "accepted") {
+            q[o.job_id] = o.price;
+          }
+        }
+        setQuotedJobs(q);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (navTab === "lowongan") return;
+    setLoadingTab(true);
+    if (navTab === "penawaran") {
+      api
+        .getOffersMine()
+        .then(({ offers }) => setMyOffers(offers))
+        .catch(() => setMyOffers([]))
+        .finally(() => setLoadingTab(false));
+    } else if (navTab === "aktif") {
+      api
+        .getAssignedJobs({ status: "in_progress" })
+        .then(({ jobs }) => setActiveJobs(jobs))
+        .catch(() => setActiveJobs([]))
+        .finally(() => setLoadingTab(false));
+    } else if (navTab === "selesai") {
+      api
+        .getAssignedJobs({ status: "completed" })
+        .then(({ jobs }) => setCompletedJobs(jobs))
+        .catch(() => setCompletedJobs([]))
+        .finally(() => setLoadingTab(false));
+    }
+  }, [navTab]);
+
+  const handleCompleteJob = async (jobId: string) => {
+    if (!confirm("Tandai pekerjaan ini selesai?")) return;
+    setCompletingId(jobId);
+    try {
+      await api.completeJob(jobId);
+      setActiveJobs((prev) => prev.filter((j) => j.id !== jobId));
+      setNavTab("selesai");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Gagal menyelesaikan pekerjaan");
+    } finally {
+      setCompletingId(null);
+    }
+  };
 
   useEffect(() => {
     api.getJobs({ search: search || undefined })
@@ -823,28 +885,35 @@ export default function TechDashboard() {
       {navTab === "penawaran" && (
         <div className="flex-1 overflow-y-auto p-6 max-w-[860px] mx-auto w-full">
           <h2 className="font-black text-[22px] text-[#172E4D] mb-5">Penawaran Saya</h2>
-          <div className="flex flex-col gap-3">
-            {MY_OFFERS.map((offer, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-[#D8E2F0] p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <p className="font-bold text-[15px] text-[#172E4D] leading-snug">{offer.job}</p>
-                  <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[offer.status]}`}>
-                    {offer.status}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-3 text-[12px] text-[#58708D]">
-                  <span className="flex items-center gap-1"><MapPin size={11} className="text-[#1D4196]"/>{offer.area}</span>
-                  <span className="flex items-center gap-1"><Clock size={11}/>{offer.time}</span>
-                  <span className="font-bold text-[#172E4D]">{offer.price}</span>
-                </div>
-                {offer.status === "Diterima" && (
-                  <button className="mt-3 w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors">
-                    Hubungi Pelanggan →
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          {loadingTab ? (
+            <div className="flex items-center gap-2 text-[#58708D] py-8">
+              <Loader2 size={18} className="animate-spin" /> Memuat penawaran...
+            </div>
+          ) : myOffers.length === 0 ? (
+            <p className="text-[14px] text-[#7890AA]">Belum ada penawaran. Kirim penawaran dari tab Lowongan.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {myOffers.map((offer) => {
+                const statusLabel = OFFER_STATUS_LABEL[offer.status] ?? offer.status;
+                return (
+                  <div key={offer.id} className="bg-white rounded-2xl border border-[#D8E2F0] p-5">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <p className="font-bold text-[15px] text-[#172E4D] leading-snug">{jobTitleFromOffer(offer)}</p>
+                      <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full shrink-0 ${STATUS_STYLE[statusLabel] ?? ""}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-[12px] text-[#58708D]">
+                      {jobAreaFromOffer(offer) && (
+                        <span className="flex items-center gap-1"><MapPin size={11} className="text-[#1D4196]"/>{jobAreaFromOffer(offer)}</span>
+                      )}
+                      <span className="font-bold text-[#172E4D]">{formatPrice(offer.price)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -852,42 +921,51 @@ export default function TechDashboard() {
       {navTab === "aktif" && (
         <div className="flex-1 overflow-y-auto p-6 max-w-[860px] mx-auto w-full">
           <h2 className="font-black text-[22px] text-[#172E4D] mb-5">Pekerjaan Aktif</h2>
-          {ACTIVE_JOBS.map((job, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#D8E2F0] overflow-hidden">
-              <div className="bg-[#172E4D] px-5 py-3 flex items-center justify-between">
-                <p className="font-bold text-[14px] text-white">{job.job}</p>
-                <span className="text-[11px] font-bold bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 px-2.5 py-0.5 rounded-full">{job.status}</span>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1D4196]/20 flex items-center justify-center text-[#1D4196] font-black text-[13px]">
-                    {job.customer[0]}
-                  </div>
-                  <div>
-                    <p className="font-bold text-[14px] text-[#172E4D]">{job.customer}</p>
-                    <StarRow rating={job.customerRating} />
-                  </div>
-                  <div className="ml-auto text-right">
-                    <p className="font-black text-[18px] text-[#1D4196]">{job.price}</p>
-                  </div>
+          {loadingTab ? (
+            <div className="flex items-center gap-2 text-[#58708D] py-8">
+              <Loader2 size={18} className="animate-spin" /> Memuat pekerjaan aktif...
+            </div>
+          ) : activeJobs.length === 0 ? (
+            <p className="text-[14px] text-[#7890AA]">Tidak ada pekerjaan aktif. Pekerjaan muncul setelah pelanggan membayar.</p>
+          ) : (
+            activeJobs.map((job) => (
+              <div key={job.id} className="bg-white rounded-2xl border border-[#D8E2F0] overflow-hidden mb-4">
+                <div className="bg-[#172E4D] px-5 py-3 flex items-center justify-between">
+                  <p className="font-bold text-[14px] text-white">{job.title}</p>
+                  <span className="text-[11px] font-bold bg-[#20bf6f]/20 text-[#bbf7d0] border border-[#20bf6f]/30 px-2.5 py-0.5 rounded-full">Berjalan</span>
                 </div>
+                <div className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#1D4196]/20 flex items-center justify-center text-[#1D4196] font-black text-[13px]">
+                      {(job.poster?.name ?? "?")[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-[14px] text-[#172E4D]">{job.poster?.name ?? "Pelanggan"}</p>
+                      {job.poster && <StarRow rating={job.poster.rating} />}
+                    </div>
+                    <div className="ml-auto text-right">
+                      <p className="font-black text-[18px] text-[#1D4196]">{job.price}</p>
+                    </div>
+                  </div>
 
-                <div className="flex gap-3 text-[13px] text-[#58708D]">
-                  <span className="flex items-center gap-1"><MapPin size={13} className="text-[#1D4196]"/>{job.area}</span>
-                  <span className="flex items-center gap-1"><Clock size={13}/>{job.schedule}</span>
-                </div>
+                  <div className="flex gap-3 text-[13px] text-[#58708D]">
+                    <span className="flex items-center gap-1"><MapPin size={13} className="text-[#1D4196]"/>{job.area}</span>
+                    {job.date && <span className="flex items-center gap-1"><Clock size={13}/>{job.date}</span>}
+                  </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <button className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] py-3 rounded-xl transition-colors">
-                    Hubungi Pelanggan
-                  </button>
-                  <button className="border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors">
+                  <button
+                    type="button"
+                    disabled={completingId === job.id}
+                    onClick={() => handleCompleteJob(job.id)}
+                    className="w-full border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {completingId === job.id ? <Loader2 size={14} className="animate-spin" /> : null}
                     Tandai Selesai ✓
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
@@ -895,31 +973,31 @@ export default function TechDashboard() {
       {navTab === "selesai" && (
         <div className="flex-1 overflow-y-auto p-6 max-w-[860px] mx-auto w-full">
           <h2 className="font-black text-[22px] text-[#172E4D] mb-5">Pekerjaan Selesai</h2>
-          {[
-            { job: "Pipa bocor darurat – apartemen Lt.3",  customer: "Bowo S.",  price: "Rp 450rb", rating: 5.0, review: "Andi sangat profesional dan cepat! Datang dalam 30 menit dan beres dalam 1 jam.", date: "2 hari lalu" },
-            { job: "Pasang kran baru – kamar mandi utama", customer: "Hana S.",  price: "Rp 180rb", rating: 5.0, review: "Rapi, tepat waktu, dan harga sesuai. Sangat puas!", date: "1 minggu lalu" },
-            { job: "Ganti seal kloset bocor",               customer: "Citra N.", price: "Rp 120rb", rating: 4.0, review: "Pekerjaan bagus. Sedikit terlambat dari jadwal.", date: "2 minggu lalu" },
-          ].map((job, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-[#D8E2F0] p-5 mb-3">
-              <div className="flex items-start justify-between mb-3">
-                <p className="font-bold text-[15px] text-[#172E4D] leading-snug">{job.job}</p>
-                <p className="font-black text-[16px] text-[#1D4196] shrink-0 ml-3">{job.price}</p>
-              </div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#1D4196]/20 flex items-center justify-center text-[#1D4196] font-black text-[11px]">
-                  {job.customer[0]}
-                </div>
-                <div>
-                  <p className="font-semibold text-[13px] text-[#172E4D]">{job.customer}</p>
-                  <StarRow rating={job.rating} />
-                </div>
-                <span className="ml-auto text-[11px] text-[#7890AA]">{job.date}</span>
-              </div>
-              <div className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3 text-[12px] text-[#58708D] italic">
-                "{job.review}"
-              </div>
+          {loadingTab ? (
+            <div className="flex items-center gap-2 text-[#58708D] py-8">
+              <Loader2 size={18} className="animate-spin" /> Memuat riwayat...
             </div>
-          ))}
+          ) : completedJobs.length === 0 ? (
+            <p className="text-[14px] text-[#7890AA]">Belum ada pekerjaan selesai.</p>
+          ) : (
+            completedJobs.map((job) => (
+              <div key={job.id} className="bg-white rounded-2xl border border-[#D8E2F0] p-5 mb-3">
+                <div className="flex items-start justify-between mb-3">
+                  <p className="font-bold text-[15px] text-[#172E4D] leading-snug">{job.title}</p>
+                  <p className="font-black text-[16px] text-[#1D4196] shrink-0 ml-3">{job.price}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#1D4196]/20 flex items-center justify-center text-[#1D4196] font-black text-[11px]">
+                    {(job.poster?.name ?? "?")[0]}
+                  </div>
+                  <p className="font-semibold text-[13px] text-[#172E4D]">{job.poster?.name ?? "Pelanggan"}</p>
+                  <span className="ml-auto text-[11px] text-[#7890AA] flex items-center gap-1">
+                    <CheckCircle size={12} className="text-[#20bf6f]" /> Selesai
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

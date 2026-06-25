@@ -159,11 +159,23 @@ const METHODS: {
 
 // ─── Virtual account pending screen ──────────────────────────────────────────
 
-function VAPendingScreen({ method }: { method: PayMethod }) {
+function VAPendingScreen({
+  method,
+  vaNumber,
+  total,
+  paymentId,
+  onConfirm,
+  confirming,
+}: {
+  method: PayMethod;
+  vaNumber: string;
+  total: number;
+  paymentId: string | null;
+  onConfirm: () => void;
+  confirming: boolean;
+}) {
   const m = METHODS.find((x) => x.id === method)!;
-  const vaNumber = "8277 0091 4821 7365";
   const [copied, setCopied] = useState(false);
-  const navigate = useNavigate();
 
   const copy = () => {
     navigator.clipboard.writeText(vaNumber.replace(/\s/g, "")).catch(() => {});
@@ -176,21 +188,21 @@ function VAPendingScreen({ method }: { method: PayMethod }) {
       "Buka aplikasi m-BCA atau kunjungi ATM BCA terdekat",
       'Pilih menu "Transfer" → "Virtual Account"',
       `Masukkan nomor VA: ${vaNumber}`,
-      `Transfer tepat ${formatRp(TOTAL)}`,
+      `Transfer tepat ${formatRp(total)}`,
       "Simpan bukti transfer",
     ],
     mandiri: [
       "Buka aplikasi Livin' by Mandiri atau ATM Mandiri",
       'Pilih "Bayar" → "Multipayment"',
       `Masukkan kode perusahaan & nomor VA: ${vaNumber}`,
-      `Transfer tepat ${formatRp(TOTAL)}`,
+      `Transfer tepat ${formatRp(total)}`,
       "Konfirmasi dan simpan bukti bayar",
     ],
     bri: [
       "Buka aplikasi BRImo atau ATM BRI",
       'Pilih "Pembayaran" → "BRIVA"',
       `Masukkan nomor BRIVA: ${vaNumber}`,
-      `Transfer tepat ${formatRp(TOTAL)}`,
+      `Transfer tepat ${formatRp(total)}`,
       "Simpan struk pembayaran",
     ],
   };
@@ -212,7 +224,7 @@ function VAPendingScreen({ method }: { method: PayMethod }) {
         <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3">
           <div>
             <p className="text-[11px] text-[#7890AA] font-semibold">Total pembayaran</p>
-            <p className="font-black text-[20px] text-[#1D4196]">{formatRp(TOTAL)}</p>
+            <p className="font-black text-[20px] text-[#1D4196]">{formatRp(total)}</p>
           </div>
           <div className="text-right">
             <p className="text-[11px] text-[#7890AA] font-semibold">Batas waktu</p>
@@ -244,10 +256,11 @@ function VAPendingScreen({ method }: { method: PayMethod }) {
       </div>
 
       <button
-        onClick={() => navigate("/")}
-        className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors"
+        onClick={onConfirm}
+        disabled={!paymentId || confirming}
+        className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:bg-[#D8E2F0] disabled:text-[#7890AA] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors"
       >
-        Saya sudah transfer
+        {confirming ? "Memverifikasi..." : "Saya sudah transfer"}
       </button>
       <p className="text-center text-[12px] text-[#7890AA]">
         Pembayaran akan diverifikasi otomatis dalam 1–5 menit setelah transfer berhasil
@@ -489,6 +502,7 @@ export default function Payment() {
   const [total, setTotal] = useState(TOTAL);
   const [vaNumber, setVaNumber] = useState("8277 0091 4821 7365");
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (!jobId || !offerId) return;
@@ -539,6 +553,19 @@ export default function Payment() {
     }
   };
 
+  const handleConfirmVa = async () => {
+    if (!paymentId) return;
+    setConfirming(true);
+    try {
+      await api.confirmPayment(paymentId);
+      setScreen("success");
+    } catch {
+      alert("Gagal memverifikasi pembayaran. Coba lagi.");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   const groups = ["E-Wallet", "Transfer Bank", "Kartu"];
 
   return (
@@ -559,7 +586,18 @@ export default function Payment() {
       <div className="max-w-[860px] mx-auto px-4 py-8">
         {screen === "processing" && <ProcessingScreen />}
         {screen === "success"    && <SuccessScreen />}
-        {screen === "pending" && selected && <div className="max-w-[520px] mx-auto"><VAPendingScreen method={selected} /></div>}
+        {screen === "pending" && selected && (
+          <div className="max-w-[520px] mx-auto">
+            <VAPendingScreen
+              method={selected}
+              vaNumber={vaNumber}
+              total={total}
+              paymentId={paymentId}
+              onConfirm={handleConfirmVa}
+              confirming={confirming}
+            />
+          </div>
+        )}
 
         {(screen === "method" || screen === "confirm") && (
           <div className="flex flex-col lg:flex-row gap-6 items-start">

@@ -73,13 +73,45 @@ function StepPilihLayanan({ data, onChange }: { data: FormData; onChange: (d: Pa
 
 function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [photoPaths, setPhotoPaths] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const layanan = LAYANAN.find((l) => l.id === data.layanan);
 
-  const addPhoto = () => {
-    const placeholders = ["📷 Foto 1", "📷 Foto 2", "📷 Foto 3"];
-    if (data.photos.length < 3) {
-      onChange({ photos: [...data.photos, placeholders[data.photos.length]] });
+  const handleFile = async (file: File) => {
+    if (data.photos.length >= 3) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Gagal membaca file"));
+        reader.readAsDataURL(file);
+      });
+      const base64 = dataUrl.split(",")[1];
+      const { url, path } = await api.uploadJobPhoto(base64, file.type || "image/jpeg");
+      onChange({ photos: [...data.photos, url] });
+      setPhotoPaths((prev) => [...prev, path]);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Gagal mengunggah foto");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
+  };
+
+  const removePhoto = async (index: number) => {
+    const path = photoPaths[index];
+    if (path) {
+      try {
+        await api.deleteJobPhoto(path);
+      } catch {
+        /* best-effort delete */
+      }
+    }
+    onChange({ photos: data.photos.filter((_, j) => j !== index) });
+    setPhotoPaths((prev) => prev.filter((_, j) => j !== index));
   };
 
   return (
@@ -112,10 +144,15 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
         <p className="font-bold text-[14px] text-[#172E4D] mb-3">Tambahkan foto (opsional)</p>
         <div className="flex gap-3 flex-wrap">
           {data.photos.map((photo, i) => (
-            <div key={i} className="relative w-[90px] h-[90px] rounded-xl bg-[#EEF3FB] border-2 border-[#FD6665] flex items-center justify-center text-[22px]">
-              {photo}
+            <div key={i} className="relative w-[90px] h-[90px] rounded-xl bg-[#EEF3FB] border-2 border-[#FD6665] overflow-hidden flex items-center justify-center">
+              {photo.startsWith("http") ? (
+                <img src={photo} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[22px]">{photo}</span>
+              )}
               <button
-                onClick={() => onChange({ photos: data.photos.filter((_, j) => j !== i) })}
+                type="button"
+                onClick={() => removePhoto(i)}
                 className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4196] text-white flex items-center justify-center"
               >
                 <X size={11} />
@@ -124,14 +161,17 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
           ))}
           {data.photos.length < 3 && (
             <button
-              onClick={addPhoto}
-              className="w-[90px] h-[90px] rounded-xl border-2 border-dashed border-[#D8E2F0] flex flex-col items-center justify-center gap-1 hover:border-[#1D4196] hover:bg-[#F7F9FC] transition-all text-[#7890AA]"
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="w-[90px] h-[90px] rounded-xl border-2 border-dashed border-[#D8E2F0] flex flex-col items-center justify-center gap-1 hover:border-[#1D4196] hover:bg-[#F7F9FC] transition-all text-[#7890AA] disabled:opacity-50"
             >
               <Camera size={22} />
-              <span className="text-[10px] font-semibold">Tambah foto</span>
+              <span className="text-[10px] font-semibold">{uploading ? "..." : "Tambah foto"}</span>
             </button>
           )}
         </div>
+        {uploadError && <p className="text-[12px] text-red-600 mt-2">{uploadError}</p>}
       </div>
 
       {/* Tips */}
@@ -146,7 +186,16 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
           <li>• Jenis/merek alat jika relevan (misal: Ariston 50L)</li>
         </ul>
       </div>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleFile(file);
+        }}
+      />
     </div>
   );
 }

@@ -60,6 +60,20 @@ export interface Offer {
   createdAt: string;
 }
 
+/** Raw shape from GET /api/offers/mine (nested job from DB). */
+export interface MineOffer {
+  id: string;
+  job_id: string;
+  technician_id: string;
+  price: number;
+  message?: string | null;
+  availability: string;
+  scheduled_time?: string | null;
+  status: string;
+  created_at: string;
+  job?: Job | Record<string, unknown> | null;
+}
+
 export interface PostJobFormData {
   layanan: string;
   deskripsi: string;
