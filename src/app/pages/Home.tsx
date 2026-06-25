@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
+import { tasksUrl } from "../../lib/paths";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -119,11 +120,14 @@ const SCROLL_CSS = `
 
 function ServiceCard({ label, desc }: { label: string; desc: string }) {
   return (
-    <div className="flex-shrink-0 bg-white rounded-2xl border border-[#c8dfd8] px-5 py-4 min-w-[200px] hover:border-[#2E5090] hover:shadow-sm transition-all cursor-pointer group">
+    <Link
+      to={tasksUrl({ search: label })}
+      className="flex-shrink-0 bg-white rounded-2xl border border-[#c8dfd8] px-5 py-4 min-w-[200px] hover:border-[#2E5090] hover:shadow-sm transition-all cursor-pointer group block"
+    >
       <div className="w-6 h-1 rounded-full bg-[#2E5090] mb-3 group-hover:w-10 transition-all duration-300" />
       <p className="font-bold text-[14px] text-[#1a2d4a] mb-1 group-hover:text-[#2E5090] transition-colors">{label}</p>
       <p className="text-[12px] text-[#3d6b5e] leading-snug">{desc}</p>
-    </div>
+    </Link>
   );
 }
 
@@ -157,11 +161,16 @@ function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const navigate = useNavigate();
   const [taskTab, setTaskTab] = useState("plumbing");
   const [activeTab, setActiveTab] = useState("Plumbing");
   const [searchQuery, setSearchQuery] = useState("");
 
   const tasks = COMPLETED_TASKS[taskTab] ?? [];
+
+  const goSearch = () => {
+    navigate(tasksUrl({ search: searchQuery }));
+  };
 
   return (
     <div className="bg-white" style={{ fontFamily: "Manrope, sans-serif" }}>
@@ -202,16 +211,18 @@ export default function Home() {
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && goSearch()}
                   placeholder="cth. pipa bocor, saluran mampet…"
                   className="bg-transparent text-[15px] text-[#0f2035] placeholder-[#7a9a8f] outline-none w-full font-medium"
                 />
               </div>
-              <Link
-                to="/post-job"
+              <button
+                type="button"
+                onClick={goSearch}
                 className="bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[14px] px-6 py-4 shrink-0 transition-colors"
               >
                 Cari Tukang
-              </Link>
+              </button>
             </div>
 
             {/* CTAs */}
@@ -612,10 +623,15 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-2">
             {(SERVICE_LINKS[activeTab] || []).map((link) => (
-              <a key={link} href="#" className="text-[13px] text-[#1a3d5c] hover:text-[#2E5090] transition-colors py-1 truncate">
+              <Link key={link} to={tasksUrl({ search: link })} className="text-[13px] text-[#1a3d5c] hover:text-[#2E5090] transition-colors py-1 truncate">
                 {link}
-              </a>
+              </Link>
             ))}
+          </div>
+          <div className="mt-6">
+            <Link to="/categories" className="text-[13px] font-bold text-[#2E5090] hover:underline">
+              Lihat semua kategori layanan →
+            </Link>
           </div>
         </div>
       </section>
@@ -623,11 +639,9 @@ export default function Home() {
       {/* ── INTERNATIONAL ── */}
       <section className="py-10 px-6 border-t border-[#c8dfd8]">
         <div className="max-w-[1400px] mx-auto">
-          <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-widest mb-4">Juga tersedia di</p>
+          <p className="text-[12px] font-bold text-[#7a9a8f] uppercase tracking-widest mb-4">Layanan tersedia di</p>
           <div className="flex flex-wrap gap-5">
-            {["🇦🇺 Australia", "🇮🇩 Indonesia", "🇸🇬 Singapura", "🇲🇾 Malaysia", "🇬🇧 Inggris"].map((c) => (
-              <a key={c} href="#" className="text-[14px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors">{c}</a>
-            ))}
+            <Link to="/categories" className="text-[14px] font-semibold text-[#2E5090]">🇮🇩 Jakarta & Jabodetabek</Link>
           </div>
         </div>
       </section>

@@ -13,7 +13,8 @@ A full checklist to take KerjaIn from **working prototype** to **production-read
 | Frontend UI | ✅ All major pages built (Figma export, Indonesian localization) |
 | Express API (`backend/`) | 🟡 Core routes: auth, jobs, offers, technicians, payments |
 | Supabase DB | 🟡 Tables exist: `users`, `oauth_accounts`, `refresh_tokens`, `technician_profiles`, `jobs`, `offers`, `payments` |
-| Auth | 🟡 Email + Google OAuth work; Facebook skipped for now |
+| Auth | ✅ | Email + Google OAuth, forgot/reset password, email verification, `/akun`; Facebook skipped |
+| Customer dashboard | 🟡 | `/pekerjaan-saya` — job list by status; no edit/cancel yet |
 | Payments | 🟡 Simulated — no real payment gateway |
 | File uploads | ❌ Photos/KTP are placeholder strings |
 | Messaging | ❌ No in-app chat |
@@ -98,13 +99,13 @@ flowchart TD
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 1.1 | Home page marketing content | ✅ | Static content, carousel, trust sections |
-| 1.2 | Hero search → navigate to `/tasks` with query | ❌ | Search input is local-only |
-| 1.3 | Service directory links | ❌ | All `href="#"` |
-| 1.4 | Wire `/categories` route (or remove) | ❌ | Page exists but unrouted; English/US copy |
-| 1.5 | Localize `Categories.tsx` to Indonesian + Jakarta | ❌ | |
-| 1.6 | Fix HowItWorks CTA → `/post-job` not `/tasks` | ❌ | |
-| 1.7 | Footer links (Tentang Kami, FAQ, Syarat, etc.) | ❌ | All `href="#"` |
-| 1.8 | SEO: meta tags, Open Graph, sitemap | ❌ | `index.html` has `noindex` |
+| 1.2 | Hero search → navigate to `/tasks` with query | ✅ | `?search=` param; Enter or Cari Tukang button |
+| 1.3 | Service directory links | ✅ | Links to `/tasks?search=`; carousel cards searchable |
+| 1.4 | Wire `/categories` route (or remove) | ✅ | Routed; nav link "Layanan" in header |
+| 1.5 | Localize `Categories.tsx` to Indonesian + Jakarta | ✅ | Plumbing/handyman focus; Jakarta locations |
+| 1.6 | Fix HowItWorks CTA → `/post-job` not `/tasks` | ✅ | Post CTAs → `/post-job`; browse → `/tasks` |
+| 1.7 | Footer links (Tentang Kami, FAQ, Syarat, etc.) | ✅ | Real routes in `Root.tsx`; locations → `/tasks?area=` |
+| 1.8 | SEO: meta tags, Open Graph, sitemap | ✅ | `index.html` Indonesian SEO; `public/sitemap.xml`, `robots.txt` |
 
 #### 2. Register / login
 | # | Task | Status | Notes |
@@ -120,7 +121,7 @@ flowchart TD
 | 2.9 | Show logged-in state in header (`Root.tsx`) | ✅ | Avatar, name, account link when logged in |
 | 2.10 | User profile / account settings page | ✅ | `/akun` — profile, change password, verification |
 | 2.11 | Logout from header | ✅ | Keluar button in desktop + mobile nav |
-2.12 - verify with phone number
+| 2.12 | Verify with phone number | 🟡 | `users.phone` for customers; unique per role (same # OK on user + tukang accounts) |
 
 #### 3. Post a job
 | # | Task | Status | Notes |
@@ -128,14 +129,14 @@ flowchart TD
 | 3.1 | 6-step wizard UI | ✅ | Layanan → Deskripsi → Lokasi → Waktu → Anggaran → Tinjau |
 | 3.2 | Auth guard on `/post-job` | ✅ | Redirects to `/masuk` |
 | 3.3 | Persist job to DB (`POST /api/jobs`) | ✅ | |
-| 3.4 | Real photo upload to Supabase Storage | ❌ | Placeholder strings `"📷 Foto 1"` |
-| 3.5 | Image preview + delete before submit | ❌ | |
-| 3.6 | Geocode address → lat/lng on job | ❌ | No `latitude`/`longitude` columns |
-| 3.7 | Success screen → link to live job on `/tasks?id=` | 🟡 | Shows ticket but no deep link |
-| 3.8 | Share job link (copy/WhatsApp) | 🟡 | Copy UI exists, shares mock ID |
-| 3.9 | Customer "My Jobs" dashboard | ❌ | `GET /api/jobs/mine` exists, no UI |
-| 3.10 | Edit / cancel open job | ❌ | No API or UI |
-| 3.11 | Validation error messages from API | 🟡 | Generic error only |
+| 3.4 | Real photo upload to Supabase Storage | ✅ | `POST /api/upload/job-photo` → `job-photos` bucket; uploads on submit |
+| 3.5 | Image preview + delete before submit | ✅ | Local preview thumbnails in wizard + review step |
+| 3.6 | Geocode address → lat/lng on job | ✅ | Nominatim + Jakarta area fallbacks; `jobs.latitude`/`longitude` migration |
+| 3.7 | Success screen → link to live job on `/tasks?id=` | ✅ | Primary CTA opens posted job; uses real UUID |
+| 3.8 | Share job link (copy/WhatsApp) | ✅ | Copy link + WhatsApp share with `/tasks?id=<uuid>` URL |
+| 3.9 | Customer "My Jobs" dashboard | ✅ | `/pekerjaan-saya` — Semua / Aktif / Selesai tabs; header link; `api.getMyJobs()` |
+| 3.10 | Edit / cancel open job | 🟡 | Cancel open jobs via `POST /api/jobs/:id/cancel` + My Jobs UI; edit not yet |
+| 3.11 | Validation error messages from API | ✅ | `validateCreateJobBody` + `ApiError.details` surfaced in PostJob |
 
 #### 4. Browse jobs & receive offers
 | # | Task | Status | Notes |
@@ -144,13 +145,13 @@ flowchart TD
 | 4.2 | Search filter (title) | ✅ | Client + server |
 | 4.3 | Location / price / sort filters | ❌ | UI only, no logic |
 | 4.4 | Real map with job pins | ❌ | SVG placeholder |
-| 4.5 | Job detail panel | ✅ | Detail / Penawaran / Pemilik tabs |
+| 4.5 | Job detail panel | ✅ | Detail / Penawaran / Pemilik tabs; `?id=` opens job from URL |
 | 4.6 | Fetch offers for job (`GET /api/offers/job/:id`) | ✅ | |
 | 4.7 | Accept offer (`POST /api/offers/:id/accept`) | ✅ | Updates job → `assigned` |
 | 4.8 | Real-time new offer notifications | ❌ | No Supabase Realtime / push |
 | 4.9 | Compare offers side-by-side | ❌ | |
 | 4.10 | View technician profile before accepting | ❌ | Only name shown |
-| 4.11 | Customer sees only their own jobs in a "My Jobs" view | ❌ | `/tasks` shows all open jobs |
+| 4.11 | Customer sees only their own jobs in a "My Jobs" view | ✅ | `/pekerjaan-saya` via `GET /api/jobs/mine`; `/tasks` still lists all open marketplace jobs |
 
 #### 5. Pay (escrow)
 | # | Task | Status | Notes |
@@ -170,7 +171,7 @@ flowchart TD
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 6.1 | Job status `in_progress` after payment | 🟡 | Backend sets on payment success |
-| 6.2 | Customer dashboard: active jobs | ❌ | No page |
+| 6.2 | Customer dashboard: active jobs | 🟡 | "Aktif" tab on `/pekerjaan-saya` (open / assigned / in_progress) |
 | 6.3 | In-app messaging with technician | ❌ | "Hubungi" buttons have no handler |
 | 6.4 | Schedule / reschedule appointment | ❌ | |
 | 6.5 | Photo updates from technician on-site | ❌ | |
@@ -183,7 +184,7 @@ flowchart TD
 | 7.1 | `reviews` table in DB | ❌ | |
 | 7.2 | Leave star rating + text review | ❌ | |
 | 7.3 | Update technician `rating` / `review_count` | ❌ | Columns exist, never updated |
-| 7.4 | Completed jobs history for customer | ❌ | |
+| 7.4 | Completed jobs history for customer | 🟡 | "Selesai" tab on `/pekerjaan-saya` (when jobs reach `completed` / `cancelled`) |
 | 7.5 | Home page "completed tasks" carousel from real data | ❌ | Static mock |
 
 ---
@@ -289,7 +290,7 @@ flowchart TD
 | 3.4 | Hide jobs already quoted | 🟡 | `quotedJobs` local state only — resets on refresh |
 | 3.5 | Persist quoted state from DB (`GET /api/offers/mine`) | ❌ | API exists, dashboard doesn't fetch |
 | 3.6 | Job detail + description panel | ✅ | |
-| 3.7 | Exclude own posted jobs (if user has both roles) | ❌ | |
+| 3.7 | Exclude own posted jobs (if user has both roles) | ✅ | `GET /api/jobs` filters own jobs for technicians; offers blocked on own jobs |
 
 #### 4. Submit quote (Penawaran)
 | # | Task | Status | Notes |
@@ -352,14 +353,14 @@ flowchart TD
 | `PATCH /api/jobs/:id` | Edit job | ❌ |
 | `POST /api/jobs/:id/cancel` | Cancel job | ❌ |
 | `POST /api/jobs/:id/complete` | Mark complete (customer or tech) | ❌ |
-| `GET /api/jobs/mine` | Customer's jobs | ✅ (no UI) |
+| `GET /api/jobs/mine` | Customer's jobs | ✅ | UI at `/pekerjaan-saya` |
 | `GET /api/jobs/assigned` | Technician's active jobs | ❌ |
 | `DELETE /api/offers/:id` | Withdraw offer | ❌ |
 | `POST /api/upload` | Presigned URL for Storage | ❌ |
 | `GET/POST /api/messages/:jobId` | Chat | ❌ |
 | `GET /api/notifications` | Notification feed | ❌ |
 | `POST /api/reviews` | Submit review | ❌ |
-| `POST /api/auth/forgot-password` | Password reset | ❌ |
+| `POST /api/auth/forgot-password` | Password reset | ✅ | `/lupa-sandi`, `/atur-ulang-sandi`; Resend or dev link |
 | Webhook `/api/webhooks/midtrans` | Payment events | ❌ |
 
 ### Security & infrastructure
@@ -398,16 +399,17 @@ flowchart TD
 
 | Route | Page | Backend wired | Remaining work |
 |-------|------|---------------|----------------|
-| `/` | Home | ❌ | Wire search, carousel from DB, fix dead links |
-| `/tasks` | Tasks | ✅ | Filters, map, my-jobs view, realtime offers |
-| `/post-job` | PostJob | ✅ | Photo upload, geocoding, my-jobs link |
+| `/` | Home | 🟡 | Search, service links, footer wired; carousel still static |
+| `/tasks` | Tasks | ✅ | `?id=` & `?search=` & `?area=`; filters, map still partial |
+| `/post-job` | PostJob | ✅ | Photo upload, geocode, share link, validation errors |
 | `/bayar` | Payment | 🟡 | Real gateway, fix static sidebar components |
-| `/masuk` `/daftar` | Auth | ✅ | Google OAuth; Facebook skipped; forgot password, header auth state |
+| `/masuk` `/daftar` | Auth | ✅ | Google OAuth; forgot password; email verification |
+| `/akun` | AccountSettings | ✅ | Profile, change password, resend verification |
+| `/pekerjaan-saya` | MyJobs | ✅ | Customer job list — Semua / Aktif / Selesai |
 | `/daftar-tukang` | TechAuth | ✅ | File upload, tarif UI, OAuth role fix |
 | `/dasbor-tukang` | TechDashboard | 🟡 | Penawaran/Aktif/Selesai tabs from API, notifications |
-| `/how-it-works` | HowItWorks | ❌ | Fix CTA links |
-| `/categories` | Categories | ❌ | Route, localize, connect to job search |
-| — | User dashboard | ❌ | New page: my jobs, active, completed |
+| `/how-it-works` | HowItWorks | ✅ | CTAs → `/post-job` and `/tasks` |
+| `/categories` | Categories | ✅ | Indonesian + Jakarta; links to task search |
 | — | Technician profile | ❌ | New public page |
 | — | Admin panel | ❌ | KTP verification, disputes, user management |
 
@@ -418,11 +420,11 @@ flowchart TD
 ### Phase 1 — Complete the core loop (MVP)
 > Customer posts → Technician quotes → Customer accepts → Pays → Job done
 
-1. Customer "My Jobs" page (`/pekerjaan-saya`) using `GET /api/jobs/mine`
+1. ~~Customer "My Jobs" page (`/pekerjaan-saya`) using `GET /api/jobs/mine`~~ ✅
 2. Technician dashboard tabs wired to API (offers mine, assigned jobs, completed)
 3. `POST /api/jobs/:id/complete` + escrow release logic
 4. Real file upload (job photos + KTP) via Supabase Storage
-5. Header auth state (name, avatar, logout)
+5. ~~Header auth state (name, avatar, logout)~~ ✅
 6. Fix Payment page to use `jobData`/`total` throughout (remove static `JOB`/`TOTAL`)
 
 ### Phase 2 — Trust & money
@@ -461,13 +463,13 @@ Use this to verify the full pipeline works after each phase:
 
 ### Customer
 1. [ ] Register at `/daftar` with email
-2. [ ] Post job at `/post-job` (with real photo)
+2. [x] Post job at `/post-job` (with real photo)
 3. [ ] See job appear on `/tasks`
 4. [ ] Receive notification when technician quotes
 5. [ ] View offers on job detail → Penawaran tab
 6. [ ] Accept an offer
 7. [ ] Pay at `/bayar` (real or sandbox gateway)
-8. [ ] See job move to "Aktif" in `/pekerjaan-saya`
+8. [ ] See job move to "Aktif" in `/pekerjaan-saya` *(tab exists; needs assigned/paid job in DB)*
 9. [ ] Message technician in-app
 10. [ ] Confirm job complete
 11. [ ] Leave a review
@@ -491,9 +493,7 @@ Use this to verify the full pipeline works after each phase:
 
 ```
 src/app/pages/
-  MyJobs.tsx              # Customer job dashboard
   TechProfile.tsx         # Public technician profile
-  UserSettings.tsx        # Account settings
   Messages.tsx            # Chat per job
 
 backend/src/routes/
@@ -511,6 +511,16 @@ supabase/migrations/
   rls_policies.sql
 ```
 
+### Recently shipped
+
+| File | Route | Notes |
+|------|-------|-------|
+| `MyJobs.tsx` | `/pekerjaan-saya` | Customer job dashboard — Phase 1 step 1 |
+| `AccountSettings.tsx` | `/akun` | Profile, password, email verification |
+| `ForgotPassword.tsx` | `/lupa-sandi` | Password reset request |
+| `ResetPassword.tsx` | `/atur-ulang-sandi` | Set new password from email link |
+| `VerifyEmail.tsx` | `/verifikasi-email` | Email verification landing |
+
 ---
 
-*Last updated: June 2026 — regenerate this doc as features ship.*
+*Last updated: 25 June 2026 — My Jobs (`/pekerjaan-saya`), auth flows, Tasks `?id=` deep link.*

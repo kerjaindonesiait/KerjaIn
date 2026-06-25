@@ -1,5 +1,6 @@
 import { API_URL } from "../constants";
 import type { AuthTokens, Job, Offer, PostJobFormData, TechProfileData, User } from "../types";
+import { ApiError } from "../types";
 
 const TOKEN_KEY = "kerjain_access";
 const REFRESH_KEY = "kerjain_refresh";
@@ -22,12 +23,23 @@ export function clearTokens() {
   localStorage.removeItem(REFRESH_KEY);
 }
 
+async function parseError(res: Response): Promise<never> {
+  if (res.status === 413) {
+    throw new ApiError("Foto terlalu besar. Gunakan gambar di bawah 5 MB.");
+  }
+  const err = await res.json().catch(() => ({} as { error?: string; details?: Record<string, string> }));
+  throw new ApiError(err.error ?? `Request failed (${res.status})`, err.details);
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+  const isJsonBody = options.body && !(options.body instanceof FormData);
+  if (isJsonBody && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
@@ -37,18 +49,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     if (refreshed) {
       headers.Authorization = `Bearer ${getAccessToken()}`;
       const retry = await fetch(`${API_URL}${path}`, { ...options, headers });
-      if (!retry.ok) {
-        const err = await retry.json().catch(() => ({}));
-        throw new Error(err.error ?? "Request failed");
-      }
+      if (!retry.ok) await parseError(retry);
       return retry.json();
     }
   }
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? `Request failed (${res.status})`);
-  }
+  if (!res.ok) await parseError(res);
 
   return res.json();
 }
@@ -126,10 +132,32 @@ export const api = {
     return request<{ job: Job }>(`/api/jobs/${id}`);
   },
 
+  getMyJobs() {
+    return request<{ jobs: Job[] }>("/api/jobs/mine");
+  },
+
+  cancelJob(id: string) {
+    return request<{ job: Job }>(`/api/jobs/${id}/cancel`, { method: "POST" });
+  },
+
   createJob(data: PostJobFormData) {
     return request<{ job: Job }>("/api/jobs", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  uploadJobPhoto(fileBase64: string, contentType: string) {
+    return request<{ url: string; path: string }>("/api/upload/job-photo", {
+      method: "POST",
+      body: JSON.stringify({ fileBase64, contentType }),
+    });
+  },
+
+  deleteJobPhoto(path: string) {
+    return request<{ ok: boolean }>("/api/upload/job-photo", {
+      method: "DELETE",
+      body: JSON.stringify({ path }),
     });
   },
 
@@ -193,7 +221,7 @@ export const api = {
     });
   },
 
-  updateProfile(body: { fullName?: string; avatarUrl?: string }) {
+  updateProfile(body: { fullName?: string; avatarUrl?: string; phone?: string }) {
     return request<{ user: User }>("/api/auth/profile", {
       method: "PATCH",
       body: JSON.stringify(body),

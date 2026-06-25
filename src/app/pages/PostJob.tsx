@@ -1,12 +1,29 @@
-import { useState, useRef } from "react";
-import { Link } from "react-router";
+import { useState, useRef, useEffect, type ReactNode } from "react";
+import { Link, useNavigate } from "react-router";
 import {
   ChevronRight, ChevronLeft, CheckCircle, MapPin, Calendar,
-  Clock, Banknote, Camera, X, AlertCircle, Share2, Copy, ExternalLink,
-  Wrench, FileText, Star,
+  Clock, Banknote, Camera, X, AlertCircle, Share2, Copy,
+  Wrench, FileText, Star, Loader2, Pencil,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import type { PostJobFormData } from "../../types";
+import { tasksUrl } from "../../lib/paths";
+import { ApiError, type PostJobFormData } from "../../types";
+
+const MAX_PHOTOS = 3;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"]);
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = () => reject(new Error("Gagal membaca file"));
+    reader.readAsDataURL(file);
+  });
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -38,7 +55,120 @@ const WAKTU_OPTIONS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface FormData extends PostJobFormData {}
+type PhotoStatus = "uploading" | "done" | "error";
+
+interface JobPhoto {
+  id: string;
+  file: File;
+  preview: string;
+  status: PhotoStatus;
+  storageUrl?: string;
+  storagePath?: string;
+  uploadError?: string;
+}
+
+interface FormData extends PostJobFormData {
+  localPhotos: JobPhoto[];
+}
+
+function photosBlockingSubmit(photos: JobPhoto[]): string | null {
+  const uploading = photos.filter((p) => p.status === "uploading");
+  if (uploading.length > 0) {
+    return `Menunggu ${uploading.length} foto selesai diunggah…`;
+  }
+  const failed = photos.filter((p) => p.status === "error");
+  if (failed.length > 0) {
+    return "Beberapa foto gagal diunggah. Hapus atau ketuk untuk coba lagi.";
+  }
+  return null;
+}
+
+function PhotoGrid({
+  photos,
+  photoError,
+  onAdd,
+  onRemove,
+  onRetry,
+  hideTitle = false,
+}: {
+  photos: JobPhoto[];
+  photoError?: string;
+  onAdd: (files: FileList | null) => void;
+  onRemove: (id: string) => void;
+  onRetry: (id: string) => void;
+  hideTitle?: boolean;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div>
+      {!hideTitle && (
+        <p className="font-bold text-[14px] text-[#0f2035] mb-3">Tambahkan foto (opsional)</p>
+      )}
+      <div className="flex gap-3 flex-wrap pt-1 pr-1">
+        {photos.map((photo) => (
+          <div key={photo.id} className="relative w-[90px] h-[90px] shrink-0">
+            <div className="w-full h-full rounded-xl overflow-hidden border-2 border-[#F59E42] relative">
+              <img src={photo.preview} alt="" className="w-full h-full object-cover" />
+              {photo.status === "uploading" && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                  <Loader2 size={22} className="text-white animate-spin" />
+                </div>
+              )}
+              {photo.status === "error" && (
+                <button
+                  type="button"
+                  onClick={() => onRetry(photo.id)}
+                  className="absolute inset-0 bg-red-600/80 flex flex-col items-center justify-center text-white p-1 pt-4"
+                  title={photo.uploadError}
+                >
+                  <AlertCircle size={16} />
+                  <span className="text-[9px] font-bold mt-0.5">Coba lagi</span>
+                </button>
+              )}
+              {photo.status === "done" && (
+                <div className="absolute bottom-0.5 left-0.5 w-4 h-4 rounded-full bg-[#20bf6f] flex items-center justify-center pointer-events-none">
+                  <CheckCircle size={10} className="text-white" />
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => onRemove(photo.id)}
+              aria-label="Hapus foto"
+              className="absolute -top-1.5 -right-1.5 z-20 w-6 h-6 rounded-full bg-[#2E5090] text-white flex items-center justify-center shadow-md border-2 border-white hover:bg-[#1e3d7a] transition-colors"
+            >
+              <X size={12} strokeWidth={3} />
+            </button>
+          </div>
+        ))}
+        {photos.length < MAX_PHOTOS && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-[90px] h-[90px] rounded-xl border-2 border-dashed border-[#b8d4c8] flex flex-col items-center justify-center gap-1 hover:border-[#2E5090] hover:bg-[#F5F1E8] transition-all text-[#7a9a8f]"
+          >
+            <Camera size={22} />
+            <span className="text-[10px] font-semibold">Tambah foto</span>
+          </button>
+        )}
+      </div>
+      {photoError && <p className="text-[12px] text-red-600 mt-2">{photoError}</p>}
+      <p className="text-[11px] text-[#7a9a8f] mt-2">Maks. 3 foto, 5 MB per foto · diunggah otomatis</p>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          onAdd(e.target.files);
+          if (fileRef.current) fileRef.current.value = "";
+        }}
+      />
+    </div>
+  );
+}
 
 // ─── Step components ─────────────────────────────────────────────────────────
 
@@ -70,16 +200,22 @@ function StepPilihLayanan({ data, onChange }: { data: FormData; onChange: (d: Pa
   );
 }
 
-function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
-  const fileRef = useRef<HTMLInputElement>(null);
+function StepDeskripsi({
+  data,
+  onChange,
+  photoError,
+  onAddPhotos,
+  onRemovePhoto,
+  onRetryPhoto,
+}: {
+  data: FormData;
+  onChange: (d: Partial<FormData>) => void;
+  photoError: string;
+  onAddPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (id: string) => void;
+  onRetryPhoto: (id: string) => void;
+}) {
   const layanan = LAYANAN.find((l) => l.id === data.layanan);
-
-  const addPhoto = () => {
-    const placeholders = ["📷 Foto 1", "📷 Foto 2", "📷 Foto 3"];
-    if (data.photos.length < 3) {
-      onChange({ photos: [...data.photos, placeholders[data.photos.length]] });
-    }
-  };
 
   return (
     <div>
@@ -107,31 +243,13 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
       </div>
 
       {/* Photo upload */}
-      <div>
-        <p className="font-bold text-[14px] text-[#0f2035] mb-3">Tambahkan foto (opsional)</p>
-        <div className="flex gap-3 flex-wrap">
-          {data.photos.map((photo, i) => (
-            <div key={i} className="relative w-[90px] h-[90px] rounded-xl bg-[#f0f7f4] border-2 border-[#F59E42] flex items-center justify-center text-[22px]">
-              {photo}
-              <button
-                onClick={() => onChange({ photos: data.photos.filter((_, j) => j !== i) })}
-                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#2E5090] text-white flex items-center justify-center"
-              >
-                <X size={11} />
-              </button>
-            </div>
-          ))}
-          {data.photos.length < 3 && (
-            <button
-              onClick={addPhoto}
-              className="w-[90px] h-[90px] rounded-xl border-2 border-dashed border-[#b8d4c8] flex flex-col items-center justify-center gap-1 hover:border-[#2E5090] hover:bg-[#F5F1E8] transition-all text-[#7a9a8f]"
-            >
-              <Camera size={22} />
-              <span className="text-[10px] font-semibold">Tambah foto</span>
-            </button>
-          )}
-        </div>
-      </div>
+      <PhotoGrid
+        photos={data.localPhotos}
+        photoError={photoError}
+        onAdd={onAddPhotos}
+        onRemove={onRemovePhoto}
+        onRetry={onRetryPhoto}
+      />
 
       {/* Tips */}
       <div className="mt-5 bg-[#F5F1E8] border border-[#c8dfd8] rounded-xl p-4">
@@ -145,7 +263,6 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
           <li>• Jenis/merek alat jika relevan (misal: Ariston 50L)</li>
         </ul>
       </div>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" />
     </div>
   );
 }
@@ -316,53 +433,79 @@ function StepAnggaran({ data, onChange }: { data: FormData; onChange: (d: Partia
   );
 }
 
-function StepReview({ data }: { data: FormData }) {
+function StepReview({
+  data,
+  photoError,
+  onAddPhotos,
+  onRemovePhoto,
+  onRetryPhoto,
+  onEditStep,
+}: {
+  data: FormData;
+  photoError: string;
+  onAddPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (id: string) => void;
+  onRetryPhoto: (id: string) => void;
+  onEditStep: (step: number) => void;
+}) {
   const layanan = LAYANAN.find((l) => l.id === data.layanan);
-  const waktu = WAKTU_OPTIONS.find((w) => w.id === data.waktuType);
 
   const formatBudget = (b: string) =>
     b ? `Rp ${parseInt(b).toLocaleString("id-ID")}` : "-";
 
+  const rows: {
+    label: string;
+    value: string;
+    step: number;
+    icon: ReactNode;
+    multiline?: boolean;
+  }[] = [
+    {
+      icon: <span className="text-[24px]">{layanan?.emoji}</span>,
+      label: "Layanan",
+      value: layanan?.label ?? "-",
+      step: 0,
+    },
+    {
+      icon: <FileText size={20} className="text-[#2E5090]" />,
+      label: "Deskripsi",
+      value: data.deskripsi || "-",
+      step: 1,
+      multiline: true,
+    },
+    {
+      icon: <MapPin size={20} className="text-[#2E5090]" />,
+      label: "Lokasi",
+      value: [data.area, data.alamat].filter(Boolean).join(", ") || "Jakarta",
+      step: 2,
+    },
+    {
+      icon: <Calendar size={20} className="text-[#2E5090]" />,
+      label: "Waktu",
+      value: data.waktuType === "asap"
+        ? "Segera / Hari ini"
+        : data.waktuType === "sebelum"
+        ? `Sebelum ${data.tanggal || "tanggal dipilih"}`
+        : "Fleksibel",
+      step: 3,
+    },
+    {
+      icon: <Banknote size={20} className="text-[#2E5090]" />,
+      label: "Anggaran",
+      value: data.budgetType === "minta"
+        ? "Minta tukang mengajukan harga"
+        : formatBudget(data.budget),
+      step: 4,
+    },
+  ];
+
   return (
     <div>
       <h2 className="font-black text-[26px] text-[#1a2d4a] mb-2">Tinjau sebelum posting</h2>
-      <p className="text-[#3d6b5e] text-[15px] mb-6">Pastikan semua detail sudah benar.</p>
+      <p className="text-[#3d6b5e] text-[15px] mb-6">Pastikan semua detail sudah benar. Ketuk Ubah untuk mengedit.</p>
 
       <div className="space-y-3">
-        {[
-          {
-            icon: <span className="text-[24px]">{layanan?.emoji}</span>,
-            label: "Layanan",
-            value: layanan?.label ?? "-",
-          },
-          {
-            icon: <FileText size={20} className="text-[#2E5090]" />,
-            label: "Deskripsi",
-            value: data.deskripsi || "-",
-            multiline: true,
-          },
-          {
-            icon: <MapPin size={20} className="text-[#2E5090]" />,
-            label: "Lokasi",
-            value: [data.area, data.alamat].filter(Boolean).join(", ") || "Jakarta",
-          },
-          {
-            icon: <Calendar size={20} className="text-[#2E5090]" />,
-            label: "Waktu",
-            value: data.waktuType === "asap"
-              ? "Segera / Hari ini"
-              : data.waktuType === "sebelum"
-              ? `Sebelum ${data.tanggal || "tanggal dipilih"}`
-              : "Fleksibel",
-          },
-          {
-            icon: <Banknote size={20} className="text-[#2E5090]" />,
-            label: "Anggaran",
-            value: data.budgetType === "minta"
-              ? "Minta tukang mengajukan harga"
-              : formatBudget(data.budget),
-          },
-        ].map((row) => (
+        {rows.map((row) => (
           <div key={row.label} className="flex items-start gap-4 bg-white border border-[#c8dfd8] rounded-2xl p-4">
             <div className="w-8 h-8 rounded-lg bg-[#f0f7f4] flex items-center justify-center shrink-0 mt-0.5">
               {row.icon}
@@ -373,26 +516,43 @@ function StepReview({ data }: { data: FormData }) {
                 {row.value}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => onEditStep(row.step)}
+              className="shrink-0 flex items-center gap-1 text-[12px] font-bold text-[#2E5090] hover:text-[#1e3d7a] px-2 py-1 rounded-lg hover:bg-[#f0f7f4] transition-colors"
+            >
+              <Pencil size={13} /> Ubah
+            </button>
           </div>
         ))}
 
-        {data.photos.length > 0 && (
-          <div className="flex items-start gap-4 bg-white border border-[#c8dfd8] rounded-2xl p-4">
-            <div className="w-8 h-8 rounded-lg bg-[#f0f7f4] flex items-center justify-center shrink-0">
-              <Camera size={16} className="text-[#2E5090]" />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-[#7a9a8f] uppercase tracking-wider mb-1">Foto</p>
-              <div className="flex gap-2">
-                {data.photos.map((p, i) => (
-                  <div key={i} className="w-12 h-12 rounded-lg bg-[#f0f7f4] border border-[#F59E42] flex items-center justify-center text-[18px]">
-                    {p.split(" ")[0]}
-                  </div>
-                ))}
+        <div className="bg-white border border-[#c8dfd8] rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#f0f7f4] flex items-center justify-center shrink-0">
+                <Camera size={16} className="text-[#2E5090]" />
               </div>
+              <p className="text-[11px] font-bold text-[#7a9a8f] uppercase tracking-wider">
+                Foto {data.localPhotos.length > 0 ? `(${data.localPhotos.length})` : "(opsional)"}
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => onEditStep(1)}
+              className="shrink-0 flex items-center gap-1 text-[12px] font-bold text-[#2E5090] hover:text-[#1e3d7a] px-2 py-1 rounded-lg hover:bg-[#f0f7f4] transition-colors"
+            >
+              <Pencil size={13} /> Ubah
+            </button>
           </div>
-        )}
+          <PhotoGrid
+            photos={data.localPhotos}
+            photoError={photoError}
+            onAdd={onAddPhotos}
+            onRemove={onRemovePhoto}
+            onRetry={onRetryPhoto}
+            hideTitle
+          />
+        </div>
       </div>
 
       <div className="mt-5 bg-[#f0f7f4] border border-[#F59E42] rounded-xl p-4 flex items-start gap-3">
@@ -408,19 +568,34 @@ function StepReview({ data }: { data: FormData }) {
 
 // ─── Job Ticket ───────────────────────────────────────────────────────────────
 
-function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
-  const [copied, setCopied] = useState(false);
+function JobTicket({ data, jobId, jobUuid }: { data: FormData; jobId: string; jobUuid: string }) {
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const layanan = LAYANAN.find((l) => l.id === data.layanan);
-  const waktu = WAKTU_OPTIONS.find((w) => w.id === data.waktuType);
   const navigate = useNavigate();
+
+  const jobLink = jobUuid ? `${window.location.origin}${tasksUrl({ id: jobUuid })}` : "";
 
   const formatBudget = (b: string) =>
     b ? `Rp ${parseInt(b).toLocaleString("id-ID")}` : "Minta penawaran";
 
   const copyId = () => {
     navigator.clipboard.writeText(jobId).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  const copyLink = () => {
+    if (!jobLink) return;
+    navigator.clipboard.writeText(jobLink).catch(() => {});
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const shareWhatsApp = () => {
+    if (!jobLink) return;
+    const text = encodeURIComponent(`Lihat pekerjaan saya di KerjaIn: ${jobLink}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   const now = new Date();
@@ -460,7 +635,7 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
               <p className="text-[11px] text-white/50 uppercase tracking-widest font-semibold mb-0.5">ID Pekerjaan</p>
               <button onClick={copyId} className="flex items-center gap-1.5 text-white font-black text-[18px] hover:text-[#F59E42] transition-colors">
                 {jobId}
-                {copied ? <CheckCircle size={14} className="text-[#20bf6f]" /> : <Copy size={14} className="text-white/50" />}
+                {copiedId ? <CheckCircle size={14} className="text-[#20bf6f]" /> : <Copy size={14} className="text-white/50" />}
               </button>
             </div>
             <div className="text-right">
@@ -559,22 +734,36 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
       {/* CTAs */}
       <div className="flex flex-col gap-3 mt-6">
         <button
-          onClick={() => navigate("/tasks")}
+          onClick={() => navigate(jobUuid ? tasksUrl({ id: jobUuid }) : "/tasks")}
           className="w-full bg-[#2E5090] hover:bg-[#1e3d7a] text-white font-bold text-[15px] py-4 rounded-2xl transition-colors"
         >
-          Lihat semua pekerjaan
+          {jobUuid ? "Lihat pekerjaan saya" : "Lihat semua pekerjaan"}
         </button>
         <div className="flex gap-3">
           <button
-            onClick={copyId}
-            className="flex-1 flex items-center justify-center gap-2 border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
+            type="button"
+            onClick={copyLink}
+            disabled={!jobLink}
+            className="flex-1 flex items-center justify-center gap-2 border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all disabled:opacity-50"
           >
-            <Copy size={16} /> Salin ID Pekerjaan
+            <Copy size={16} /> {copiedLink ? "Tersalin!" : "Salin Tautan"}
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all">
-            <Share2 size={16} /> Bagikan
+          <button
+            type="button"
+            onClick={shareWhatsApp}
+            disabled={!jobLink}
+            className="flex-1 flex items-center justify-center gap-2 border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] py-3 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all disabled:opacity-50"
+          >
+            <Share2 size={16} /> WhatsApp
           </button>
         </div>
+        <button
+          type="button"
+          onClick={copyId}
+          className="w-full text-center text-[13px] text-[#7a9a8f] hover:text-[#2E5090] transition-colors py-1"
+        >
+          Salin ID pekerjaan ({jobId})
+        </button>
         <Link
           to="/"
           className="text-center text-[13px] text-[#7a9a8f] hover:text-[#2E5090] transition-colors py-1"
@@ -589,6 +778,7 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
 const STEPS = ["Layanan", "Deskripsi", "Lokasi", "Waktu", "Anggaran", "Tinjau"];
+const REVIEW_STEP = STEPS.length - 1;
 
 function ProgressBar({ step }: { step: number }) {
   return (
@@ -624,6 +814,7 @@ const INITIAL_DATA: FormData = {
   layanan: "",
   deskripsi: "",
   photos: [],
+  localPhotos: [],
   lokasiType: "lokasi",
   area: "",
   alamat: "",
@@ -632,12 +823,6 @@ const INITIAL_DATA: FormData = {
   budgetType: "tetap",
   budget: "",
 };
-
-function generateJobId() {
-  const yr = new Date().getFullYear();
-  const rand = Math.floor(Math.random() * 90000) + 10000;
-  return `#KJ-${yr}-${rand}`;
-}
 
 function canProceed(step: number, data: FormData): boolean {
   if (step === 0) return !!data.layanan;
@@ -648,40 +833,212 @@ function canProceed(step: number, data: FormData): boolean {
   return true;
 }
 
+function canSaveEditStep(step: number, data: FormData): boolean {
+  if (!canProceed(step, data)) return false;
+  if (step === 1 && photosBlockingSubmit(data.localPhotos)) return false;
+  return true;
+}
+
 export default function PostJob() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<FormData>(INITIAL_DATA);
   const [submitted, setSubmitted] = useState(false);
-  const [jobId, setJobId] = useState(generateJobId());
+  const [jobId, setJobId] = useState("");
+  const [jobUuid, setJobUuid] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [returnToReview, setReturnToReview] = useState(false);
 
-  const update = (patch: Partial<FormData>) => setData((d) => ({ ...d, ...patch }));
+  const removedPhotoIdsRef = useRef(new Set<string>());
+  const uploadPromisesRef = useRef(new Map<string, Promise<void>>());
+  const localPhotosRef = useRef(data.localPhotos);
+  localPhotosRef.current = data.localPhotos;
+
+  useEffect(() => {
+    return () => {
+      localPhotosRef.current.forEach((p) => URL.revokeObjectURL(p.preview));
+    };
+  }, []);
+
+  const updatePhoto = (id: string, patch: Partial<JobPhoto>) => {
+    setData((d) => ({
+      ...d,
+      localPhotos: d.localPhotos.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }));
+  };
+
+  const startUpload = (photo: JobPhoto) => {
+    const promise = (async () => {
+      const base64 = await readFileAsBase64(photo.file);
+      const { url, path } = await api.uploadJobPhoto(base64, photo.file.type);
+
+      if (removedPhotoIdsRef.current.has(photo.id)) {
+        api.deleteJobPhoto(path).catch(() => {});
+        return;
+      }
+
+      updatePhoto(photo.id, { status: "done", storageUrl: url, storagePath: path, uploadError: undefined });
+    })().catch((err) => {
+      if (removedPhotoIdsRef.current.has(photo.id)) return;
+      const message = err instanceof Error ? err.message : "Gagal mengunggah";
+      updatePhoto(photo.id, { status: "error", uploadError: message });
+    }).finally(() => {
+      uploadPromisesRef.current.delete(photo.id);
+    });
+
+    uploadPromisesRef.current.set(photo.id, promise);
+  };
+
+  const addPhotos = (files: FileList | null) => {
+    if (!files?.length) return;
+    setPhotoError("");
+
+    const remaining = MAX_PHOTOS - data.localPhotos.length;
+    const toAdd = Array.from(files).slice(0, remaining);
+    const added: JobPhoto[] = [];
+
+    for (const file of toAdd) {
+      if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
+        setPhotoError("Format foto harus JPEG, PNG, atau WebP");
+        continue;
+      }
+      if (file.size > MAX_PHOTO_BYTES) {
+        setPhotoError("Ukuran foto maksimal 5 MB");
+        continue;
+      }
+      const photo: JobPhoto = {
+        id: crypto.randomUUID(),
+        file,
+        preview: URL.createObjectURL(file),
+        status: "uploading",
+      };
+      added.push(photo);
+    }
+
+    if (!added.length) return;
+
+    setData((d) => ({ ...d, localPhotos: [...d.localPhotos, ...added] }));
+    added.forEach((photo) => startUpload(photo));
+  };
+
+  const removePhoto = (id: string) => {
+    removedPhotoIdsRef.current.add(id);
+    const photo = data.localPhotos.find((p) => p.id === id);
+    if (photo) {
+      URL.revokeObjectURL(photo.preview);
+      if (photo.storagePath) {
+        api.deleteJobPhoto(photo.storagePath).catch(() => {});
+      }
+    }
+    setData((d) => ({ ...d, localPhotos: d.localPhotos.filter((p) => p.id !== id) }));
+  };
+
+  const retryPhoto = (id: string) => {
+    const photo = data.localPhotos.find((p) => p.id === id);
+    if (!photo) return;
+    removedPhotoIdsRef.current.delete(id);
+    updatePhoto(id, { status: "uploading", uploadError: undefined, storageUrl: undefined, storagePath: undefined });
+    startUpload(photo);
+  };
+
+  const waitForPendingUploads = async () => {
+    const pending = [...uploadPromisesRef.current.values()];
+    if (pending.length > 0) {
+      await Promise.allSettled(pending);
+    }
+  };
+
+  const photoBlockReason = photosBlockingSubmit(data.localPhotos);
+
+  const editFromReview = (targetStep: number) => {
+    setReturnToReview(true);
+    setSubmitError("");
+    setStep(targetStep);
+  };
+
+  const goBackToReview = () => {
+    setReturnToReview(false);
+    setStep(REVIEW_STEP);
+  };
 
   const handleNext = async () => {
-    if (step < STEPS.length - 1) {
+    if (returnToReview) {
+      if (!canSaveEditStep(step, data)) return;
+      goBackToReview();
+      return;
+    }
+
+    if (step < REVIEW_STEP) {
       setStep((s) => s + 1);
       return;
     }
+
     setSubmitting(true);
     setSubmitError("");
     try {
-      const { job } = await api.createJob(data);
+      await waitForPendingUploads();
+
+      const photos = localPhotosRef.current;
+      const blockReason = photosBlockingSubmit(photos);
+      if (blockReason) {
+        setSubmitError(blockReason);
+        return;
+      }
+
+      const photoUrls = photos
+        .filter((p) => p.status === "done" && p.storageUrl)
+        .map((p) => p.storageUrl!);
+
+      const { job } = await api.createJob({
+        layanan: data.layanan,
+        deskripsi: data.deskripsi,
+        photos: photoUrls,
+        lokasiType: data.lokasiType,
+        area: data.area,
+        alamat: data.alamat,
+        waktuType: data.waktuType,
+        tanggal: data.tanggal,
+        budgetType: data.budgetType,
+        budget: data.budget,
+      });
       setJobId(job.jobNumber);
+      setJobUuid(job.id);
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Gagal memposting pekerjaan");
+      if (err instanceof ApiError) {
+        const detailMsgs = err.details ? Object.values(err.details) : [];
+        setSubmitError(detailMsgs.length > 0 ? detailMsgs.join(" · ") : err.message);
+      } else {
+        setSubmitError(err instanceof Error ? err.message : "Gagal memposting pekerjaan");
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleBack = () => setStep((s) => s - 1);
+  const handleBack = () => {
+    if (returnToReview) {
+      goBackToReview();
+      return;
+    }
+    setStep((s) => s - 1);
+  };
+
+  const update = (patch: Partial<FormData>) => setData((d) => ({ ...d, ...patch }));
+
+  const canSubmit = canProceed(step, data) && !photoBlockReason && !submitting;
+  const progressStep = returnToReview ? REVIEW_STEP : step;
+  const forwardEnabled = returnToReview
+    ? canSaveEditStep(step, data) && !submitting
+    : step === REVIEW_STEP
+    ? canSubmit
+    : canProceed(step, data) && !submitting;
 
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#F5F1E8] py-10 px-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-        <JobTicket data={data} jobId={jobId} />
+        <JobTicket data={data} jobId={jobId} jobUuid={jobUuid} />
       </div>
     );
   }
@@ -695,52 +1052,86 @@ export default function PostJob() {
             <ChevronLeft size={18} className="text-[#3d6b5e]" />
           </Link>
           <div>
-            <p className="text-[12px] text-[#7a9a8f] font-semibold">Langkah {step + 1} dari {STEPS.length}</p>
+            <p className="text-[12px] text-[#7a9a8f] font-semibold">
+              {returnToReview ? "Mengedit — kembali ke tinjauan" : `Langkah ${step + 1} dari ${STEPS.length}`}
+            </p>
             <p className="font-black text-[15px] text-[#1a2d4a]">Pasang Pekerjaan</p>
           </div>
         </div>
 
         {/* Progress */}
-        <ProgressBar step={step} />
+        <ProgressBar step={progressStep} />
 
         {/* Step content */}
         <div className="bg-white rounded-3xl border border-[#c8dfd8] p-6 sm:p-8 mb-6 min-h-[400px]">
           {step === 0 && <StepPilihLayanan data={data} onChange={update} />}
-          {step === 1 && <StepDeskripsi data={data} onChange={update} />}
+          {step === 1 && (
+            <StepDeskripsi
+              data={data}
+              onChange={update}
+              photoError={photoError}
+              onAddPhotos={addPhotos}
+              onRemovePhoto={removePhoto}
+              onRetryPhoto={retryPhoto}
+            />
+          )}
           {step === 2 && <StepLokasi data={data} onChange={update} />}
           {step === 3 && <StepWaktu data={data} onChange={update} />}
           {step === 4 && <StepAnggaran data={data} onChange={update} />}
-          {step === 5 && <StepReview data={data} />}
+          {step === 5 && (
+            <StepReview
+              data={data}
+              photoError={photoError}
+              onAddPhotos={addPhotos}
+              onRemovePhoto={removePhoto}
+              onRetryPhoto={retryPhoto}
+              onEditStep={editFromReview}
+            />
+          )}
         </div>
 
         {/* Nav buttons */}
         <div className="flex gap-3">
-          {step > 0 && (
+          {(step > 0 || returnToReview) && (
             <button
+              type="button"
               onClick={handleBack}
               className="flex items-center gap-2 border-2 border-[#b8d4c8] text-[#1a3d5c] font-bold text-[14px] px-6 py-3.5 rounded-2xl hover:border-[#2E5090] hover:text-[#2E5090] transition-all"
             >
-              <ChevronLeft size={16} /> Kembali
+              <ChevronLeft size={16} /> {returnToReview ? "Kembali ke tinjauan" : "Kembali"}
             </button>
           )}
           <button
+            type="button"
             onClick={handleNext}
-            disabled={!canProceed(step, data) || submitting}
+            disabled={!forwardEnabled}
             className={`flex-1 flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data) && !submitting
+              forwardEnabled
                 ? "bg-[#2E5090] hover:bg-[#1e3d7a] text-white"
                 : "bg-[#c8dfd8] text-[#7a9a8f] cursor-not-allowed"
             }`}
           >
             {submitting ? (
-              "Memposting…"
-            ) : step === STEPS.length - 1 ? (
+              <><Loader2 size={16} className="animate-spin" /> Memposting…</>
+            ) : returnToReview ? (
+              <><CheckCircle size={16} /> Simpan & kembali</>
+            ) : step === REVIEW_STEP && photoBlockReason ? (
+              photoBlockReason
+            ) : step === REVIEW_STEP ? (
               <>Posting Sekarang <Star size={16} /></>
             ) : (
               <>Lanjut <ChevronRight size={16} /></>
             )}
           </button>
         </div>
+
+        {returnToReview && step === 1 && photoBlockReason && !submitting && (
+          <p className="text-center text-[12px] text-[#7a9a8f] mt-2">{photoBlockReason}</p>
+        )}
+
+        {photoBlockReason && step === REVIEW_STEP && !submitting && !returnToReview && (
+          <p className="text-center text-[12px] text-[#7a9a8f] mt-2">{photoBlockReason}</p>
+        )}
 
         {submitError && (
           <p className="text-center text-[13px] text-red-600 font-semibold mt-3">{submitError}</p>

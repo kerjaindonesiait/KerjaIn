@@ -17,6 +17,18 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   }
 }
 
+export function optionalAuth(req: AuthedRequest, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return next();
+  try {
+    const payload = verifyAccessToken(header.slice(7));
+    req.user = { id: payload.sub, email: payload.email, role: payload.role };
+  } catch {
+    // ignore invalid token — public endpoints stay public
+  }
+  next();
+}
+
 export function requireRole(...roles: string[]) {
   return (req: AuthedRequest, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });

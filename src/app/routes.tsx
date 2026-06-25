@@ -4,6 +4,7 @@ import Root from "./pages/Root";
 import Home from "./pages/Home";
 import Tasks from "./pages/Tasks";
 import HowItWorks from "./pages/HowItWorks";
+import Categories from "./pages/Categories";
 import PostJob from "./pages/PostJob";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
@@ -14,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AccountSettings from "./pages/AccountSettings";
+import MyJobs from "./pages/MyJobs";
 
 export const router = createBrowserRouter([
   {
@@ -23,10 +25,11 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "tasks", Component: Tasks },
       { path: "how-it-works", Component: HowItWorks },
+      { path: "categories", Component: Categories },
       {
         path: "post-job",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute role="user">
             <PostJob />
           </ProtectedRoute>
         ),
@@ -49,6 +52,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <AccountSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "pekerjaan-saya",
+        element: (
+          <ProtectedRoute role="user">
+            <MyJobs />
           </ProtectedRoute>
         ),
       },

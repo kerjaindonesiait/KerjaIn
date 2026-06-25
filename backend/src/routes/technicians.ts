@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { resolveTechnicianPhone } from "../utils/phone.js";
 
 const router = Router();
 
@@ -18,9 +19,16 @@ router.get("/profile", requireAuth, requireRole("technician"), async (req: Authe
 router.post("/profile", requireAuth, requireRole("technician"), async (req: AuthedRequest, res) => {
   try {
     const body = req.body;
+    let normalizedPhone: string | null = null;
+    if (body.phone) {
+      const resolved = await resolveTechnicianPhone(body.phone, req.user!.id);
+      if ("error" in resolved) return res.status(409).json({ error: resolved.error });
+      normalizedPhone = resolved.phone;
+    }
+
     const payload = {
       user_id: req.user!.id,
-      phone: body.phone ?? null,
+      phone: normalizedPhone,
       area: body.area ?? null,
       nik: body.nik ?? null,
       ktp_photo_url: body.ktpPhoto ?? body.ktp_photo_url ?? null,
@@ -49,7 +57,12 @@ router.post("/profile", requireAuth, requireRole("technician"), async (req: Auth
       result = data;
     } else {
       const { data, error } = await db.from("technician_profiles").insert(payload).select().single();
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505") {
+          return res.status(409).json({ error: "Nomor telepon ini sudah terdaftar untuk akun tukang lain" });
+        }
+        throw error;
+      }
       result = data;
     }
 
@@ -61,7 +74,6 @@ router.post("/profile", requireAuth, requireRole("technician"), async (req: Auth
 });
 
 router.post("/register", async (req, res) => {
-  // Combined technician signup: creates user + profile in one call
   try {
     const { email, password, fullName, ...profileData } = req.body;
     if (!email || !password) {
@@ -82,11 +94,21 @@ router.post("/register", async (req, res) => {
       throw userErr;
     }
 
+    let normalizedPhone: string | null = null;
+    if (profileData.phone) {
+      const resolved = await resolveTechnicianPhone(profileData.phone, user.id);
+      if ("error" in resolved) {
+        await db.from("users").delete().eq("id", user.id);
+        return res.status(409).json({ error: resolved.error });
+      }
+      normalizedPhone = resolved.phone;
+    }
+
     const { data: profile, error: profileErr } = await db
       .from("technician_profiles")
       .insert({
         user_id: user.id,
-        phone: profileData.phone ?? null,
+        phone: normalizedPhone,
         area: profileData.area ?? null,
         keahlian: profileData.keahlian ?? [],
         pengalaman: profileData.pengalaman ?? null,
@@ -96,7 +118,13 @@ router.post("/register", async (req, res) => {
       .select()
       .single();
 
-    if (profileErr) throw profileErr;
+    if (profileErr) {
+      await db.from("users").delete().eq("id", user.id);
+      if (profileErr.code === "23505") {
+        return res.status(409).json({ error: "Nomor telepon ini sudah terdaftar untuk akun tukang lain" });
+      }
+      throw profileErr;
+    }
 
     res.status(201).json({ user, profile });
   } catch (err) {

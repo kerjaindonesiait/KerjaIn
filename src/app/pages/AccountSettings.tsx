@@ -9,6 +9,7 @@ export default function AccountSettings() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState(user?.fullName ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
 
@@ -24,7 +25,8 @@ export default function AccountSettings() {
 
   useEffect(() => {
     if (user?.fullName) setFullName(user.fullName);
-  }, [user?.fullName]);
+    if (user?.phone !== undefined) setPhone(user.phone ?? "");
+  }, [user?.fullName, user?.phone]);
 
   if (!user) return null;
 
@@ -40,7 +42,10 @@ export default function AccountSettings() {
     setProfileLoading(true);
     setProfileMsg("");
     try {
-      await api.updateProfile({ fullName: fullName.trim() });
+      await api.updateProfile({
+        fullName: fullName.trim(),
+        ...(user.role === "user" ? { phone: phone.trim() } : {}),
+      });
       await refreshUser();
       setProfileMsg("Profil diperbarui.");
     } catch (err) {
@@ -145,6 +150,20 @@ export default function AccountSettings() {
               <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Email</label>
               <input value={user.email} disabled className="w-full border-2 border-[#e8e8e8] rounded-xl px-4 py-3 text-[14px] bg-[#f5f5f5] text-[#7a9a8f]" />
             </div>
+            {user.role === "user" && (
+              <div className="mb-4">
+                <label className="block text-[13px] font-bold text-[#0f2035] mb-1.5">Nomor telepon</label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s-]/g, ""))}
+                  placeholder="08xxxxxxxxxx"
+                  className="w-full border-2 border-[#b8d4c8] rounded-xl px-4 py-3 text-[14px] bg-[#F5F1E8] outline-none focus:border-[#2E5090]"
+                />
+                <p className="text-[11px] text-[#7a9a8f] mt-1.5">
+                  Nomor yang sama boleh dipakai di akun tukang terpisah (email berbeda).
+                </p>
+              </div>
+            )}
             {profileMsg && (
               <p className={`text-[13px] mb-3 ${profileMsg.includes("Gagal") ? "text-red-600" : "text-[#20bf6f]"}`}>{profileMsg}</p>
             )}

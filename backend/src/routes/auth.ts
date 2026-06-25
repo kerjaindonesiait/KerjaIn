@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword } from "../utils/password.js";
 import { hashToken, signAccessToken, verifyRefreshToken } from "../utils/jwt.js";
 import { findOrCreateOAuthUser, issueTokens } from "../utils/oauth.js";
 import { consumeToken, sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "../utils/authTokens.js";
+import { resolveCustomerPhone } from "../utils/phone.js";
 import { config } from "../config.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
@@ -17,6 +18,7 @@ function publicUser(user: UserRow) {
     role: user.role,
     avatarUrl: user.avatar_url,
     emailVerified: user.email_verified,
+    phone: user.phone ?? null,
     createdAt: user.created_at,
   };
 }
@@ -248,10 +250,23 @@ router.post("/reset-password", async (req, res) => {
 
 router.patch("/profile", requireAuth, async (req: AuthedRequest, res) => {
   try {
-    const { fullName, avatarUrl } = req.body;
+    const { fullName, avatarUrl, phone } = req.body;
     const updates: Record<string, string | null> = {};
     if (fullName !== undefined) updates.full_name = fullName || null;
     if (avatarUrl !== undefined) updates.avatar_url = avatarUrl || null;
+
+    if (phone !== undefined) {
+      if (req.user!.role !== "user") {
+        return res.status(400).json({ error: "Nomor telepon pelanggan hanya untuk akun pengguna" });
+      }
+      if (!phone || !String(phone).trim()) {
+        updates.phone = null;
+      } else {
+        const resolved = await resolveCustomerPhone(String(phone), req.user!.id);
+        if ("error" in resolved) return res.status(409).json({ error: resolved.error });
+        updates.phone = resolved.phone;
+      }
+    }
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No fields to update" });
@@ -264,7 +279,12 @@ router.patch("/profile", requireAuth, async (req: AuthedRequest, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === "23505") {
+        return res.status(409).json({ error: "Nomor telepon ini sudah terdaftar untuk akun pelanggan lain" });
+      }
+      throw error;
+    }
     res.json({ user: publicUser(data as UserRow) });
   } catch (err) {
     console.error(err);

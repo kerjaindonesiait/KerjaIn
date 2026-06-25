@@ -13,6 +13,7 @@ export type UserRow = {
   avatar_url: string | null;
   password_hash: string | null;
   email_verified: boolean;
+  phone: string | null;
   created_at: string;
 };
 
@@ -34,6 +35,8 @@ export type JobRow = {
   status: string;
   urgency: string | null;
   assigned_technician_id: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
 };

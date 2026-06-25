@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { CheckCircle, Shield, Star, MessageSquare, Lock, ChevronRight } from "lucide-react";
+import { tasksUrl } from "../../lib/paths";
 
 const STEPS = [
   {
@@ -91,7 +92,7 @@ export default function HowItWorks() {
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
-              to="/tasks"
+              to="/post-job"
               className="bg-[#2E5090] text-white font-bold text-[15px] px-8 py-3.5 rounded-full hover:bg-[#1e3d7a] transition-colors"
             >
               Pasang pekerjaan gratis
@@ -134,7 +135,7 @@ export default function HowItWorks() {
                 <h3 className="font-black text-[28px] text-[#1a2d4a] leading-tight mb-4">{step.heading}</h3>
                 <p className="text-[#3d6b5e] text-[15px] leading-relaxed mb-6">{step.body}</p>
                 <Link
-                  to="/tasks"
+                  to="/post-job"
                   className="inline-flex items-center gap-2 bg-[#2E5090] text-white font-bold text-[13px] px-6 py-2.5 rounded-full hover:bg-[#1e3d7a] transition-colors"
                 >
                   Pasang pekerjaan gratis <ChevronRight size={14} />
@@ -157,7 +158,7 @@ export default function HowItWorks() {
           {[...LAYANAN, ...LAYANAN].map((cat, i) => (
             <Link
               key={i}
-              to="/tasks"
+              to={tasksUrl({ search: cat.label })}
               className="flex-shrink-0 w-[160px] bg-white rounded-2xl p-5 border border-transparent hover:border-[#2E5090] hover:shadow-md transition-all flex flex-col items-center gap-3 group"
             >
               <span className="text-[44px]">{cat.emoji}</span>
@@ -200,7 +201,7 @@ export default function HowItWorks() {
 
         <div className="mt-10 text-center">
           <Link
-            to="/tasks"
+            to="/post-job"
             className="inline-flex items-center gap-2 bg-[#1a2d4a] text-white font-bold text-[14px] px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity"
           >
             Mulai gratis <ChevronRight size={16} />
@@ -218,7 +219,7 @@ export default function HowItWorks() {
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link
-            to="/tasks"
+            to="/post-job"
             className="bg-[#2E5090] text-white font-bold text-[15px] px-9 py-4 rounded-full hover:bg-[#1e3d7a] transition-colors"
           >
             Pasang pekerjaan gratis

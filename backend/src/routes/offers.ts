@@ -40,6 +40,20 @@ router.post("/job/:jobId", requireAuth, requireRole("technician"), async (req: A
     const { price, message, availability = "segera", scheduledTime } = req.body;
     if (!price) return res.status(400).json({ error: "Price required" });
 
+    const { data: job, error: jobErr } = await db
+      .from("jobs")
+      .select("id, user_id, status")
+      .eq("id", req.params.jobId)
+      .single();
+
+    if (jobErr || !job) return res.status(404).json({ error: "Job not found" });
+    if (job.user_id === req.user!.id) {
+      return res.status(403).json({ error: "You cannot quote your own job" });
+    }
+    if (job.status !== "open") {
+      return res.status(400).json({ error: "Job is no longer open for offers" });
+    }
+
     const { data, error } = await db
       .from("offers")
       .insert({

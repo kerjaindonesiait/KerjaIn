@@ -1,29 +1,58 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useState } from "react";
-import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, LogOut, User as UserIcon, Briefcase } from "lucide-react";
 import { useAuth } from "../../lib/auth";
+import { tasksUrl } from "../../lib/paths";
 
 const NAV_LINKS = [
   { label: "Lihat Pekerjaan", href: "/tasks" },
+  { label: "Layanan", href: "/categories" },
   { label: "Cara Kerja", href: "/how-it-works" },
 ];
 
-const FOOTER_COLS = [
+const FOOTER_COLS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
     heading: "Temukan",
-    links: ["Cara Kerja", "Cari Pekerjaan", "Panduan Biaya", "Panduan Plumbing", "FAQ Pengguna Baru"],
+    links: [
+      { label: "Cara Kerja", href: "/how-it-works" },
+      { label: "Cari Pekerjaan", href: "/tasks" },
+      { label: "Semua Layanan", href: "/categories" },
+      { label: "Panduan Biaya", href: tasksUrl({ search: "biaya" }) },
+      { label: "Panduan Plumbing", href: tasksUrl({ search: "plumbing" }) },
+      { label: "FAQ Pengguna Baru", href: "/how-it-works" },
+    ],
   },
   {
     heading: "Perusahaan",
-    links: ["Tentang Kami", "Karir", "Hubungi Media", "Panduan Komunitas", "Syarat & Ketentuan", "Blog", "Hubungi Kami", "Kebijakan Privasi"],
+    links: [
+      { label: "Tentang Kami", href: "/how-it-works" },
+      { label: "Karir", href: "/daftar-tukang" },
+      { label: "Syarat & Ketentuan", href: "/how-it-works" },
+      { label: "Kebijakan Privasi", href: "/how-it-works" },
+      { label: "Hubungi Kami", href: "mailto:hello@kerjain.id" },
+    ],
   },
   {
     heading: "Tautan Cepat",
-    links: ["Pasang Pekerjaan", "Lihat Pekerjaan", "Masuk", "Pusat Bantuan"],
+    links: [
+      { label: "Pasang Pekerjaan", href: "/post-job" },
+      { label: "Lihat Pekerjaan", href: "/tasks" },
+      { label: "Masuk", href: "/masuk" },
+      { label: "Daftar Tukang", href: "/daftar-tukang" },
+    ],
   },
   {
     heading: "Layanan Kami",
-    links: ["Pipa Bocor Darurat", "Deteksi Kebocoran", "Ganti Pipa", "Saluran Mampet", "Pemanas Air", "Pasang Kamar Mandi", "Perawatan Umum", "Tukang Serba Bisa", "Perbaikan Pintu & Kunci", "Bersih Talang", "Perbaikan Keramik", "Semua Layanan"],
+    links: [
+      { label: "Pipa Bocor Darurat", href: tasksUrl({ search: "pipa bocor" }) },
+      { label: "Deteksi Kebocoran", href: tasksUrl({ search: "deteksi kebocoran" }) },
+      { label: "Ganti Pipa", href: tasksUrl({ search: "ganti pipa" }) },
+      { label: "Saluran Mampet", href: tasksUrl({ search: "saluran mampet" }) },
+      { label: "Pemanas Air", href: tasksUrl({ search: "pemanas air" }) },
+      { label: "Pasang Kamar Mandi", href: tasksUrl({ search: "kamar mandi" }) },
+      { label: "Perawatan Umum", href: tasksUrl({ search: "perawatan" }) },
+      { label: "Semua Layanan", href: "/categories" },
+    ],
   },
 ];
 
@@ -65,13 +94,15 @@ export default function Root() {
             </svg>
           </Link>
 
-          {/* Post a job CTA */}
-          <Link
-            to="/post-job"
-            className="hidden md:flex items-center bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap mr-1"
-          >
-            Pasang Pekerjaan
-          </Link>
+          {/* Post a job CTA — customers only */}
+          {(!user || user.role === "user") && (
+            <Link
+              to="/post-job"
+              className="hidden md:flex items-center bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#1e3d7a] transition-colors whitespace-nowrap mr-1"
+            >
+              Pasang Pekerjaan
+            </Link>
+          )}
 
           {/* Center nav */}
           <nav className="hidden md:flex items-center h-full flex-1">
@@ -99,6 +130,11 @@ export default function Root() {
           <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto">
             {loading ? null : user ? (
               <>
+                {user.role === "user" && (
+                  <Link to="/pekerjaan-saya" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
+                    Pekerjaan Saya
+                  </Link>
+                )}
                 {user.role === "technician" && (
                   <Link to="/dasbor-tukang" className="text-[13px] font-semibold text-[#1a3d5c] hover:text-[#2E5090] transition-colors whitespace-nowrap px-2">
                     Dasbor Tukang
@@ -142,9 +178,11 @@ export default function Root() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-white border-t border-[#f5eded] px-6 py-4 flex flex-col gap-3">
-            <Link to="/post-job" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
-              Pasang Pekerjaan
-            </Link>
+            {(!user || user.role === "user") && (
+              <Link to="/post-job" className="bg-[#2E5090] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
+                Pasang Pekerjaan
+              </Link>
+            )}
             {NAV_LINKS.map((item) => (
               <Link key={item.label} to={item.href} className="text-[14px] font-semibold text-[#1a3d5c] py-2 border-b border-[#f0f7f4]" onClick={() => setMobileOpen(false)}>
                 {item.label}
@@ -166,6 +204,11 @@ export default function Root() {
                       <p className="text-[12px] text-[#7a9a8f]">{user.email}</p>
                     </div>
                   </Link>
+                  {user.role === "user" && (
+                    <Link to="/pekerjaan-saya" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#1a3d5c] py-2 flex items-center gap-2">
+                      <Briefcase size={16} /> Pekerjaan Saya
+                    </Link>
+                  )}
                   {user.role === "technician" && (
                     <Link to="/dasbor-tukang" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#1a3d5c] py-2 flex items-center gap-2">
                       <UserIcon size={16} /> Dasbor Tukang
@@ -199,7 +242,7 @@ export default function Root() {
             <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">Lokasi Populer di Jakarta</p>
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {POPULAR_LOCATIONS.map((loc) => (
-                <a key={loc} href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{loc}</a>
+                <Link key={loc} to={tasksUrl({ area: loc })} className="text-[13px] text-white/70 hover:text-white transition-colors">{loc}</Link>
               ))}
             </div>
           </div>
@@ -211,8 +254,12 @@ export default function Root() {
                 <h4 className="text-[12px] font-bold uppercase tracking-widest text-white/50 mb-4">{col.heading}</h4>
                 <ul className="flex flex-col gap-2">
                   {col.links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{link}</a>
+                    <li key={link.label}>
+                      {link.href.startsWith("mailto:") ? (
+                        <a href={link.href} className="text-[13px] text-white/70 hover:text-white transition-colors">{link.label}</a>
+                      ) : (
+                        <Link to={link.href} className="text-[13px] text-white/70 hover:text-white transition-colors">{link.label}</Link>
+                      )}
                     </li>
                   ))}
                 </ul>

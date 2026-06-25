@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { db } from "../db.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth, optionalAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { geocodeJobLocation } from "../utils/geocode.js";
+import { validateCreateJobBody } from "../utils/jobValidation.js";
 
 const router = Router();
 
@@ -81,6 +83,8 @@ async function enrichJob(job: Record<string, unknown>) {
     photos: job.photos,
     area: job.area,
     alamat: job.alamat,
+    latitude: job.latitude ?? null,
+    longitude: job.longitude ?? null,
     lokasiType: job.lokasi_type,
     waktuType: job.waktu_type,
     tanggal: job.tanggal,
@@ -102,7 +106,7 @@ async function enrichJob(job: Record<string, unknown>) {
   };
 }
 
-router.get("/", async (req, res) => {
+router.get("/", optionalAuth, async (req: AuthedRequest, res) => {
   try {
     const { status = "open", search, area } = req.query;
     let query = db.from("jobs").select("*").order("created_at", { ascending: false });
@@ -114,7 +118,12 @@ router.get("/", async (req, res) => {
     const { data, error } = await query;
     if (error) throw error;
 
-    const jobs = await Promise.all((data ?? []).map((j) => enrichJob(j)));
+    let rows = data ?? [];
+    if (req.user?.role === "technician") {
+      rows = rows.filter((j) => j.user_id !== req.user!.id);
+    }
+
+    const jobs = await Promise.all(rows.map((j) => enrichJob(j)));
     res.json({ jobs });
   } catch (err) {
     console.error(err);
@@ -138,6 +147,39 @@ router.get("/mine", requireAuth, async (req: AuthedRequest, res) => {
   }
 });
 
+router.post("/:id/cancel", requireAuth, requireRole("user"), async (req: AuthedRequest, res) => {
+  try {
+    const { data: job, error: fetchErr } = await db
+      .from("jobs")
+      .select("*")
+      .eq("id", req.params.id)
+      .single();
+
+    if (fetchErr || !job) {
+      return res.status(404).json({ error: "Pekerjaan tidak ditemukan" });
+    }
+    if (job.user_id !== req.user!.id) {
+      return res.status(403).json({ error: "Anda tidak berhak membatalkan pekerjaan ini" });
+    }
+    if (job.status !== "open") {
+      return res.status(400).json({ error: "Hanya pekerjaan terbuka yang bisa dibatalkan" });
+    }
+
+    const { data, error } = await db
+      .from("jobs")
+      .update({ status: "cancelled" })
+      .eq("id", req.params.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ job: await enrichJob(data) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Gagal membatalkan pekerjaan" });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const { data, error } = await db.from("jobs").select("*").eq("id", req.params.id).single();
@@ -149,10 +191,20 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", requireAuth, async (req: AuthedRequest, res) => {
+router.post("/", requireAuth, requireRole("user"), async (req: AuthedRequest, res) => {
   try {
-    const body = req.body;
-    const budgetRaw = body.budgetType === "minta" ? null : parseBudget(body.budget);
+    const body = req.body as Record<string, unknown>;
+    const validationErrors = validateCreateJobBody(body);
+    if (Object.keys(validationErrors).length > 0) {
+      return res.status(400).json({ error: "Periksa kembali formulir Anda", details: validationErrors });
+    }
+
+    const budgetRaw = body.budgetType === "minta" ? null : parseBudget(String(body.budget ?? ""));
+    const coords = await geocodeJobLocation(String(body.area ?? ""), body.alamat as string | undefined);
+
+    const photos = Array.isArray(body.photos)
+      ? (body.photos as string[]).filter((p) => typeof p === "string" && p.startsWith("http"))
+      : [];
 
     const { data, error } = await db
       .from("jobs")
@@ -160,17 +212,19 @@ router.post("/", requireAuth, async (req: AuthedRequest, res) => {
         user_id: req.user!.id,
         job_number: generateJobNumber(),
         category: body.layanan ?? body.category,
-        title: deriveTitle(body.layanan ?? body.category, body.deskripsi ?? body.description),
+        title: deriveTitle(String(body.layanan ?? body.category), String(body.deskripsi ?? body.description)),
         description: body.deskripsi ?? body.description,
-        photos: body.photos ?? [],
+        photos,
         lokasi_type: body.lokasiType ?? "lokasi",
         area: body.area,
         alamat: body.alamat ?? null,
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
         waktu_type: body.waktuType ?? "fleksibel",
         tanggal: body.tanggal || null,
         budget_type: body.budgetType ?? "tetap",
         budget_raw: budgetRaw,
-        urgency: urgencyFromWaktu(body.waktuType ?? "fleksibel"),
+        urgency: urgencyFromWaktu(String(body.waktuType ?? "fleksibel")),
         status: "open",
       })
       .select()

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   Plus, Minus, Crosshair, SlidersHorizontal, Shield,
@@ -447,17 +447,40 @@ function MapPlaceholder({ selectedId }: { selectedId: string | null }) {
 }
 
 export default function Tasks() {
+  const [searchParams] = useSearchParams();
+  const idFromUrl = searchParams.get("id");
+  const areaFromUrl = searchParams.get("area") ?? "";
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(idFromUrl);
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") ?? "");
 
   useEffect(() => {
-    api.getJobs({ search: searchQuery || undefined })
+    const q = searchParams.get("search");
+    if (q !== null) setSearchQuery(q);
+  }, [searchParams]);
+
+  useEffect(() => {
+    setLoading(true);
+    api.getJobs({ search: searchQuery || undefined, area: areaFromUrl || undefined })
       .then(({ jobs }) => setTasks(jobs.map((j) => ({ ...j, status: j.status === "open" ? "Terbuka" : j.status }))))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
-  }, [searchQuery]);
+  }, [searchQuery, areaFromUrl]);
+
+  useEffect(() => {
+    if (!idFromUrl) return;
+    setSelectedId(idFromUrl);
+    api.getJob(idFromUrl)
+      .then(({ job }) => {
+        const mapped: Task = {
+          ...job,
+          status: job.status === "open" ? "Terbuka" : job.status,
+        };
+        setTasks((prev) => (prev.some((t) => t.id === job.id) ? prev : [...prev, mapped]));
+      })
+      .catch(() => {});
+  }, [idFromUrl]);
 
   const filtered = tasks.filter((t) =>
     t.title.toLowerCase().includes(searchQuery.toLowerCase())

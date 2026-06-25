@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   avatarUrl: string | null;
   emailVerified: boolean;
+  phone: string | null;
   createdAt: string;
 }
 
@@ -19,6 +20,8 @@ export interface Job {
   photos: string[];
   area: string;
   alamat?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   lokasiType: string;
   waktuType: string;
   tanggal?: string | null;
@@ -70,6 +73,16 @@ export interface PostJobFormData {
   tanggal: string;
   budgetType: "tetap" | "minta";
   budget: string;
+}
+
+export class ApiError extends Error {
+  details?: Record<string, string>;
+
+  constructor(message: string, details?: Record<string, string>) {
+    super(message);
+    this.name = "ApiError";
+    this.details = details;
+  }
 }
 
 export interface TechProfileData {
