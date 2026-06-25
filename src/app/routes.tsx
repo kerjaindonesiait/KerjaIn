@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
       {
         path: "post-job",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute role="user">
             <PostJob />
           </ProtectedRoute>
         ),
@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
       {
         path: "bayar",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute role="user">
             <Payment />
           </ProtectedRoute>
         ),
@@ -43,7 +43,7 @@ export const router = createBrowserRouter([
       {
         path: "pekerjaan-saya",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute role="user">
             <MyJobs />
           </ProtectedRoute>
         ),

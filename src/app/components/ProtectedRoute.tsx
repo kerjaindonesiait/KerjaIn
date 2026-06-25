@@ -18,7 +18,13 @@ export function ProtectedRoute({ children, role }: { children: React.ReactNode; 
   }
 
   if (role && user.role !== role) {
-    return <Navigate to={user.role === "technician" ? "/dasbor-tukang" : "/"} replace />;
+    const redirect =
+      user.role === "technician" && role === "user"
+        ? "/dasbor-tukang"
+        : user.role === "user" && role === "technician"
+          ? "/"
+          : "/";
+    return <Navigate to={redirect} replace />;
   }
 
   return <>{children}</>;

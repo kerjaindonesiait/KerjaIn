@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   Plus, Minus, Crosshair, SlidersHorizontal, Shield,
   CheckCircle, Heart, Share2, ChevronLeft,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth";
 import type { Job, Offer } from "../../types";
 
 type Task = Job & { status: string };
@@ -107,15 +108,22 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
 }
 
 function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [acceptedOfferId, setAcceptedOfferId] = useState<string | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(false);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
+
+  const canAcceptOffers = !!task.isOwner && task.status === "open";
 
   useEffect(() => {
     if (tab === "penawaran") {
       setLoadingOffers(true);
+      setAcceptError(null);
       api.getOffers(task.id)
         .then(({ offers: data }) => setOffers(data))
         .catch(() => setOffers([]))
@@ -124,11 +132,23 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   }, [tab, task.id]);
 
   const handleAcceptOffer = async (offerId: string) => {
+    if (!user) {
+      navigate("/masuk", { state: { from: "/tasks" } });
+      return;
+    }
+    if (!canAcceptOffers) {
+      setAcceptError("Hanya pemilik pekerjaan yang dapat menerima penawaran.");
+      return;
+    }
+    setAcceptError(null);
+    setAcceptingId(offerId);
     try {
       await api.acceptOffer(offerId);
       setAcceptedOfferId(offerId);
-    } catch {
-      // keep UI state
+    } catch (e) {
+      setAcceptError(e instanceof Error ? e.message : "Gagal menerima penawaran");
+    } finally {
+      setAcceptingId(null);
     }
   };
 
@@ -263,6 +283,20 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 <p className="text-[12px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">
                   {offers.length} penawaran masuk
                 </p>
+                {!canAcceptOffers && !user && (
+                  <p className="text-[13px] text-[#58708D] bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3">
+                    <Link to="/masuk" state={{ from: "/tasks" }} className="font-bold text-[#1D4196] hover:underline">Masuk</Link> sebagai pemilik pekerjaan untuk menerima penawaran.
+                  </p>
+                )}
+                {!canAcceptOffers && user && !task.isOwner && (
+                  <p className="text-[13px] text-[#58708D] bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3">
+                    Hanya pemilik pekerjaan yang dapat menerima penawaran. Lihat pekerjaan Anda di{" "}
+                    <Link to="/pekerjaan-saya" className="font-bold text-[#1D4196] hover:underline">Pekerjaan Saya</Link>.
+                  </p>
+                )}
+                {acceptError && (
+                  <p className="text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">{acceptError}</p>
+                )}
                 {offers.map((offer) => {
                   const initials = offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
                   const colorIdx = offer.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
@@ -285,12 +319,16 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     {offer.message && (
                       <p className="text-[12px] text-[#58708D] leading-relaxed mb-3 italic">"{offer.message}"</p>
                     )}
-                    <button
-                      onClick={() => handleAcceptOffer(offer.id)}
-                      className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                    >
-                      Terima penawaran ini
-                    </button>
+                    {canAcceptOffers && (
+                      <button
+                        type="button"
+                        disabled={acceptingId === offer.id}
+                        onClick={() => handleAcceptOffer(offer.id)}
+                        className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                      >
+                        {acceptingId === offer.id ? "Memproses..." : "Terima penawaran ini"}
+                      </button>
+                    )}
                   </div>
                   );
                 })}

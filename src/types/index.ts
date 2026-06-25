@@ -29,6 +29,8 @@ export interface Job {
   status: string;
   urgency?: string | null;
   offers: number;
+  ownerId?: string;
+  isOwner?: boolean;
   remote: boolean;
   flexible: boolean;
   date?: string | null;

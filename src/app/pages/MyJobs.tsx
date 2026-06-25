@@ -23,29 +23,44 @@ export default function MyJobs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acceptedOffers, setAcceptedOffers] = useState<Record<string, Offer>>({});
+  const [openOffers, setOpenOffers] = useState<Record<string, Offer[]>>({});
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
     setError(null);
+    setAcceptError(null);
     api
       .getMyJobs()
       .then(async ({ jobs: data }) => {
         setJobs(data);
         const assigned = data.filter((j) => j.status === "assigned");
+        const open = data.filter((j) => j.status === "open" && (j.offers ?? 0) > 0);
         const offerMap: Record<string, Offer> = {};
-        await Promise.all(
-          assigned.map(async (job) => {
+        const pendingMap: Record<string, Offer[]> = {};
+        await Promise.all([
+          ...assigned.map(async (job) => {
             try {
               const { offers } = await api.getOffers(job.id);
               const accepted = offers.find((o) => o.status === "accepted");
               if (accepted) offerMap[job.id] = accepted;
             } catch {
-              /* ignore per-job offer fetch errors */
+              /* ignore */
             }
           }),
-        );
+          ...open.map(async (job) => {
+            try {
+              const { offers } = await api.getOffers(job.id);
+              pendingMap[job.id] = offers.filter((o) => o.status === "pending");
+            } catch {
+              pendingMap[job.id] = [];
+            }
+          }),
+        ]);
         setAcceptedOffers(offerMap);
+        setOpenOffers(pendingMap);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -81,6 +96,20 @@ export default function MyJobs() {
     }
   };
 
+  const handleAcceptOffer = async (jobId: string, offerId: string) => {
+    setAcceptError(null);
+    setActionId(offerId);
+    try {
+      await api.acceptOffer(offerId);
+      load();
+      setExpandedJobId(null);
+    } catch (e) {
+      setAcceptError(e instanceof Error ? e.message : "Gagal menerima penawaran");
+    } finally {
+      setActionId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="bg-white border-b border-[#D8E2F0]">
@@ -99,6 +128,9 @@ export default function MyJobs() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-[14px]">{error}</div>
+        )}
+        {acceptError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-[14px] mb-4">{acceptError}</div>
         )}
 
         {!loading && !error && jobs.length === 0 && (
@@ -145,13 +177,17 @@ export default function MyJobs() {
                 <div className="flex flex-wrap gap-2">
                   {job.status === "open" && (
                     <>
-                      <Link
-                        to="/tasks"
-                        className="text-[13px] font-bold text-[#1D4196] border border-[#D8E2F0] px-4 py-2 rounded-xl hover:bg-[#F7F9FC] transition-colors"
-                      >
-                        Lihat penawaran
-                      </Link>
+                      {(openOffers[job.id]?.length ?? 0) > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+                          className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] px-4 py-2 rounded-xl transition-colors"
+                        >
+                          {expandedJobId === job.id ? "Tutup penawaran" : `Lihat ${openOffers[job.id]?.length} penawaran`}
+                        </button>
+                      )}
                       <button
+                        type="button"
                         disabled={busy}
                         onClick={() => handleCancel(job.id)}
                         className="flex items-center gap-1.5 text-[13px] font-bold text-red-600 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50"
@@ -188,6 +224,30 @@ export default function MyJobs() {
                     </span>
                   )}
                 </div>
+
+                {job.status === "open" && expandedJobId === job.id && (openOffers[job.id]?.length ?? 0) > 0 && (
+                  <div className="mt-4 pt-4 border-t border-[#EEF3FB] flex flex-col gap-3">
+                    {openOffers[job.id].map((offer) => (
+                      <div key={offer.id} className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl p-4">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <p className="font-bold text-[14px] text-[#172E4D]">{offer.technicianName}</p>
+                          <p className="font-black text-[15px] text-[#1D4196]">{formatOfferPrice(offer.price)}</p>
+                        </div>
+                        {offer.message && (
+                          <p className="text-[12px] text-[#58708D] italic mb-3">"{offer.message}"</p>
+                        )}
+                        <button
+                          type="button"
+                          disabled={actionId === offer.id}
+                          onClick={() => handleAcceptOffer(job.id, offer.id)}
+                          className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                        >
+                          {actionId === offer.id ? "Memproses..." : "Terima penawaran ini"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
