@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   ChevronRight, ChevronLeft, CheckCircle, MapPin, Calendar,
   Clock, Banknote, Camera, X, AlertCircle, Share2, Copy, ExternalLink,
