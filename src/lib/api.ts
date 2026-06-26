@@ -193,6 +193,22 @@ export const api = {
     });
   },
 
+  getTechnicianProfile() {
+    return request<{
+      profile: {
+        area: string | null;
+        keahlian: string[];
+        pengalaman: string | null;
+        tarif: string | null;
+        bio: string | null;
+        verified: boolean;
+        ktpPhotoUrl: string | null;
+        selfiePhotoUrl: string | null;
+        nik: string | null;
+      } | null;
+    }>("/api/technicians/profile");
+  },
+
   createPayment(body: { jobId: string; offerId: string; method: string }) {
     return request("/api/payments", {
       method: "POST",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -424,6 +424,9 @@ function EmailForm({
 
 export default function Auth() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const redirectFrom = (location.state as { from?: string } | null)?.from;
   const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
@@ -450,6 +453,10 @@ export default function Auth() {
   };
 
   const handleEmailSuccess = (name: string, email: string, link?: string) => {
+    if (mode === "masuk" && redirectFrom) {
+      navigate(redirectFrom, { replace: true });
+      return;
+    }
     setAuthProvider("email");
     setSuccessName(name);
     setSuccessEmail(email);
