@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { MapPin, Clock, ChevronRight, Loader2, XCircle, CheckCircle, Star } from "lucide-react";
+import { MapPin, Clock, ChevronRight, Loader2, XCircle, CheckCircle, Star, MessageSquare } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Job, Offer, Review } from "../../types";
 
@@ -107,7 +107,7 @@ export default function MyJobs() {
       .getMyJobs()
       .then(async ({ jobs: data }) => {
         setJobs(data);
-        const assigned = data.filter((j) => j.status === "assigned");
+        const assigned = data.filter((j) => j.status === "assigned" || j.status === "in_progress");
         const open = data.filter((j) => j.status === "open" && (j.offers ?? 0) > 0);
         const completed = data.filter((j) => j.status === "completed");
         const offerMap: Record<string, Offer> = {};
@@ -281,15 +281,30 @@ export default function MyJobs() {
                   )}
 
                   {job.status === "assigned" && offer && (
-                    <Link
-                      to={`/bayar?jobId=${job.id}&offerId=${offer.id}`}
-                      className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] px-5 py-2.5 rounded-xl transition-colors"
-                    >
-                      Bayar {formatOfferPrice(offer.price)} →
-                    </Link>
+                    <>
+                      <Link
+                        to={`/pesan/${job.id}?peerId=${encodeURIComponent(offer.technicianId)}`}
+                        className="flex items-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] px-4 py-2.5 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+                      >
+                        <MessageSquare size={14} /> Kirim pesan
+                      </Link>
+                      <Link
+                        to={`/bayar?jobId=${job.id}&offerId=${offer.id}`}
+                        className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] px-5 py-2.5 rounded-xl transition-colors"
+                      >
+                        Bayar {formatOfferPrice(offer.price)} →
+                      </Link>
+                    </>
                   )}
 
-                  {job.status === "in_progress" && (
+                  {job.status === "in_progress" && offer && (
+                    <>
+                      <Link
+                        to={`/pesan/${job.id}?peerId=${encodeURIComponent(offer.technicianId)}`}
+                        className="flex items-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] px-4 py-2.5 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+                      >
+                        <MessageSquare size={14} /> Kirim pesan
+                      </Link>
                     <button
                       disabled={busy}
                       onClick={() => handleComplete(job.id)}
@@ -298,6 +313,7 @@ export default function MyJobs() {
                       {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
                       Tandai selesai
                     </button>
+                    </>
                   )}
 
                   {job.status === "completed" && (
@@ -322,14 +338,22 @@ export default function MyJobs() {
                         {offer.message && (
                           <p className="text-[12px] text-[#58708D] italic mb-3">"{offer.message}"</p>
                         )}
-                        <button
-                          type="button"
-                          disabled={actionId === offer.id}
-                          onClick={() => handleAcceptOffer(job.id, offer.id)}
-                          className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                        >
-                          {actionId === offer.id ? "Memproses..." : "Terima penawaran ini"}
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Link
+                            to={`/pesan/${job.id}?peerId=${encodeURIComponent(offer.technicianId)}`}
+                            className="flex items-center justify-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] py-2.5 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+                          >
+                            <MessageSquare size={14} /> Kirim pesan
+                          </Link>
+                          <button
+                            type="button"
+                            disabled={actionId === offer.id}
+                            onClick={() => handleAcceptOffer(job.id, offer.id)}
+                            className="flex-1 bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                          >
+                            {actionId === offer.id ? "Memproses..." : "Terima penawaran ini"}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -122,6 +122,9 @@ export default function Root() {
                     Pekerjaan Saya
                   </Link>
                 )}
+                <Link to="/pesan" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
+                  Pesan
+                </Link>
                 <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#D8E2F0]" />
@@ -194,6 +197,9 @@ export default function Root() {
                       <UserIcon size={16} /> Pekerjaan Saya
                     </Link>
                   )}
+                  <Link to="/pesan" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#294566] py-2 flex items-center gap-2">
+                    Pesan
+                  </Link>
                   <button onClick={handleLogout} className="flex items-center justify-center gap-2 border border-red-200 text-red-600 font-semibold text-[13px] py-2.5 rounded-full">
                     <LogOut size={15} /> Keluar
                   </button>

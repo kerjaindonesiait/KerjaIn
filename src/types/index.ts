@@ -169,3 +169,31 @@ export interface AppSettings {
   requireVerifiedToQuote: boolean;
   maintenanceMode: boolean;
 }
+
+export interface JobMessage {
+  id: string;
+  threadId: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+  createdAt: string;
+  isMine: boolean;
+}
+
+export interface MessageThreadSummary {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  jobStatus: string;
+  peerId: string;
+  peerName: string;
+  lastMessage: string | null;
+  lastMessageAt: string;
+}
+
+export interface MessageConversation {
+  threadId: string;
+  job: { id: string; title: string; status: string };
+  peer: { id: string; name: string };
+  messages: JobMessage[];
+}

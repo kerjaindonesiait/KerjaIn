@@ -3,7 +3,7 @@ import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   SlidersHorizontal, Shield,
-  CheckCircle, Heart, Share2, ChevronLeft, Image as ImageIcon,
+  CheckCircle, Heart, Share2, ChevronLeft, Image as ImageIcon, MessageSquare,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -119,6 +119,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [acceptedOfferId, setAcceptedOfferId] = useState<string | null>(null);
+  const [acceptedTechnicianId, setAcceptedTechnicianId] = useState<string | null>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
@@ -152,6 +153,19 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
     }
   }, [tab, task.id, task.isOwner]);
 
+  useEffect(() => {
+    if (!task.isOwner || task.status === "open") return;
+    api.getOffers(task.id)
+      .then(({ offers: data }) => {
+        const accepted = data.find((o) => o.status === "accepted");
+        if (accepted) {
+          setAcceptedOfferId(accepted.id);
+          setAcceptedTechnicianId(accepted.technicianId);
+        }
+      })
+      .catch(() => {});
+  }, [task.id, task.isOwner, task.status]);
+
   const handleAcceptOffer = async (offerId: string) => {
     if (!user) {
       navigate("/masuk", { state: { from: "/tasks" } });
@@ -166,6 +180,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
     try {
       await api.acceptOffer(offerId);
       setAcceptedOfferId(offerId);
+      const accepted = offers.find((o) => o.id === offerId);
+      if (accepted) setAcceptedTechnicianId(accepted.technicianId);
     } catch (e) {
       setAcceptError(e instanceof Error ? e.message : "Gagal menerima penawaran");
     } finally {
@@ -367,15 +383,25 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                     {offer.message && (
                       <p className="text-[12px] text-[#58708D] leading-relaxed mb-3 italic">"{offer.message}"</p>
                     )}
-                    {canAcceptOffers && (
-                      <button
-                        type="button"
-                        disabled={acceptingId === offer.id}
-                        onClick={() => handleAcceptOffer(offer.id)}
-                        className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                      >
-                        {acceptingId === offer.id ? "Memproses..." : "Terima penawaran ini"}
-                      </button>
+                    {task.isOwner && (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Link
+                          to={`/pesan/${task.id}?peerId=${encodeURIComponent(offer.technicianId)}`}
+                          className="flex items-center justify-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] py-2.5 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+                        >
+                          <MessageSquare size={14} /> Kirim pesan
+                        </Link>
+                        {canAcceptOffers && (
+                          <button
+                            type="button"
+                            disabled={acceptingId === offer.id}
+                            onClick={() => handleAcceptOffer(offer.id)}
+                            className="flex-1 bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                          >
+                            {acceptingId === offer.id ? "Memproses..." : "Terima penawaran ini"}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                   );
@@ -451,13 +477,30 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             <div className="flex items-center justify-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] font-bold text-[14px] rounded-xl py-3">
               <CheckCircle size={16} /> Penawaran diterima!
             </div>
-            <Link
-              to={`/bayar?jobId=${task.id}&offerId=${acceptedOfferId}`}
-              className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors"
-            >
-              Lanjut ke Pembayaran →
-            </Link>
+            {acceptedTechnicianId && (
+              <Link
+                to={`/pesan/${task.id}?peerId=${encodeURIComponent(acceptedTechnicianId)}`}
+                className="w-full flex items-center justify-center gap-2 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[14px] py-3 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+              >
+                <MessageSquare size={16} /> Kirim pesan ke tukang
+              </Link>
+            )}
+            {task.status === "assigned" && (
+              <Link
+                to={`/bayar?jobId=${task.id}&offerId=${acceptedOfferId}`}
+                className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors"
+              >
+                Lanjut ke Pembayaran →
+              </Link>
+            )}
           </div>
+        ) : (task.status === "assigned" || task.status === "in_progress") && acceptedTechnicianId ? (
+          <Link
+            to={`/pesan/${task.id}?peerId=${encodeURIComponent(acceptedTechnicianId)}`}
+            className="w-full flex items-center justify-center gap-2 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[14px] py-3 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+          >
+            <MessageSquare size={16} /> Kirim pesan ke tukang
+          </Link>
         ) : (
           <div className="flex flex-col gap-2">
             <p className="text-center text-[11px] text-[#7890AA]">

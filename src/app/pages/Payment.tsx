@@ -34,20 +34,14 @@ function loadMidtransSnap(): Promise<void> {
 type PayMethod = "gopay" | "ovo" | "dana" | "shopee" | "bca" | "mandiri" | "bri" | "card";
 type Screen = "method" | "confirm" | "processing" | "success" | "pending";
 
-// ─── Mock job & tasker data ───────────────────────────────────────────────────
-
-const JOB = {
-  id: "#KJ-2024-48291",
-  title: "Pipa bocor – butuh perbaikan segera",
-  category: "Pipa Bocor Darurat",
-  emoji: "🚨",
-  tasker: { name: "Andi S.", initials: "AS", color: "#1D4196", rating: 5.0, reviews: 134 },
-  priceRaw: 320000,
-  serviceFee: 16000,
-  insurance: 5000,
+type PaymentSummary = {
+  jobNumber: string;
+  title: string;
+  category: string;
+  emoji: string;
+  tasker: { name: string; initials: string; color: string; rating: number; reviews: number };
+  quotePrice: number;
 };
-
-const TOTAL = JOB.priceRaw + JOB.serviceFee + JOB.insurance;
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
@@ -294,7 +288,7 @@ function VAPendingScreen({
 
 // ─── Card form ────────────────────────────────────────────────────────────────
 
-function CardForm({ onSuccess }: { onSuccess: () => void }) {
+function CardForm({ total, onSuccess }: { total: number; onSuccess: () => void }) {
   const [num, setNum] = useState("");
   const [name, setName] = useState("");
   const [exp, setExp] = useState("");
@@ -381,7 +375,7 @@ function CardForm({ onSuccess }: { onSuccess: () => void }) {
           </>
         ) : (
           <>
-            <Lock size={16} /> Bayar {formatRp(TOTAL)}
+            <Lock size={16} /> Bayar {formatRp(total)}
           </>
         )}
       </button>
@@ -419,7 +413,7 @@ function ProcessingScreen() {
 
 // ─── Success screen ───────────────────────────────────────────────────────────
 
-function SuccessScreen() {
+function SuccessScreen({ summary, total }: { summary: PaymentSummary; total: number }) {
   const navigate = useNavigate();
   const txId = `TXN${Date.now().toString().slice(-10)}`;
 
@@ -442,7 +436,7 @@ function SuccessScreen() {
           </div>
           <div className="text-right">
             <p className="text-[10px] text-white/50 uppercase tracking-widest font-semibold">Jumlah</p>
-            <p className="font-black text-[18px] text-[#FD6665]">{formatRp(TOTAL)}</p>
+            <p className="font-black text-[18px] text-[#FD6665]">{formatRp(total)}</p>
           </div>
         </div>
 
@@ -454,40 +448,35 @@ function SuccessScreen() {
 
         <div className="px-5 py-4 space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-[28px]">{JOB.emoji}</span>
+            <span className="text-[28px]">{summary.emoji}</span>
             <div>
-              <p className="text-[11px] text-[#7890AA] font-semibold">{JOB.category}</p>
-              <p className="font-bold text-[14px] text-[#172E4D] line-clamp-1">{JOB.title}</p>
+              <p className="text-[11px] text-[#7890AA] font-semibold">{summary.category}</p>
+              <p className="font-bold text-[14px] text-[#172E4D] line-clamp-1">{summary.title}</p>
             </div>
           </div>
 
           <div className="space-y-1.5 text-[13px]">
-            {[
-              ["Biaya tukang", formatRp(JOB.priceRaw)],
-              ["Biaya layanan", formatRp(JOB.serviceFee)],
-              ["Asuransi", formatRp(JOB.insurance)],
-            ].map(([label, val]) => (
-              <div key={label} className="flex justify-between text-[#58708D]">
-                <span>{label}</span><span>{val}</span>
-              </div>
-            ))}
+            <div className="flex justify-between text-[#58708D]">
+              <span>Harga penawaran tukang</span>
+              <span>{formatRp(summary.quotePrice)}</span>
+            </div>
             <div className="border-t border-[#D8E2F0] pt-1.5 flex justify-between font-black text-[#172E4D]">
-              <span>Total</span><span>{formatRp(TOTAL)}</span>
+              <span>Total dibayar</span><span>{formatRp(total)}</span>
             </div>
           </div>
 
           {/* Tasker row */}
           <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#D8E2F0]">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-[12px]" style={{ background: JOB.tasker.color }}>
-              {JOB.tasker.initials}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-[12px]" style={{ background: summary.tasker.color }}>
+              {summary.tasker.initials}
             </div>
             <div className="flex-1">
-              <p className="font-bold text-[13px] text-[#172E4D]">{JOB.tasker.name}</p>
+              <p className="font-bold text-[13px] text-[#172E4D]">{summary.tasker.name}</p>
               <p className="text-[11px] text-[#7890AA]">Tukang pilihanmu · Dalam perjalanan</p>
             </div>
             <div className="flex items-center gap-1 text-[#f59e0b]">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <span className="font-bold text-[12px] text-[#172E4D]">{JOB.tasker.rating}</span>
+              <span className="font-bold text-[12px] text-[#172E4D]">{summary.tasker.rating}</span>
             </div>
           </div>
         </div>
@@ -496,7 +485,7 @@ function SuccessScreen() {
       <div className="w-full bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 flex items-start gap-3">
         <Shield size={16} className="text-[#20bf6f] shrink-0 mt-0.5" />
         <p className="text-[12px] text-[#166534] font-semibold">
-          Dana sebesar <span className="font-black">{formatRp(TOTAL)}</span> ditahan aman oleh KerjaIn Pay dan baru dicairkan setelah pekerjaan selesai dikonfirmasi.
+          Dana sebesar <span className="font-black">{formatRp(total)}</span> ditahan aman oleh KerjaIn Pay dan baru dicairkan setelah pekerjaan selesai dikonfirmasi.
         </p>
       </div>
 
@@ -520,40 +509,47 @@ export default function Payment() {
   const offerId = params.get("offerId");
   const [screen, setScreen] = useState<Screen>("method");
   const [selected, setSelected] = useState<PayMethod | null>(null);
-  const [expandCard, setExpandCard] = useState(false);
-  const [jobData, setJobData] = useState(JOB);
-  const [total, setTotal] = useState(TOTAL);
+  const [summary, setSummary] = useState<PaymentSummary | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loadingQuote, setLoadingQuote] = useState(!!(jobId && offerId));
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [vaNumber, setVaNumber] = useState("8277 0091 4821 7365");
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
-    if (!jobId || !offerId) return;
+    if (!jobId || !offerId) {
+      setLoadingQuote(false);
+      setLoadError("Pekerjaan atau penawaran tidak ditemukan.");
+      return;
+    }
+    setLoadingQuote(true);
+    setLoadError(null);
     Promise.all([api.getJob(jobId), api.getOffers(jobId)])
       .then(([{ job }, { offers }]) => {
         const offer = offers.find((o) => o.id === offerId);
-        if (!offer) return;
-        const serviceFee = Math.round(offer.price * 0.05);
-        const insurance = 5000;
-        setJobData({
-          id: job.jobNumber,
+        if (!offer) {
+          setLoadError("Penawaran tidak ditemukan atau sudah tidak berlaku.");
+          return;
+        }
+        setSummary({
+          jobNumber: job.jobNumber,
           title: job.title,
           category: job.category,
-          emoji: "🚨",
+          emoji: "🔧",
           tasker: {
             name: offer.technicianName,
-            initials: offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2),
+            initials: offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
             color: "#1D4196",
             rating: 5.0,
             reviews: 0,
           },
-          priceRaw: offer.price,
-          serviceFee,
-          insurance,
+          quotePrice: offer.price,
         });
-        setTotal(offer.price + serviceFee + insurance);
+        setTotal(offer.price);
       })
-      .catch(() => {});
+      .catch(() => setLoadError("Gagal memuat detail penawaran."))
+      .finally(() => setLoadingQuote(false));
   }, [jobId, offerId]);
 
   const selectedM = METHODS.find((m) => m.id === selected);
@@ -614,6 +610,23 @@ export default function Payment() {
 
   const groups = ["E-Wallet", "Transfer Bank", "Kartu"];
 
+  if (loadingQuote) {
+    return (
+      <div className="min-h-screen bg-[#F7F9FC] flex items-center justify-center" style={{ fontFamily: "Manrope, sans-serif" }}>
+        <p className="text-[#58708D] font-semibold">Memuat harga penawaran…</p>
+      </div>
+    );
+  }
+
+  if (!summary || loadError) {
+    return (
+      <div className="min-h-screen bg-[#F7F9FC] flex flex-col items-center justify-center gap-4 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
+        <p className="text-[#58708D] text-center">{loadError ?? "Data pembayaran tidak tersedia."}</p>
+        <Link to="/pekerjaan-saya" className="text-[#1D4196] font-bold hover:underline">Kembali ke Pekerjaan Saya</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
       {/* Top bar */}
@@ -631,7 +644,7 @@ export default function Payment() {
 
       <div className="max-w-[860px] mx-auto px-4 py-8">
         {screen === "processing" && <ProcessingScreen />}
-        {screen === "success"    && <SuccessScreen />}
+        {screen === "success"    && <SuccessScreen summary={summary} total={total} />}
         {screen === "pending" && selected && (
           <div className="max-w-[520px] mx-auto">
             <VAPendingScreen
@@ -667,7 +680,7 @@ export default function Payment() {
                       <p className="text-[12px] text-[#58708D]">{selectedM?.desc}</p>
                     </div>
                   </div>
-                  <CardForm onSuccess={() => setScreen("success")} />
+                  <CardForm total={total} onSuccess={() => setScreen("success")} />
                 </div>
               ) : (
                 /* Method list */
@@ -721,48 +734,42 @@ export default function Payment() {
                 {/* Header */}
                 <div className="bg-[#172E4D] px-5 py-4">
                   <p className="text-[10px] text-white/50 uppercase tracking-widest font-semibold mb-1">Ringkasan Pekerjaan</p>
-                  <p className="font-black text-[13px] text-white">{JOB.id}</p>
+                  <p className="font-black text-[13px] text-white">{summary.jobNumber}</p>
                 </div>
 
                 <div className="p-5 space-y-4">
                   {/* Job */}
                   <div className="flex items-center gap-3">
-                    <span className="text-[32px]">{JOB.emoji}</span>
+                    <span className="text-[32px]">{summary.emoji}</span>
                     <div className="min-w-0">
-                      <p className="text-[11px] text-[#7890AA] font-semibold">{JOB.category}</p>
-                      <p className="font-bold text-[13px] text-[#172E4D] leading-snug">{JOB.title}</p>
+                      <p className="text-[11px] text-[#7890AA] font-semibold">{summary.category}</p>
+                      <p className="font-bold text-[13px] text-[#172E4D] leading-snug">{summary.title}</p>
                     </div>
                   </div>
 
                   {/* Tasker */}
                   <div className="flex items-center gap-3 bg-[#F7F9FC] rounded-xl px-3 py-2.5">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-[11px] shrink-0" style={{ background: JOB.tasker.color }}>
-                      {JOB.tasker.initials}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-[11px] shrink-0" style={{ background: summary.tasker.color }}>
+                      {summary.tasker.initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-[13px] text-[#172E4D]">{JOB.tasker.name}</p>
+                      <p className="font-bold text-[13px] text-[#172E4D]">{summary.tasker.name}</p>
                       <div className="flex items-center gap-1">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        <span className="text-[11px] text-[#58708D]">{JOB.tasker.rating} · {JOB.tasker.reviews} ulasan</span>
+                        <span className="text-[11px] text-[#58708D]">{summary.tasker.rating} · {summary.tasker.reviews} ulasan</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Price breakdown */}
                   <div className="space-y-2">
-                    {[
-                      { label: "Biaya tukang", val: JOB.priceRaw },
-                      { label: "Biaya layanan (5%)", val: JOB.serviceFee },
-                      { label: "Asuransi pekerjaan", val: JOB.insurance },
-                    ].map(({ label, val }) => (
-                      <div key={label} className="flex justify-between text-[13px] text-[#58708D]">
-                        <span>{label}</span>
-                        <span>{formatRp(val)}</span>
-                      </div>
-                    ))}
+                    <div className="flex justify-between text-[13px] text-[#58708D]">
+                      <span>Harga penawaran tukang</span>
+                      <span>{formatRp(summary.quotePrice)}</span>
+                    </div>
                     <div className="border-t border-[#D8E2F0] pt-2 flex justify-between font-black text-[#172E4D] text-[16px]">
-                      <span>Total</span>
-                      <span className="text-[#1D4196]">{formatRp(TOTAL)}</span>
+                      <span>Total dibayar</span>
+                      <span className="text-[#1D4196]">{formatRp(total)}</span>
                     </div>
                   </div>
 
@@ -788,7 +795,7 @@ export default function Payment() {
                       }`}
                     >
                       <Lock size={15} />
-                      {selected ? `Bayar ${formatRp(TOTAL)}` : "Pilih metode dulu"}
+                      {selected ? `Bayar ${formatRp(total)}` : "Pilih metode dulu"}
                     </button>
                   )}
 

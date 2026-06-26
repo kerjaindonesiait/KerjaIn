@@ -17,6 +17,8 @@ import AccountSettings from "./pages/AccountSettings";
 import MyJobs from "./pages/MyJobs";
 import TechProfile from "./pages/TechProfile";
 import AdminPanel from "./pages/AdminPanel";
+import MessagesInbox from "./pages/MessagesInbox";
+import JobChat from "./pages/JobChat";
 
 export const router = createBrowserRouter([
   {
@@ -69,6 +71,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <AccountSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "pesan",
+        element: (
+          <ProtectedRoute>
+            <MessagesInbox />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "pesan/:jobId",
+        element: (
+          <ProtectedRoute>
+            <JobChat />
           </ProtectedRoute>
         ),
       },

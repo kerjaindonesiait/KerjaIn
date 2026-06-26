@@ -4,7 +4,10 @@ import type {
   AdminTechnician,
   AdminUser,
   Job,
+  JobMessage,
   LoginResponse,
+  MessageConversation,
+  MessageThreadSummary,
   MineOffer,
   Offer,
   PostJobFormData,
@@ -337,6 +340,22 @@ export const api = {
     return request<{ settings: AppSettings }>("/api/admin/settings", {
       method: "PATCH",
       body: JSON.stringify(patch),
+    });
+  },
+
+  getMessageInbox() {
+    return request<{ threads: MessageThreadSummary[] }>("/api/messages/inbox");
+  },
+
+  getJobMessages(jobId: string, peerId?: string) {
+    const qs = peerId ? `?peerId=${encodeURIComponent(peerId)}` : "";
+    return request<MessageConversation>(`/api/messages/job/${jobId}${qs}`);
+  },
+
+  sendJobMessage(jobId: string, body: string, peerId?: string) {
+    return request<{ message: JobMessage }>(`/api/messages/job/${jobId}`, {
+      method: "POST",
+      body: JSON.stringify({ body, ...(peerId ? { peerId } : {}) }),
     });
   },
 };
