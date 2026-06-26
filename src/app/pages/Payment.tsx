@@ -5,6 +5,29 @@ import {
   AlertCircle, ChevronRight, Lock, Smartphone, CreditCard, Building2,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { MIDTRANS_CLIENT_KEY, MIDTRANS_IS_PRODUCTION } from "../../constants";
+
+declare global {
+  interface Window {
+    snap?: {
+      pay: (token: string, opts: Record<string, () => void>) => void;
+    };
+  }
+}
+
+function loadMidtransSnap(): Promise<void> {
+  if (window.snap) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = MIDTRANS_IS_PRODUCTION
+      ? "https://app.midtrans.com/snap/snap.js"
+      : "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.setAttribute("data-client-key", MIDTRANS_CLIENT_KEY);
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Gagal memuat Midtrans Snap"));
+    document.body.appendChild(script);
+  });
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -540,9 +563,32 @@ export default function Payment() {
     if (selected === "card") return;
     setScreen("processing");
     try {
-      const { payment } = await api.createPayment({ jobId, offerId, method: selected });
+      const { payment } = await api.createPayment({ jobId, offerId, method: selected }) as {
+        payment: {
+          id: string;
+          status: string;
+          vaNumber?: string | null;
+          snapToken?: string | null;
+          midtransEnabled?: boolean;
+        };
+      };
       setPaymentId(payment.id);
       if (payment.vaNumber) setVaNumber(payment.vaNumber);
+
+      if (payment.snapToken && MIDTRANS_CLIENT_KEY) {
+        await loadMidtransSnap();
+        window.snap!.pay(payment.snapToken, {
+          onSuccess: () => setScreen("success"),
+          onPending: () => setScreen("pending"),
+          onError: () => {
+            alert("Pembayaran gagal. Silakan coba lagi.");
+            setScreen("method");
+          },
+          onClose: () => setScreen("method"),
+        });
+        return;
+      }
+
       if (payment.status === "pending") {
         setScreen("pending");
       } else {

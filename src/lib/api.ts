@@ -1,5 +1,19 @@
 import { API_URL } from "../constants";
-import type { Job, LoginResponse, MineOffer, Offer, PostJobFormData, RegisterResponse, TechProfileData, User } from "../types";
+import type {
+  AppSettings,
+  AdminTechnician,
+  AdminUser,
+  Job,
+  LoginResponse,
+  MineOffer,
+  Offer,
+  PostJobFormData,
+  RegisterResponse,
+  Review,
+  TechnicianPublic,
+  TechProfileData,
+  User,
+} from "../types";
 
 const LEGACY_ACCESS_KEY = "kerjain_access";
 const LEGACY_REFRESH_KEY = "kerjain_refresh";
@@ -57,10 +71,10 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 export const api = {
-  register(email: string, password: string, fullName: string, role: "user" | "technician" = "user") {
+  register(email: string, password: string, fullName: string, role: "user" | "technician" = "user", phone?: string) {
     return request<RegisterResponse>("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password, fullName, role }),
+      body: JSON.stringify({ email, password, fullName, role, ...(phone ? { phone } : {}) }),
     }, false);
   },
 
@@ -136,6 +150,20 @@ export const api = {
     });
   },
 
+  uploadKtpDocument(fileBase64: string, contentType: string, kind: "ktp" | "selfie") {
+    return request<{ path: string; previewUrl: string | null }>("/api/upload/ktp-document", {
+      method: "POST",
+      body: JSON.stringify({ fileBase64, contentType, kind }),
+    });
+  },
+
+  deleteKtpDocument(path: string) {
+    return request<{ ok: boolean }>("/api/upload/ktp-document", {
+      method: "DELETE",
+      body: JSON.stringify({ path }),
+    });
+  },
+
   createJob(data: PostJobFormData) {
     return request<{ job: Job }>("/api/jobs", {
       method: "POST",
@@ -163,6 +191,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     });
+  },
+
+  getTechnicianProfile() {
+    return request<{
+      profile: {
+        area: string | null;
+        keahlian: string[];
+        pengalaman: string | null;
+        tarif: string | null;
+        bio: string | null;
+        verified: boolean;
+        ktpPhotoUrl: string | null;
+        selfiePhotoUrl: string | null;
+        nik: string | null;
+      } | null;
+    }>("/api/technicians/profile");
   },
 
   createPayment(body: { jobId: string; offerId: string; method: string }) {
@@ -203,6 +247,13 @@ export const api = {
     });
   },
 
+  resendVerificationEmail(email: string) {
+    return request<{ ok: boolean; message: string; devVerifyLink?: string }>("/api/auth/resend-verification-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }, false);
+  },
+
   updateProfile(body: { fullName?: string; avatarUrl?: string; phone?: string }) {
     return request<{ user: User }>("/api/auth/profile", {
       method: "PATCH",
@@ -214,6 +265,78 @@ export const api = {
     return request<{ ok: boolean }>("/api/auth/change-password", {
       method: "PATCH",
       body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  getTechnicianPublic(id: string) {
+    return request<{ technician: TechnicianPublic }>(`/api/technicians/${id}/public`);
+  },
+
+  getTechnicianReviews(id: string, limit = 10) {
+    return request<{ reviews: Review[] }>(`/api/reviews/technician/${id}?limit=${limit}`);
+  },
+
+  getJobReview(jobId: string) {
+    return request<{ review: Review | null }>(`/api/reviews/job/${jobId}`);
+  },
+
+  submitReview(jobId: string, body: { rating: number; comment?: string }) {
+    return request<{ review: Review }>(`/api/reviews/job/${jobId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  getAppConfig() {
+    return request<{ config: AppSettings }>("/api/app/config");
+  },
+
+  adminMe() {
+    return request<{ isAdmin: boolean }>("/api/admin/me");
+  },
+
+  adminStats() {
+    return request<{
+      stats: {
+        pendingVerification: number;
+        verifiedTechnicians: number;
+        totalTechnicians: number;
+        openJobs: number;
+        pendingEmailVerification: number;
+      };
+    }>("/api/admin/stats");
+  },
+
+  adminTechnicians(filter: "pending" | "verified" | "unverified" | "all" = "pending") {
+    return request<{ technicians: AdminTechnician[] }>(`/api/admin/technicians?filter=${filter}`);
+  },
+
+  adminUsers(filter: "unverified_email" | "all" = "unverified_email") {
+    return request<{ users: AdminUser[] }>(`/api/admin/users?filter=${filter}`);
+  },
+
+  adminVerifyUserEmail(userId: string, verified = true) {
+    return request<{ user: AdminUser }>(`/api/admin/users/${userId}/email-verified`, {
+      method: "PATCH",
+      body: JSON.stringify({ verified }),
+    });
+  },
+
+  adminVerifyTechnician(userId: string, verified: boolean) {
+    return request<{ technician: AdminTechnician; devDashboardLink?: string }>(
+      `/api/admin/technicians/${userId}/verified`,
+      { method: "PATCH", body: JSON.stringify({ verified }) },
+    );
+  },
+
+  adminGetSettings() {
+    return request<{ settings: AppSettings }>("/api/admin/settings");
+  },
+
+  adminUpdateSettings(patch: Partial<AppSettings>) {
+    return request<{ settings: AppSettings }>("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify(patch),
     });
   },
 };

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { MapPin, Clock, ChevronRight, Loader2, XCircle, CheckCircle } from "lucide-react";
+import { MapPin, Clock, ChevronRight, Loader2, XCircle, CheckCircle, Star } from "lucide-react";
 import { api } from "../../lib/api";
-import type { Job, Offer } from "../../types";
+import type { Job, Offer, Review } from "../../types";
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   open: { label: "Terbuka", className: "bg-[#EEF3FB] text-[#1D4196] border-[#D8E2F0]" },
@@ -18,6 +18,76 @@ function formatOfferPrice(n: number) {
   return `Rp ${n.toLocaleString("id-ID")}`;
 }
 
+function JobReviewSection({
+  jobId,
+  review,
+  onSubmitted,
+}: {
+  jobId: string;
+  review: Review | null | undefined;
+  onSubmitted: () => void;
+}) {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (review === undefined) return null;
+  if (review) {
+    return (
+      <div className="mt-4 pt-4 border-t border-[#EEF3FB]">
+        <p className="text-[12px] font-bold text-[#7890AA] uppercase mb-2">Ulasan Anda</p>
+        <div className="flex gap-1 mb-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Star key={i} size={14} className={i <= review.rating ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
+          ))}
+        </div>
+        {review.comment && <p className="text-[13px] text-[#58708D] italic">"{review.comment}"</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 pt-4 border-t border-[#EEF3FB]">
+      <p className="text-[13px] font-bold text-[#172E4D] mb-2">Beri ulasan untuk tukang</p>
+      <div className="flex gap-1 mb-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <button key={i} type="button" onClick={() => setRating(i)} aria-label={`${i} bintang`}>
+            <Star size={22} className={i <= rating ? "text-amber-400 fill-amber-400" : "text-gray-200"} />
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Ceritakan pengalaman Anda (opsional)"
+        rows={3}
+        className="w-full border border-[#D8E2F0] rounded-xl px-3 py-2 text-[13px] mb-2 resize-none"
+      />
+      {error && <p className="text-[12px] text-red-600 mb-2">{error}</p>}
+      <button
+        type="button"
+        disabled={submitting}
+        onClick={async () => {
+          setSubmitting(true);
+          setError(null);
+          try {
+            await api.submitReview(jobId, { rating, comment: comment.trim() || undefined });
+            onSubmitted();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Gagal mengirim ulasan");
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+        className="bg-[#1D4196] text-white font-bold text-[13px] px-4 py-2 rounded-xl disabled:opacity-50"
+      >
+        {submitting ? "Mengirim..." : "Kirim ulasan"}
+      </button>
+    </div>
+  );
+}
+
 export default function MyJobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +97,7 @@ export default function MyJobs() {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [jobReviews, setJobReviews] = useState<Record<string, Review | null>>({});
 
   const load = () => {
     setLoading(true);
@@ -38,8 +109,10 @@ export default function MyJobs() {
         setJobs(data);
         const assigned = data.filter((j) => j.status === "assigned");
         const open = data.filter((j) => j.status === "open" && (j.offers ?? 0) > 0);
+        const completed = data.filter((j) => j.status === "completed");
         const offerMap: Record<string, Offer> = {};
         const pendingMap: Record<string, Offer[]> = {};
+        const reviewMap: Record<string, Review | null> = {};
         await Promise.all([
           ...assigned.map(async (job) => {
             try {
@@ -58,9 +131,18 @@ export default function MyJobs() {
               pendingMap[job.id] = [];
             }
           }),
+          ...completed.map(async (job) => {
+            try {
+              const { review } = await api.getJobReview(job.id);
+              reviewMap[job.id] = review;
+            } catch {
+              reviewMap[job.id] = null;
+            }
+          }),
         ]);
         setAcceptedOffers(offerMap);
         setOpenOffers(pendingMap);
+        setJobReviews(reviewMap);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -230,7 +312,11 @@ export default function MyJobs() {
                     {openOffers[job.id].map((offer) => (
                       <div key={offer.id} className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl p-4">
                         <div className="flex items-center justify-between gap-3 mb-2">
-                          <p className="font-bold text-[14px] text-[#172E4D]">{offer.technicianName}</p>
+                          <p className="font-bold text-[14px] text-[#172E4D]">
+                            <Link to={`/tukang/${offer.technicianId}`} className="hover:underline text-[#1D4196]">
+                              {offer.technicianName}
+                            </Link>
+                          </p>
                           <p className="font-black text-[15px] text-[#1D4196]">{formatOfferPrice(offer.price)}</p>
                         </div>
                         {offer.message && (
@@ -247,6 +333,18 @@ export default function MyJobs() {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {job.status === "completed" && (
+                  <JobReviewSection
+                    jobId={job.id}
+                    review={job.id in jobReviews ? jobReviews[job.id] : undefined}
+                    onSubmitted={() => {
+                      api.getJobReview(job.id).then(({ review }) => {
+                        setJobReviews((prev) => ({ ...prev, [job.id]: review }));
+                      });
+                    }}
+                  />
                 )}
               </div>
             );

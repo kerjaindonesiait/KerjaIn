@@ -397,13 +397,18 @@ Legacy `KerjaIn-frontend/backend/` — **do not use**; delete in cleanup PR.
 
 **Explicitly out of Phase 1:** maps, Midtrans, admin UI, chat, notifications, merging `map` branch.
 
-### Phase 2 — Trust & money
+### Phase 2 — Trust & money (in progress)
 
-1. Midtrans or Xendit + webhooks  
-2. Reviews UI + ensure `reviews` table live  
-3. Public technician profile page  
-4. Admin panel UI (`/api/admin/*`)  
-5. Broader email notifications  
+**Branches:** `feature/roadmap-phase-2-trust` on both repos.
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Midtrans Snap + webhook scaffold | 🟡 Backend ready; set `MIDTRANS_SERVER_KEY` + `VITE_MIDTRANS_CLIENT_KEY` |
+| 2 | Reviews UI on `/pekerjaan-saya` | ✅ |
+| 3 | Public technician profile `/tukang/:id` | ✅ |
+| 4 | Admin panel `/admin` | ✅ |
+| 5 | Transactional emails (offer, accept, payment) | ✅ |
+| 6 | `requireVerifiedToQuote` enforced on offers | ✅ |
 
 ### Phase 3 — Discovery & growth
 

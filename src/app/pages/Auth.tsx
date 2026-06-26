@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
-import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -198,20 +198,28 @@ function EmailForm({
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
+  const [phone, setPhone] = useState("");
+  const needsEmailVerification = error === "Email belum terverifikasi";
 
   const valid =
     (mode === "masuk" || name.trim().length >= 2) &&
     email.includes("@") &&
-    password.length >= 6;
+    password.length >= 6 &&
+    (mode === "masuk" || phone.replace(/\D/g, "").length >= 8);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
     setError("");
+    setResendSent(false);
+    setDevVerifyLink(null);
     setLoading(true);
     try {
       if (mode === "daftar") {
-        const { devVerifyLink } = await register(email, password, name, "user");
+        const { devVerifyLink } = await register(email, password, name, "user", phone);
         onSuccess(name || email.split("@")[0], email, devVerifyLink);
       } else {
         await login(email, password);
@@ -221,6 +229,22 @@ function EmailForm({
       setError(err instanceof Error ? err.message : "Autentikasi gagal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email.includes("@")) return;
+    setResendLoading(true);
+    setResendSent(false);
+    setDevVerifyLink(null);
+    try {
+      const res = await api.resendVerificationEmail(email);
+      setResendSent(true);
+      if (res.devVerifyLink) setDevVerifyLink(res.devVerifyLink);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengirim ulang email verifikasi");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -277,6 +301,24 @@ function EmailForm({
         />
       </div>
 
+      {mode === "daftar" && (
+        <>
+          <div>
+            <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nomor WhatsApp</label>
+            <div className="flex">
+              <span className="flex items-center px-3 border-2 border-r-0 border-[#D8E2F0] rounded-l-xl bg-[#EEF3FB] text-[#294566] font-semibold text-[14px]">+62</span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="812 3456 7890"
+                className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="block text-[13px] font-bold text-[#172E4D]">Kata sandi</label>
@@ -321,6 +363,30 @@ function EmailForm({
         </div>
       )}
 
+      {needsEmailVerification && (
+        <div className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3 space-y-2">
+          <p className="text-[12px] text-[#58708D]">
+            Periksa inbox untuk tautan verifikasi, atau kirim ulang email verifikasi.
+          </p>
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resendLoading}
+            className="text-[13px] font-bold text-[#1D4196] hover:underline disabled:opacity-50"
+          >
+            {resendLoading ? "Mengirim…" : "Kirim ulang email verifikasi"}
+          </button>
+          {resendSent && (
+            <p className="text-[12px] text-[#20bf6f] font-semibold">Email verifikasi dikirim. Periksa inbox.</p>
+          )}
+          {devVerifyLink && (
+            <a href={devVerifyLink} className="block text-[11px] text-[#1D4196] break-all hover:underline">
+              Dev link verifikasi
+            </a>
+          )}
+        </div>
+      )}
+
       {mode === "daftar" && (
         <p className="text-[12px] text-[#58708D]">
           Dengan mendaftar, kamu menyetujui{" "}
@@ -358,6 +424,9 @@ function EmailForm({
 
 export default function Auth() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const redirectFrom = (location.state as { from?: string } | null)?.from;
   const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
@@ -384,6 +453,10 @@ export default function Auth() {
   };
 
   const handleEmailSuccess = (name: string, email: string, link?: string) => {
+    if (mode === "masuk" && redirectFrom) {
+      navigate(redirectFrom, { replace: true });
+      return;
+    }
     setAuthProvider("email");
     setSuccessName(name);
     setSuccessEmail(email);

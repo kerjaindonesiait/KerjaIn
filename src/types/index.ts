@@ -20,6 +20,8 @@ export interface Job {
   photos: string[];
   area: string;
   alamat?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   lokasiType: string;
   waktuType: string;
   tanggal?: string | null;
@@ -28,7 +30,7 @@ export interface Job {
   price: string;
   status: string;
   urgency?: string | null;
-  offers: number;
+  offers: number | null;
   ownerId?: string;
   isOwner?: boolean;
   remote: boolean;
@@ -109,4 +111,61 @@ export interface RegisterResponse {
 
 export interface LoginResponse {
   user: User;
+}
+
+export interface Review {
+  id: string;
+  jobId: string;
+  reviewerId: string;
+  revieweeId: string;
+  rating: number;
+  comment: string | null;
+  reviewerName: string | null;
+  createdAt: string;
+}
+
+export interface TechnicianPublic {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  memberSince: string;
+  area: string | null;
+  keahlian: string[];
+  pengalaman: string | null;
+  tarif: string | null;
+  bio: string | null;
+  completedJobs: number;
+  completionRate: number | null;
+  rating: number;
+  reviewCount: number;
+  verified: boolean;
+}
+
+export interface AdminTechnician {
+  userId: string;
+  email: string;
+  fullName: string | null;
+  phone: string | null;
+  area: string | null;
+  nik: string | null;
+  ktpPhotoUrl: string | null;
+  selfiePhotoUrl: string | null;
+  keahlian: string[];
+  verified: boolean;
+  memberSince: string;
+  hasKtpSubmission: boolean;
+}
+
+export interface AdminUser {
+  userId: string;
+  email: string;
+  fullName: string | null;
+  role: string;
+  emailVerified: boolean;
+  memberSince: string;
+}
+
+export interface AppSettings {
+  requireVerifiedToQuote: boolean;
+  maintenanceMode: boolean;
 }

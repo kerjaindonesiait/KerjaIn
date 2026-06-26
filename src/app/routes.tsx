@@ -15,6 +15,8 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AccountSettings from "./pages/AccountSettings";
 import MyJobs from "./pages/MyJobs";
+import TechProfile from "./pages/TechProfile";
+import AdminPanel from "./pages/AdminPanel";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "tasks", Component: Tasks },
+      { path: "tukang/:id", Component: TechProfile },
       { path: "how-it-works", Component: HowItWorks },
       {
         path: "post-job",
@@ -45,6 +48,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute role="user">
             <MyJobs />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
+          <ProtectedRoute>
+            <AdminPanel />
           </ProtectedRoute>
         ),
       },

@@ -1,23 +1,19 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
-  Plus, Minus, Crosshair, SlidersHorizontal, Shield,
+  SlidersHorizontal, Shield,
   CheckCircle, Heart, Share2, ChevronLeft, Image as ImageIcon,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
+import { JobsMap } from "../components/JobsMap";
 import type { Job, Offer } from "../../types";
 
 type Task = Job & { status: string };
 
 const AVATAR_COLORS = ["#1D4196", "#6c47d9", "#e85d26", "#20bf6f", "#f59e0b", "#ec4899", "#14b8a6", "#8b5cf6"];
 
-const MAP_PINS = [
-  { x: "28%", y: "35%" }, { x: "42%", y: "22%" }, { x: "55%", y: "42%" },
-  { x: "35%", y: "55%" }, { x: "65%", y: "30%" }, { x: "72%", y: "60%" },
-  { x: "18%", y: "62%" }, { x: "50%", y: "65%" }, { x: "80%", y: "45%" },
-];
 function Avatar({ initials, id, size = "sm" }: { initials: string | null | undefined; id: string; size?: "sm" | "lg" }) {
   const colorIdx = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
@@ -91,7 +87,7 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[13px] font-bold text-[#1D4196]">{task.status}</span>
-            {task.offers !== null && (
+            {task.isOwner && task.offers != null && task.offers > 0 && (
               <span className="text-[12px] text-[#58708D]">
                 · {task.offers} penawaran
               </span>
@@ -118,10 +114,23 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
 
+  const TABS = [
+    { id: "detail" as const, label: "Detail", count: null },
+    { id: "penawaran" as const, label: "Penawaran", count: task.offers ?? 0 },
+    { id: "pemilik" as const, label: "Pemilik", count: null },
+  ];
+
   const canAcceptOffers = !!task.isOwner && task.status === "open";
+  const visibleTabs = TABS.filter((t) => t.id !== "penawaran" || task.isOwner);
 
   useEffect(() => {
-    if (tab === "penawaran") {
+    if (tab === "penawaran" && !task.isOwner) {
+      setTab("detail");
+    }
+  }, [tab, task.isOwner]);
+
+  useEffect(() => {
+    if (tab === "penawaran" && task.isOwner) {
       setLoadingOffers(true);
       setAcceptError(null);
       api.getOffers(task.id)
@@ -129,7 +138,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         .catch(() => setOffers([]))
         .finally(() => setLoadingOffers(false));
     }
-  }, [tab, task.id]);
+  }, [tab, task.id, task.isOwner]);
 
   const handleAcceptOffer = async (offerId: string) => {
     if (!user) {
@@ -151,12 +160,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       setAcceptingId(null);
     }
   };
-
-  const TABS = [
-    { id: "detail"    as const, label: "Detail",    count: null },
-    { id: "penawaran" as const, label: "Penawaran", count: task.offers ?? 0 },
-    { id: "pemilik"   as const, label: "Pemilik",   count: null },
-  ];
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -196,14 +199,14 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         {/* Status row */}
         <div className="flex items-center gap-2 px-6 pb-3">
           <span className="bg-[#EEF3FB] text-[#1D4196] text-[11px] font-bold px-2.5 py-0.5 rounded-full">{task.status}</span>
-          {task.offers !== null && (
+          {task.isOwner && task.offers != null && (
             <span className="text-[12px] text-[#58708D]">{task.offers} penawaran</span>
           )}
         </div>
 
         {/* Tab bar */}
         <div className="flex border-t border-[#f5eded]">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -339,7 +342,11 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[14px] text-[#172E4D]">{offer.technicianName}</p>
+                        <p className="font-bold text-[14px] text-[#172E4D]">
+                          <Link to={`/tukang/${offer.technicianId}`} className="hover:underline text-[#1D4196]">
+                            {offer.technicianName}
+                          </Link>
+                        </p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-black text-[16px] text-[#172E4D]">{offer.priceFormatted}</p>
@@ -394,7 +401,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             </div>
 
             <div className="flex gap-2 flex-wrap mb-5">
-              {["Email terverifikasi", "HP terverifikasi", "ID terverifikasi"].map((badge) => (
+              {["Email terverifikasi", "ID terverifikasi"].map((badge) => (
                 <span key={badge} className="flex items-center gap-1 text-[11px] font-semibold text-[#20bf6f] bg-[#f0fdf4] border border-[#bbf7d0] px-2.5 py-1 rounded-full">
                   <CheckCircle size={11} /> {badge}
                 </span>
@@ -425,6 +432,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       </div>
 
       {/* Sticky CTA */}
+      {task.isOwner && (
       <div className="shrink-0 border-t border-[#f5eded] px-6 py-4 bg-white">
         {acceptedOfferId ? (
           <div className="flex flex-col gap-2">
@@ -446,77 +454,17 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function MapPlaceholder({ selectedId }: { selectedId: string | null }) {
-  return (
-    <div className="relative w-full h-full overflow-hidden bg-[#f8eded]">
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0">
-        <rect width="100%" height="100%" fill="#f8eded" />
-        {["20%", "38%", "56%", "72%", "87%"].map((y) => (
-          <line key={y} x1="0" y1={y} x2="100%" y2={y} stroke="#F7F9FC" strokeWidth="10" />
-        ))}
-        {["18%", "35%", "52%", "68%", "83%"].map((x) => (
-          <line key={x} x1={x} y1="0" x2={x} y2="100%" stroke="#F7F9FC" strokeWidth="10" />
-        ))}
-        {[
-          {x:"2%",y:"3%",w:"14%",h:"15%"},{x:"20%",y:"3%",w:"13%",h:"15%"},{x:"37%",y:"3%",w:"13%",h:"15%"},
-          {x:"54%",y:"3%",w:"12%",h:"15%"},{x:"70%",y:"3%",w:"11%",h:"15%"},{x:"85%",y:"3%",w:"13%",h:"15%"},
-          {x:"2%",y:"22%",w:"14%",h:"14%"},{x:"20%",y:"22%",w:"13%",h:"14%"},{x:"37%",y:"22%",w:"13%",h:"14%"},
-          {x:"54%",y:"22%",w:"12%",h:"14%"},{x:"70%",y:"22%",w:"11%",h:"14%"},{x:"85%",y:"22%",w:"13%",h:"14%"},
-          {x:"2%",y:"40%",w:"14%",h:"14%"},{x:"20%",y:"40%",w:"13%",h:"14%"},{x:"37%",y:"40%",w:"13%",h:"14%"},
-          {x:"54%",y:"40%",w:"12%",h:"14%"},{x:"70%",y:"40%",w:"11%",h:"14%"},{x:"85%",y:"40%",w:"13%",h:"14%"},
-          {x:"2%",y:"58%",w:"14%",h:"12%"},{x:"20%",y:"58%",w:"13%",h:"12%"},{x:"37%",y:"58%",w:"13%",h:"12%"},
-          {x:"54%",y:"58%",w:"12%",h:"12%"},{x:"70%",y:"58%",w:"11%",h:"12%"},{x:"85%",y:"58%",w:"13%",h:"12%"},
-          {x:"2%",y:"74%",w:"14%",h:"23%"},{x:"20%",y:"74%",w:"13%",h:"23%"},{x:"37%",y:"74%",w:"13%",h:"23%"},
-          {x:"54%",y:"74%",w:"12%",h:"23%"},{x:"70%",y:"74%",w:"11%",h:"23%"},{x:"85%",y:"74%",w:"13%",h:"23%"},
-        ].map((b, i) => <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx="4" fill="#f0d8d8" opacity="0.85" />)}
-        <rect x="37%" y="40%" width="13%" height="14%" rx="4" fill="#c8e6c9" opacity="0.6" />
-        <rect x="2%" y="58%" width="14%" height="12%" rx="4" fill="#c8e6c9" opacity="0.5" />
-        {/* Jakarta label */}
-        <text x="50%" y="92%" textAnchor="middle" fontFamily="Manrope,sans-serif" fontSize="12" fill="#7890AA" fontWeight="600">Jakarta, Indonesia</text>
-      </svg>
-
-      {MAP_PINS.map((pin, i) => {
-        const active = selectedId !== null && i === 0;
-        return (
-          <div key={i} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: pin.x, top: pin.y }}>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 transition-all ${
-              active ? "bg-[#1D4196] border-white scale-125" : "bg-white border-[#1D4196] hover:scale-110"
-            }`}>
-              <MapPin size={13} className={active ? "text-white" : "text-[#1D4196]"} fill={active ? "currentColor" : "none"} />
-            </div>
-            {active && <div className="w-2 h-2 bg-[#1D4196] rotate-45 mx-auto -mt-[3px]" />}
-          </div>
-        );
-      })}
-
-      <div className="absolute right-4 bottom-10 flex flex-col gap-1.5">
-        <button className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-[#F7F9FC] border border-[#D8E2F0]">
-          <Crosshair size={15} className="text-[#58708D]" />
-        </button>
-        <div className="w-9 bg-white rounded-lg shadow-md border border-[#D8E2F0] overflow-hidden mt-0.5">
-          <button className="w-full h-9 flex items-center justify-center hover:bg-[#F7F9FC] border-b border-[#D8E2F0]">
-            <Plus size={15} className="text-[#58708D]" />
-          </button>
-          <button className="w-full h-9 flex items-center justify-center hover:bg-[#F7F9FC]">
-            <Minus size={15} className="text-[#58708D]" />
-          </button>
-        </div>
-      </div>
-      <div className="absolute bottom-2 right-3 text-[10px] text-[#7890AA] bg-white/80 px-2 py-0.5 rounded-full">
-        MapLibre | © OpenStreetMap
-      </div>
+      )}
     </div>
   );
 }
 
 export default function Tasks() {
+  const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -531,6 +479,10 @@ export default function Tasks() {
   );
 
   const selectedTask = tasks.find((t) => t.id === selectedId) ?? null;
+
+  if (!authLoading && user?.role === "technician") {
+    return <Navigate to="/dasbor-tukang" replace />;
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -565,9 +517,32 @@ export default function Tasks() {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
+        {/* Map — top on mobile, right panel on desktop */}
+        <div className="order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0">
+          <div className={`absolute inset-0 transition-opacity duration-300 ${selectedTask ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+            <JobsMap
+              jobs={filtered}
+              previewId={mapPreviewId}
+              onPinClick={(id) => setMapPreviewId((prev) => (prev === id ? null : id))}
+              onPreviewClose={() => setMapPreviewId(null)}
+              onViewTask={(id) => {
+                setMapPreviewId(null);
+                setSelectedId(id);
+              }}
+            />
+          </div>
+          <div className={`absolute inset-0 transition-all duration-300 ${
+            selectedTask ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0 pointer-events-none"
+          }`}>
+            {selectedTask && (
+              <TaskDetail task={selectedTask} onClose={() => { setSelectedId(null); setMapPreviewId(null); }} />
+            )}
+          </div>
+        </div>
+
         {/* Task list */}
-        <div className="w-[410px] shrink-0 flex flex-col bg-[#F7F9FC] border-r border-[#f5eded]">
+        <div className="order-2 md:order-1 w-full md:w-[410px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0">
           <div className="px-4 py-2.5 border-b border-[#D8E2F0] bg-white">
             <p className="text-[12px] text-[#7890AA] font-semibold">{filtered.length} pekerjaan tersedia</p>
           </div>
@@ -578,28 +553,17 @@ export default function Tasks() {
               <TaskCard
                 key={task.id}
                 task={task}
-                selected={selectedId === task.id}
-                onClick={() => setSelectedId(selectedId === task.id ? null : task.id)}
+                selected={selectedId === task.id || mapPreviewId === task.id}
+                onClick={() => {
+                  setMapPreviewId(null);
+                  setSelectedId(selectedId === task.id ? null : task.id);
+                }}
               />
             ))}
             {filtered.length === 0 && (
               <div className="text-center py-16 text-[#7890AA] text-[14px] font-medium">
                 Tidak ada pekerjaan yang cocok
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right panel: detail or map */}
-        <div className="flex-1 min-w-0 relative">
-          <div className={`absolute inset-0 transition-opacity duration-300 ${selectedTask ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-            <MapPlaceholder selectedId={selectedId} />
-          </div>
-          <div className={`absolute inset-0 transition-all duration-300 ${
-            selectedTask ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0 pointer-events-none"
-          }`}>
-            {selectedTask && (
-              <TaskDetail task={selectedTask} onClose={() => setSelectedId(null)} />
             )}
           </div>
         </div>
