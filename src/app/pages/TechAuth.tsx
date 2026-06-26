@@ -7,7 +7,6 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
-import { PhoneOtpVerification } from "../components/PhoneOtpVerification";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -246,15 +245,9 @@ function StepAuth({
 function StepProfil({
   data,
   onChange,
-  phoneVerified,
-  onPhoneVerified,
-  onPhoneReset,
 }: {
   data: TechData;
   onChange: (d: Partial<TechData>) => void;
-  phoneVerified: boolean;
-  onPhoneVerified: () => void;
-  onPhoneReset: () => void;
 }) {
   return (
     <div className="space-y-4">
@@ -279,26 +272,14 @@ function StepProfil({
           <span className="flex items-center px-3 border-2 border-r-0 border-[#D8E2F0] rounded-l-xl bg-[#EEF3FB] text-[#294566] font-semibold text-[14px]">+62</span>
           <input
             value={data.phone}
-            onChange={(e) => {
-              onPhoneReset();
-              onChange({ phone: e.target.value.replace(/\D/g, "") });
-            }}
+            onChange={(e) => onChange({ phone: e.target.value.replace(/\D/g, "") })}
             placeholder="812 3456 7890"
             type="tel"
-            disabled={phoneVerified}
-            className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all disabled:opacity-70"
+            className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
           />
         </div>
         <p className="text-[11px] text-[#7890AA] mt-1">Pelanggan bisa menghubungimu via WhatsApp setelah penawaran diterima</p>
       </div>
-
-      <PhoneOtpVerification
-        phone={data.phone}
-        verified={phoneVerified}
-        onVerified={onPhoneVerified}
-        onReset={onPhoneReset}
-        disabled={data.phone.length < 8}
-      />
 
       <div>
         <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Area kerja utama</label>
@@ -730,12 +711,11 @@ function canProceed(
   data: TechData,
   isLoggedInTechnician: boolean,
   pending: { ktp: File | null; selfie: File | null },
-  phoneVerified: boolean,
 ): boolean {
   if (step === 0) {
     return isLoggedInTechnician || !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
   }
-  if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area && phoneVerified;
+  if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
   if (step === 2) {
     const nikOk = data.nik.replace(/\D/g, "").length === 16;
     const hasKtp = !!data.ktpPhoto || !!pending.ktp;
@@ -749,13 +729,12 @@ function canProceed(
 
 const TECH_DRAFT_KEY = "kerjain_tech_draft";
 
-async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null, phoneVerified: boolean) {
+async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null) {
   const draft: {
     data: TechData;
-    phoneVerified: boolean;
     pendingKtp?: { base64: string; contentType: string };
     pendingSelfie?: { base64: string; contentType: string };
-  } = { data, phoneVerified };
+  } = { data };
   if (pendingKtp) {
     draft.pendingKtp = await fileToBase64(pendingKtp);
   }
@@ -794,7 +773,6 @@ export default function TechAuth() {
   const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
   const [pendingKtp, setPendingKtp] = useState<File | null>(null);
   const [pendingSelfie, setPendingSelfie] = useState<File | null>(null);
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const [ktpUploadError, setKtpUploadError] = useState<string | null>(null);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
@@ -813,7 +791,6 @@ export default function TechAuth() {
         try {
           const draft = JSON.parse(raw) as {
             data: TechData;
-            phoneVerified?: boolean;
             pendingKtp?: { base64: string; contentType: string };
             pendingSelfie?: { base64: string; contentType: string };
           };
@@ -823,7 +800,6 @@ export default function TechAuth() {
             email: draft.data.email || user.email,
             authMethod: draft.data.authMethod ?? authMethod,
           }));
-          setPhoneVerified(!!draft.phoneVerified);
           if (draft.pendingKtp) {
             setPendingKtp(base64ToFile(draft.pendingKtp.base64, draft.pendingKtp.contentType, "ktp.jpg"));
           }
@@ -861,7 +837,7 @@ export default function TechAuth() {
       if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
         await register(data.email, data.password, data.nama, "technician");
         if (pendingKtp || pendingSelfie) {
-          await saveTechDraft(data, pendingKtp, pendingSelfie, phoneVerified);
+          await saveTechDraft(data, pendingKtp, pendingSelfie);
         }
         setPendingEmailVerify(true);
         setSubmitted(true);
@@ -995,9 +971,6 @@ export default function TechAuth() {
             <StepProfil
               data={data}
               onChange={update}
-              phoneVerified={phoneVerified}
-              onPhoneVerified={() => setPhoneVerified(true)}
-              onPhoneReset={() => setPhoneVerified(false)}
             />
           )}
           {step === 2 && (
@@ -1031,9 +1004,9 @@ export default function TechAuth() {
         {!(step === 0 && oauthLoading) && (
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }, phoneVerified) || submitting}
+            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) || submitting}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }, phoneVerified) && !submitting
+              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) && !submitting
                 ? "bg-[#172E4D] hover:opacity-90 text-white"
                 : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}

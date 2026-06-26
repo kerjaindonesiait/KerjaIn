@@ -8,7 +8,6 @@ export interface User {
   avatarUrl: string | null;
   emailVerified: boolean;
   phone?: string | null;
-  phoneVerified?: boolean;
   createdAt: string;
 }
 
@@ -21,6 +20,8 @@ export interface Job {
   photos: string[];
   area: string;
   alamat?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   lokasiType: string;
   waktuType: string;
   tanggal?: string | null;

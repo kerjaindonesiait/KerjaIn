@@ -55,7 +55,7 @@ export default function Root() {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className={`flex flex-col bg-[#F7F9FC] ${isTasksPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
       {/* NAV */}
       <header className="bg-white border-b border-[#D8E2F0] sticky top-0 z-50">
         <div className="flex items-center h-[72px] px-6 max-w-[1400px] mx-auto w-full">
@@ -196,7 +196,7 @@ export default function Root() {
       </header>
 
       {/* PAGE CONTENT */}
-      <main className={`flex-1 ${isTasksPage ? "flex flex-col overflow-hidden" : ""}`}>
+      <main className={`flex-1 min-h-0 ${isTasksPage ? "flex flex-col overflow-hidden" : ""}`}>
         <Outlet />
       </main>
 

@@ -3,9 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
-import { PhoneOtpVerification } from "../components/PhoneOtpVerification";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -204,14 +202,13 @@ function EmailForm({
   const [resendSent, setResendSent] = useState(false);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const needsEmailVerification = error === "Email belum terverifikasi";
 
   const valid =
     (mode === "masuk" || name.trim().length >= 2) &&
     email.includes("@") &&
     password.length >= 6 &&
-    (mode === "masuk" || (phone.replace(/\D/g, "").length >= 8 && phoneVerified));
+    (mode === "masuk" || phone.replace(/\D/g, "").length >= 8);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,23 +310,12 @@ function EmailForm({
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => {
-                  setPhoneVerified(false);
-                  setPhone(e.target.value.replace(/\D/g, ""));
-                }}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 placeholder="812 3456 7890"
-                disabled={phoneVerified}
-                className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all disabled:opacity-70"
+                className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
               />
             </div>
           </div>
-          <PhoneOtpVerification
-            phone={phone}
-            verified={phoneVerified}
-            onVerified={() => setPhoneVerified(true)}
-            onReset={() => setPhoneVerified(false)}
-            disabled={phone.length < 8}
-          />
         </>
       )}
 

@@ -238,20 +238,6 @@ export const api = {
     }, false);
   },
 
-  sendPhoneOtp(phone: string) {
-    return request<{ ok: boolean; message: string; devCode?: string }>("/api/auth/phone/send-otp", {
-      method: "POST",
-      body: JSON.stringify({ phone }),
-    }, false);
-  },
-
-  verifyPhoneOtp(phone: string, code: string) {
-    return request<{ ok: boolean; phone: string; phoneVerified: boolean }>("/api/auth/phone/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ phone, code }),
-    }, false);
-  },
-
   updateProfile(body: { fullName?: string; avatarUrl?: string; phone?: string }) {
     return request<{ user: User }>("/api/auth/profile", {
       method: "PATCH",
