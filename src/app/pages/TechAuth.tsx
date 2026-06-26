@@ -895,7 +895,7 @@ export default function TechAuth() {
                 </p>
               </div>
               <button
-                onClick={() => navigate("/masuk")}
+                onClick={() => navigate("/masuk", { state: { from: "/daftar-tukang?resume=1" } })}
                 className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors"
               >
                 Ke halaman masuk
