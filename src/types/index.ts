@@ -170,30 +170,29 @@ export interface AppSettings {
   maintenanceMode: boolean;
 }
 
-export interface JobMessage {
-  id: string;
-  threadId: string;
-  senderId: string;
-  senderName: string;
-  body: string;
-  createdAt: string;
-  isMine: boolean;
-}
-
-export interface MessageThreadSummary {
+export interface ChatMessage {
   id: string;
   jobId: string;
-  jobTitle: string;
-  jobStatus: string;
-  peerId: string;
-  peerName: string;
-  lastMessage: string | null;
-  lastMessageAt: string;
+  technicianId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
 }
 
-export interface MessageConversation {
-  threadId: string;
-  job: { id: string; title: string; status: string };
-  peer: { id: string; name: string };
-  messages: JobMessage[];
+export interface ConversationPreview {
+  jobId: string;
+  jobTitle: string;
+  technicianId: string;
+  otherPartyName: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  isLastFromMe: boolean;
+}
+
+export interface JobChatThread {
+  job: { id: string; title: string };
+  technicianId: string;
+  owner: { id: string; name: string };
+  technician: { id: string; name: string };
+  messages: ChatMessage[];
 }

@@ -17,8 +17,7 @@ import AccountSettings from "./pages/AccountSettings";
 import MyJobs from "./pages/MyJobs";
 import TechProfile from "./pages/TechProfile";
 import AdminPanel from "./pages/AdminPanel";
-import MessagesInbox from "./pages/MessagesInbox";
-import JobChat from "./pages/JobChat";
+import Messages from "./pages/Messages";
 
 export const router = createBrowserRouter([
   {
@@ -74,22 +73,6 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: "pesan",
-        element: (
-          <ProtectedRoute>
-            <MessagesInbox />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "pesan/:jobId",
-        element: (
-          <ProtectedRoute>
-            <JobChat />
-          </ProtectedRoute>
-        ),
-      },
       { path: "auth/callback", Component: AuthCallback },
       { path: "daftar-tukang", Component: TechAuth },
       {
@@ -97,6 +80,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute role="technician">
             <TechDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "pesan",
+        element: (
+          <ProtectedRoute>
+            <Messages />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "pesan/:jobId",
+        element: (
+          <ProtectedRoute>
+            <Messages />
           </ProtectedRoute>
         ),
       },

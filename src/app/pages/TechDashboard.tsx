@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronDown, Bell, Star, SlidersHorizontal, Send,
-  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2, MessageSquare,
+  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -899,7 +899,7 @@ export default function TechDashboard() {
                         {statusLabel}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-3 text-[12px] text-[#58708D] mb-3">
+                    <div className="flex flex-wrap gap-3 text-[12px] text-[#58708D]">
                       {jobAreaFromOffer(offer) && (
                         <span className="flex items-center gap-1"><MapPin size={11} className="text-[#1D4196]"/>{jobAreaFromOffer(offer)}</span>
                       )}
@@ -907,9 +907,9 @@ export default function TechDashboard() {
                     </div>
                     <Link
                       to={`/pesan/${offer.job_id}`}
-                      className="inline-flex items-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] px-4 py-2 rounded-xl hover:bg-[#EEF3FB] transition-colors"
+                      className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
                     >
-                      <MessageSquare size={14} /> Kirim pesan
+                      <MessageCircle size={15} /> Kirim pesan ke pelanggan
                     </Link>
                   </div>
                 );
@@ -955,23 +955,22 @@ export default function TechDashboard() {
                     {job.date && <span className="flex items-center gap-1"><Clock size={13}/>{job.date}</span>}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Link
-                      to={`/pesan/${job.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 border-2 border-[#1D4196] text-[#1D4196] font-bold text-[13px] py-3 rounded-xl hover:bg-[#EEF3FB] transition-colors"
-                    >
-                      <MessageSquare size={14} /> Kirim pesan
-                    </Link>
-                    <button
-                      type="button"
-                      disabled={completingId === job.id}
-                      onClick={() => handleCompleteJob(job.id)}
-                      className="flex-1 border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {completingId === job.id ? <Loader2 size={14} className="animate-spin" /> : null}
-                      Tandai Selesai ✓
-                    </button>
-                  </div>
+                  <Link
+                    to={`/pesan/${job.id}`}
+                    className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] py-3 rounded-xl transition-colors"
+                  >
+                    <MessageCircle size={15} /> Hubungi pelanggan
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={completingId === job.id}
+                    onClick={() => handleCompleteJob(job.id)}
+                    className="w-full border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {completingId === job.id ? <Loader2 size={14} className="animate-spin" /> : null}
+                    Tandai Selesai ✓
+                  </button>
                 </div>
               </div>
             ))

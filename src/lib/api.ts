@@ -3,11 +3,11 @@ import type {
   AppSettings,
   AdminTechnician,
   AdminUser,
+  ChatMessage,
+  ConversationPreview,
   Job,
-  JobMessage,
+  JobChatThread,
   LoginResponse,
-  MessageConversation,
-  MessageThreadSummary,
   MineOffer,
   Offer,
   PostJobFormData,
@@ -343,19 +343,19 @@ export const api = {
     });
   },
 
-  getMessageInbox() {
-    return request<{ threads: MessageThreadSummary[] }>("/api/messages/inbox");
+  getConversations() {
+    return request<{ conversations: ConversationPreview[] }>("/api/messages/conversations");
   },
 
-  getJobMessages(jobId: string, peerId?: string) {
-    const qs = peerId ? `?peerId=${encodeURIComponent(peerId)}` : "";
-    return request<MessageConversation>(`/api/messages/job/${jobId}${qs}`);
+  getJobMessages(jobId: string, technicianId?: string) {
+    const qs = technicianId ? `?technicianId=${encodeURIComponent(technicianId)}` : "";
+    return request<JobChatThread>(`/api/messages/job/${jobId}${qs}`);
   },
 
-  sendJobMessage(jobId: string, body: string, peerId?: string) {
-    return request<{ message: JobMessage }>(`/api/messages/job/${jobId}`, {
+  sendJobMessage(jobId: string, body: string, technicianId?: string) {
+    return request<{ message: ChatMessage }>(`/api/messages/job/${jobId}`, {
       method: "POST",
-      body: JSON.stringify({ body, ...(peerId ? { peerId } : {}) }),
+      body: JSON.stringify({ body, ...(technicianId ? { technicianId } : {}) }),
     });
   },
 };
