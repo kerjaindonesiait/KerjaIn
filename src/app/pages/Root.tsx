@@ -39,6 +39,19 @@ export default function Root() {
   const { user, loading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isTasksPage = location.pathname === "/tasks";
+  const browseJobsHref = user?.role === "technician" ? "/dasbor-tukang" : "/tasks";
+
+  const navHref = (item: (typeof NAV_LINKS)[number]) =>
+    item.label === "Cari Pekerjaan" ? browseJobsHref : item.href;
+
+  const navActive = (item: (typeof NAV_LINKS)[number]) => {
+    if (item.label === "Cari Pekerjaan") {
+      return user?.role === "technician"
+        ? location.pathname === "/dasbor-tukang"
+        : location.pathname === "/tasks";
+    }
+    return location.pathname === item.href;
+  };
 
   const handleLogout = async () => {
     setMobileOpen(false);
@@ -75,14 +88,15 @@ export default function Root() {
           {/* Center nav */}
           <nav className="hidden md:flex items-center h-full flex-1">
             {NAV_LINKS.map((item) => {
-              const active = location.pathname === item.href;
+              const href = navHref(item);
+              const active = navActive(item);
               return (
                 <div key={item.label} className="relative h-full flex items-center px-3">
                   {active && (
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#1D4196] rounded-b" />
                   )}
                   <Link
-                    to={item.href}
+                    to={href}
                     className={`text-[13px] font-semibold whitespace-nowrap transition-colors ${
                       active ? "text-[#1D4196]" : "text-[#294566] hover:text-[#1D4196]"
                     }`}
@@ -150,7 +164,7 @@ export default function Root() {
               Post Kerjaan
             </Link>
             {NAV_LINKS.map((item) => (
-              <Link key={item.label} to={item.href} className="text-[14px] font-semibold text-[#294566] py-2 border-b border-[#EEF3FB]" onClick={() => setMobileOpen(false)}>
+              <Link key={item.label} to={navHref(item)} className="text-[14px] font-semibold text-[#294566] py-2 border-b border-[#EEF3FB]" onClick={() => setMobileOpen(false)}>
                 {item.label}
               </Link>
             ))}

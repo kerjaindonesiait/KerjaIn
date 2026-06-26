@@ -30,7 +30,7 @@ export interface Job {
   price: string;
   status: string;
   urgency?: string | null;
-  offers: number;
+  offers: number | null;
   ownerId?: string;
   isOwner?: boolean;
   remote: boolean;

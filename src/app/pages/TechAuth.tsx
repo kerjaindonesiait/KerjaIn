@@ -223,17 +223,6 @@ function StepAuth({
               {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
             </button>
           </div>
-          <button
-            onClick={() => onChange({ authMethod: "email" })}
-            disabled={!data.email.includes("@") || data.password.length < 6}
-            className={`w-full font-bold text-[14px] py-3 rounded-2xl transition-all ${
-              data.email.includes("@") && data.password.length >= 6
-                ? "bg-[#172E4D] text-white hover:opacity-90"
-                : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
-            }`}
-          >
-            Buat akun dengan email
-          </button>
         </div>
       )}
     </div>
@@ -828,6 +817,16 @@ export default function TechAuth() {
 
   const handleNext = async () => {
     if (step < STEPS.length - 1) {
+      if (
+        step === 0 &&
+        !isLoggedInTechnician &&
+        data.email.includes("@") &&
+        data.password.length >= 6 &&
+        data.authMethod !== "google" &&
+        data.authMethod !== "facebook"
+      ) {
+        update({ authMethod: "email" });
+      }
       setStep((s) => s + 1);
       return;
     }

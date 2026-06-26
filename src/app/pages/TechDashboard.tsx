@@ -223,8 +223,7 @@ function JobCard({ job, selected, quoted, onClick }: {
         <span className="flex items-center gap-1"><MapPin size={11} className="text-[#1D4196]" />{job.area}</span>
         <span className="flex items-center gap-1"><Clock size={11} />{job.date}</span>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-[#58708D]">{job.offers} penawaran masuk</span>
+      <div className="flex items-center justify-end">
         {quoted ? (
           <span className="text-[11px] font-bold text-[#20bf6f] bg-[#f0fdf4] border border-[#bbf7d0] px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <CheckCircle size={10} /> Penawaran terkirim
@@ -505,9 +504,6 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
             </span>
             <span className="flex items-center gap-1 bg-[#F7F9FC] px-2.5 py-1 rounded-lg">
               <Clock size={12} className="text-[#1D4196]" /> {job.time}
-            </span>
-            <span className="bg-[#F7F9FC] px-2.5 py-1 rounded-lg font-medium">
-              {job.offers} penawaran
             </span>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   SlidersHorizontal, Shield,
@@ -87,7 +87,7 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[13px] font-bold text-[#1D4196]">{task.status}</span>
-            {task.offers !== null && (
+            {task.isOwner && task.offers != null && task.offers > 0 && (
               <span className="text-[12px] text-[#58708D]">
                 · {task.offers} penawaran
               </span>
@@ -114,10 +114,23 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
 
+  const TABS = [
+    { id: "detail" as const, label: "Detail", count: null },
+    { id: "penawaran" as const, label: "Penawaran", count: task.offers ?? 0 },
+    { id: "pemilik" as const, label: "Pemilik", count: null },
+  ];
+
   const canAcceptOffers = !!task.isOwner && task.status === "open";
+  const visibleTabs = TABS.filter((t) => t.id !== "penawaran" || task.isOwner);
 
   useEffect(() => {
-    if (tab === "penawaran") {
+    if (tab === "penawaran" && !task.isOwner) {
+      setTab("detail");
+    }
+  }, [tab, task.isOwner]);
+
+  useEffect(() => {
+    if (tab === "penawaran" && task.isOwner) {
       setLoadingOffers(true);
       setAcceptError(null);
       api.getOffers(task.id)
@@ -125,7 +138,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         .catch(() => setOffers([]))
         .finally(() => setLoadingOffers(false));
     }
-  }, [tab, task.id]);
+  }, [tab, task.id, task.isOwner]);
 
   const handleAcceptOffer = async (offerId: string) => {
     if (!user) {
@@ -147,12 +160,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       setAcceptingId(null);
     }
   };
-
-  const TABS = [
-    { id: "detail"    as const, label: "Detail",    count: null },
-    { id: "penawaran" as const, label: "Penawaran", count: task.offers ?? 0 },
-    { id: "pemilik"   as const, label: "Pemilik",   count: null },
-  ];
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -192,14 +199,14 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
         {/* Status row */}
         <div className="flex items-center gap-2 px-6 pb-3">
           <span className="bg-[#EEF3FB] text-[#1D4196] text-[11px] font-bold px-2.5 py-0.5 rounded-full">{task.status}</span>
-          {task.offers !== null && (
+          {task.isOwner && task.offers != null && (
             <span className="text-[12px] text-[#58708D]">{task.offers} penawaran</span>
           )}
         </div>
 
         {/* Tab bar */}
         <div className="flex border-t border-[#f5eded]">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -396,6 +403,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       </div>
 
       {/* Sticky CTA */}
+      {task.isOwner && (
       <div className="shrink-0 border-t border-[#f5eded] px-6 py-4 bg-white">
         {acceptedOfferId ? (
           <div className="flex flex-col gap-2">
@@ -417,11 +425,13 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
 
 export default function Tasks() {
+  const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -440,6 +450,10 @@ export default function Tasks() {
   );
 
   const selectedTask = tasks.find((t) => t.id === selectedId) ?? null;
+
+  if (!authLoading && user?.role === "technician") {
+    return <Navigate to="/dasbor-tukang" replace />;
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">

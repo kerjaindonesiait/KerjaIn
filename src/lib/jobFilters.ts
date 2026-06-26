@@ -137,7 +137,7 @@ export function filterAndSortJobs(
         return pb - pa;
       }
       case "offers":
-        return b.offers - a.offers;
+        return (b.offers ?? 0) - (a.offers ?? 0);
       default:
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
