@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   ChevronLeft, ChevronRight, CheckCircle, AlertCircle,
@@ -302,43 +302,6 @@ async function fileToBase64(file: File): Promise<{ base64: string; contentType: 
   return { base64: dataUrl.split(",")[1], contentType: file.type || "image/jpeg" };
 }
 
-/** Shrink photos before localStorage draft (avoids quota errors). */
-async function compressImageForDraft(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const maxW = 1280;
-    const scale = Math.min(1, maxW / bitmap.width);
-    const w = Math.max(1, Math.round(bitmap.width * scale));
-    const h = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
-    ctx.drawImage(bitmap, 0, 0, w, h);
-    bitmap.close();
-    return await new Promise((resolve) => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            resolve(file);
-            return;
-          }
-          resolve(new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" }));
-        },
-        "image/jpeg",
-        0.82,
-      );
-    });
-  } catch {
-    return file;
-  }
-}
-
 // ─── Step 2 — KTP Verification ───────────────────────────────────────────────
 
 function UploadBox({
@@ -382,20 +345,12 @@ function StepKTP({
   data,
   onChange,
   isLoggedIn,
-  pendingKtp,
-  pendingSelfie,
-  onPendingKtp,
-  onPendingSelfie,
   uploadError,
   onUploadError,
 }: {
   data: TechData;
   onChange: (d: Partial<TechData>) => void;
   isLoggedIn: boolean;
-  pendingKtp: File | null;
-  pendingSelfie: File | null;
-  onPendingKtp: (file: File | null) => void;
-  onPendingSelfie: (file: File | null) => void;
   uploadError: string | null;
   onUploadError: (msg: string | null) => void;
 }) {
@@ -407,23 +362,20 @@ function StepKTP({
     v.replace(/\D/g, "").slice(0, 16).replace(/(\d{6})(\d{6})(\d{4})/, "$1 $2 $3").trim();
 
   const handleFile = async (file: File, field: "ktp" | "selfie") => {
+    if (!isLoggedIn) {
+      onUploadError("Silakan verifikasi email dan masuk terlebih dahulu sebelum mengunggah KTP.");
+      return;
+    }
     onUploadError(null);
-    if (isLoggedIn) {
-      setUploadingField(field);
-      try {
-        const { base64, contentType } = await fileToBase64(file);
-        const { path } = await api.uploadKtpDocument(base64, contentType, field);
-        onChange(field === "ktp" ? { ktpPhoto: path } : { selfiePhoto: path });
-        if (field === "ktp") onPendingKtp(null);
-        else onPendingSelfie(null);
-      } catch (e) {
-        onUploadError(e instanceof Error ? e.message : "Gagal mengunggah foto");
-      } finally {
-        setUploadingField(null);
-      }
-    } else {
-      if (field === "ktp") onPendingKtp(file);
-      else onPendingSelfie(file);
+    setUploadingField(field);
+    try {
+      const { base64, contentType } = await fileToBase64(file);
+      const { path } = await api.uploadKtpDocument(base64, contentType, field);
+      onChange(field === "ktp" ? { ktpPhoto: path } : { selfiePhoto: path });
+    } catch (e) {
+      onUploadError(e instanceof Error ? e.message : "Gagal mengunggah foto");
+    } finally {
+      setUploadingField(null);
     }
   };
 
@@ -438,12 +390,10 @@ function StepKTP({
       }
     }
     onChange(field === "ktp" ? { ktpPhoto: null } : { selfiePhoto: null });
-    if (field === "ktp") onPendingKtp(null);
-    else onPendingSelfie(null);
   };
 
-  const hasKtp = !!data.ktpPhoto || !!pendingKtp;
-  const hasSelfie = !!data.selfiePhoto || !!pendingSelfie;
+  const hasKtp = !!data.ktpPhoto;
+  const hasSelfie = !!data.selfiePhoto;
 
   return (
     <div className="space-y-5">
@@ -490,12 +440,6 @@ function StepKTP({
         onUpload={() => selfieRef.current?.click()}
         onRemove={() => handleRemove("selfie")}
       />
-
-      {!isLoggedIn && (pendingKtp || pendingSelfie) && (
-        <p className="text-[12px] text-[#58708D] bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3">
-          Foto disimpan sementara. Setelah verifikasi email dan masuk kembali, dokumen akan diunggah otomatis saat menyelesaikan pendaftaran.
-        </p>
-      )}
 
       {uploadError && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-600">
@@ -732,105 +676,23 @@ function SuccessScreen({ data }: { data: TechData }) {
 
 // ─── can proceed logic ────────────────────────────────────────────────────────
 
-function canProceed(
-  step: number,
-  data: TechData,
-  isLoggedInTechnician: boolean,
-  pending: { ktp: File | null; selfie: File | null },
-): boolean {
+function canProceed(step: number, data: TechData, isLoggedInTechnician: boolean): boolean {
   if (step === 0) {
-    return isLoggedInTechnician || !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
+    return isLoggedInTechnician || !!(data.email.includes("@") && data.password.length >= 6);
   }
+  if (!isLoggedInTechnician) return false;
   if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
   if (step === 2) {
     const nikOk = data.nik.replace(/\D/g, "").length === 16;
-    const hasKtp = !!data.ktpPhoto || !!pending.ktp;
-    const hasSelfie = !!data.selfiePhoto || !!pending.selfie;
-    return nikOk && hasKtp && hasSelfie;
+    return nikOk && !!data.ktpPhoto && !!data.selfiePhoto;
   }
   if (step === 3) return data.keahlian.length >= 1;
   if (step === 4) return !!data.pengalaman;
   return true;
 }
 
-const TECH_DRAFT_KEY = "kerjain_tech_draft";
-
-type StoredTechDraft = {
-  data: TechData;
-  pendingKtp?: { base64: string; contentType: string };
-  pendingSelfie?: { base64: string; contentType: string };
-};
-
-function clearTechDraft() {
-  try {
-    localStorage.removeItem(TECH_DRAFT_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null) {
-  const draft: StoredTechDraft = { data };
-  if (pendingKtp) {
-    const compressed = await compressImageForDraft(pendingKtp);
-    draft.pendingKtp = await fileToBase64(compressed);
-  }
-  if (pendingSelfie) {
-    const compressed = await compressImageForDraft(pendingSelfie);
-    draft.pendingSelfie = await fileToBase64(compressed);
-  }
-  try {
-    localStorage.setItem(TECH_DRAFT_KEY, JSON.stringify(draft));
-  } catch {
-    const withoutPhotos: StoredTechDraft = { data };
-    localStorage.setItem(TECH_DRAFT_KEY, JSON.stringify(withoutPhotos));
-    throw new Error("Foto terlalu besar untuk disimpan sementara. Setelah masuk, unggah ulang KTP dan selfie.");
-  }
-}
-
-function readTechDraft(): StoredTechDraft | null {
-  try {
-    let raw = localStorage.getItem(TECH_DRAFT_KEY);
-    if (!raw) {
-      raw = sessionStorage.getItem(TECH_DRAFT_KEY);
-      if (raw) {
-        localStorage.setItem(TECH_DRAFT_KEY, raw);
-        sessionStorage.removeItem(TECH_DRAFT_KEY);
-      }
-    }
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredTechDraft;
-  } catch {
-    clearTechDraft();
-    return null;
-  }
-}
-
-function base64ToFile(base64: string, contentType: string, name: string): File {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], name, { type: contentType });
-}
-
-async function saveTechnicianProfileWithPhotos(
-  data: TechData,
-  pendingKtp: File | null,
-  pendingSelfie: File | null,
-) {
-  let ktpPhoto = data.ktpPhoto;
-  let selfiePhoto = data.selfiePhoto;
-
-  if (pendingKtp && !ktpPhoto) {
-    const { base64, contentType } = await fileToBase64(pendingKtp);
-    ktpPhoto = (await api.uploadKtpDocument(base64, contentType, "ktp")).path;
-  }
-  if (pendingSelfie && !selfiePhoto) {
-    const { base64, contentType } = await fileToBase64(pendingSelfie);
-    selfiePhoto = (await api.uploadKtpDocument(base64, contentType, "selfie")).path;
-  }
-
-  if (!ktpPhoto || !selfiePhoto) {
+async function saveTechnicianProfile(data: TechData) {
+  if (!data.ktpPhoto || !data.selfiePhoto) {
     throw new Error("KTP dan selfie wajib diunggah sebelum menyelesaikan pendaftaran.");
   }
 
@@ -838,8 +700,8 @@ async function saveTechnicianProfileWithPhotos(
     phone: data.phone,
     area: data.area,
     nik: data.nik.replace(/\D/g, ""),
-    ktpPhoto,
-    selfiePhoto,
+    ktpPhoto: data.ktpPhoto,
+    selfiePhoto: data.selfiePhoto,
     keahlian: data.keahlian,
     pengalaman: data.pengalaman,
     tarif: data.tarif,
@@ -867,26 +729,22 @@ export default function TechAuth() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
-  const [pendingKtp, setPendingKtp] = useState<File | null>(null);
-  const [pendingSelfie, setPendingSelfie] = useState<File | null>(null);
   const [ktpUploadError, setKtpUploadError] = useState<string | null>(null);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
-  const [resumeSaving, setResumeSaving] = useState(false);
   const resumeHandled = useRef(false);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
   const isLoggedInTechnician = user?.role === "technician";
 
-  const completeProfileSave = useCallback(
-    async (profileData: TechData, ktp: File | null, selfie: File | null) => {
-      await saveTechnicianProfileWithPhotos(profileData, ktp, selfie);
-      clearTechDraft();
-    },
-    [],
-  );
+  useEffect(() => {
+    if (loading) return;
+    if (step > 0 && !isLoggedInTechnician) {
+      setStep(0);
+    }
+  }, [loading, step, isLoggedInTechnician]);
 
   useEffect(() => {
     if (loading) return;
@@ -898,6 +756,13 @@ export default function TechAuth() {
     const oauthMethod: OAuthProvider | null =
       providerParam === "google" ? "google" : providerParam === "facebook" ? "facebook" : null;
 
+    try {
+      localStorage.removeItem("kerjain_tech_draft");
+      sessionStorage.removeItem("kerjain_tech_draft");
+    } catch {
+      /* ignore legacy draft cleanup */
+    }
+
     (async () => {
       try {
         const { profile } = await api.getTechnicianProfile();
@@ -906,63 +771,24 @@ export default function TechAuth() {
           return;
         }
 
-        const draft = readTechDraft();
-        if (!draft) {
-          setStep(1);
-          setData((d) => ({
-            ...d,
-            nama: d.nama || user!.fullName || "",
-            email: d.email || user!.email,
-            authMethod: oauthMethod ?? d.authMethod ?? "email",
-          }));
-          return;
-        }
-
-        const profileData: TechData = {
-          ...draft.data,
-          nama: draft.data.nama || user!.fullName || "",
-          email: draft.data.email || user!.email,
-          authMethod: draft.data.authMethod ?? oauthMethod ?? "email",
-        };
-        const ktpFile = draft.pendingKtp
-          ? base64ToFile(draft.pendingKtp.base64, draft.pendingKtp.contentType, "ktp.jpg")
-          : null;
-        const selfieFile = draft.pendingSelfie
-          ? base64ToFile(draft.pendingSelfie.base64, draft.pendingSelfie.contentType, "selfie.jpg")
-          : null;
-
-        setData(profileData);
-        if (ktpFile) setPendingKtp(ktpFile);
-        if (selfieFile) setPendingSelfie(selfieFile);
-
-        setResumeSaving(true);
-        await completeProfileSave(profileData, ktpFile, selfieFile);
-        setSubmitted(true);
-        setPendingEmailVerify(false);
-      } catch (e) {
-        const draft = readTechDraft();
-        if (draft) {
-          const profileData: TechData = {
-            ...draft.data,
-            nama: draft.data.nama || user!.fullName || "",
-            email: draft.data.email || user!.email,
-            authMethod: draft.data.authMethod ?? oauthMethod ?? "email",
-          };
-          setData(profileData);
-          if (draft.pendingKtp) {
-            setPendingKtp(base64ToFile(draft.pendingKtp.base64, draft.pendingKtp.contentType, "ktp.jpg"));
-          }
-          if (draft.pendingSelfie) {
-            setPendingSelfie(base64ToFile(draft.pendingSelfie.base64, draft.pendingSelfie.contentType, "selfie.jpg"));
-          }
-          setStep(4);
-        }
-        setSubmitError(e instanceof Error ? e.message : "Gagal menyimpan profil tukang");
-      } finally {
-        setResumeSaving(false);
+        setStep(1);
+        setData((d) => ({
+          ...d,
+          nama: d.nama || user!.fullName || "",
+          email: d.email || user!.email,
+          authMethod: oauthMethod ?? d.authMethod ?? "email",
+        }));
+      } catch {
+        setStep(1);
+        setData((d) => ({
+          ...d,
+          nama: d.nama || user!.fullName || "",
+          email: d.email || user!.email,
+          authMethod: oauthMethod ?? d.authMethod ?? "email",
+        }));
       }
     })();
-  }, [loading, user, searchParams, navigate, completeProfileSave]);
+  }, [loading, user, searchParams, navigate]);
 
   const handleOAuth = (provider: OAuthProvider) => {
     setOauthLoading(provider);
@@ -970,60 +796,48 @@ export default function TechAuth() {
   };
 
   const handleNext = async () => {
-    if (step < STEPS.length - 1) {
-      if (
-        step === 0 &&
-        !isLoggedInTechnician &&
-        data.email.includes("@") &&
-        data.password.length >= 6 &&
-        data.authMethod !== "google" &&
-        data.authMethod !== "facebook"
-      ) {
+    if (step === 0 && !isLoggedInTechnician) {
+      const isEmailSignup = data.email.includes("@") && data.password.length >= 6;
+      if (!isEmailSignup) return;
+
+      setSubmitting(true);
+      setSubmitError("");
+      try {
         update({ authMethod: "email" });
+        const displayName = data.nama.trim() || data.email.split("@")[0] || "Tukang";
+        const { devVerifyLink: link } = await register(data.email, data.password, displayName, "technician");
+        setDevVerifyLink(link ?? null);
+        setPendingEmailVerify(true);
+        setSubmitted(true);
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : "Pendaftaran gagal");
+      } finally {
+        setSubmitting(false);
       }
+      return;
+    }
+
+    if (step < STEPS.length - 1) {
       setStep((s) => s + 1);
       return;
     }
+
+    if (!isLoggedInTechnician) {
+      setSubmitError("Silakan verifikasi email dan masuk terlebih dahulu.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError("");
     try {
-      if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
-        const { devVerifyLink: link } = await register(data.email, data.password, data.nama, "technician");
-        setDevVerifyLink(link ?? null);
-        if (pendingKtp || pendingSelfie) {
-          try {
-            await saveTechDraft(data, pendingKtp, pendingSelfie);
-          } catch (draftErr) {
-            console.warn("Tech draft save failed:", draftErr);
-            await saveTechDraft({ ...data, ktpPhoto: null, selfiePhoto: null }, null, null);
-          }
-        }
-        setPendingEmailVerify(true);
-        setSubmitted(true);
-        return;
-      }
-      if (!isLoggedInTechnician && !user) {
-        throw new Error("Silakan buat akun terlebih dahulu di langkah 1");
-      }
-
-      await completeProfileSave(data, pendingKtp, pendingSelfie);
+      await saveTechnicianProfile(data);
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Pendaftaran gagal");
+      setSubmitError(err instanceof Error ? err.message : "Gagal menyimpan profil");
     } finally {
       setSubmitting(false);
     }
   };
-
-  if (resumeSaving) {
-    return (
-      <div className="min-h-screen bg-[#F7F9FC] flex flex-col items-center justify-center gap-3 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
-        <div className="w-10 h-10 rounded-full border-2 border-[#1D4196]/30 border-t-[#1D4196] animate-spin" />
-        <p className="font-semibold text-[#172E4D]">Menyimpan profil dan mengunggah KTP…</p>
-        <p className="text-[13px] text-[#7890AA]">Mohon tunggu sebentar</p>
-      </div>
-    );
-  }
 
   if (submitted) {
     return (
@@ -1043,7 +857,7 @@ export default function TechAuth() {
                 <h2 className="font-black text-[26px] text-[#172E4D] mb-1">Cek email kamu</h2>
                 <p className="text-[#58708D] text-[14px] max-w-xs mx-auto">
                   Kami mengirim tautan verifikasi ke <span className="font-bold text-[#172E4D]">{data.email}</span>.
-                  Setelah verifikasi, masuk dan lanjutkan pendaftaran profil tukang.
+                  Setelah verifikasi, masuk lalu lengkapi profil dan unggah KTP langsung ke sistem kami.
                 </p>
               </div>
 
@@ -1087,7 +901,12 @@ export default function TechAuth() {
               )}
 
               <button
-                onClick={() => navigate("/masuk", { state: { from: "/daftar-tukang?resume=1" } })}
+                onClick={() =>
+                  navigate(
+                    "/masuk?next=" + encodeURIComponent("/daftar-tukang?resume=1"),
+                    { state: { from: "/daftar-tukang?resume=1" } },
+                  )
+                }
                 className="w-full bg-[#172E4D] hover:opacity-90 text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors"
               >
                 Ke halaman masuk
@@ -1164,10 +983,6 @@ export default function TechAuth() {
               data={data}
               onChange={update}
               isLoggedIn={isLoggedInTechnician}
-              pendingKtp={pendingKtp}
-              pendingSelfie={pendingSelfie}
-              onPendingKtp={setPendingKtp}
-              onPendingSelfie={setPendingSelfie}
               uploadError={ktpUploadError}
               onUploadError={setKtpUploadError}
             />
@@ -1176,31 +991,23 @@ export default function TechAuth() {
           {step === 4 && <StepPengalaman data={data} onChange={update} />}
         </div>
 
-        {/* KTP skip note */}
-        {step === 2 && (
-          <p className="text-center text-[12px] text-[#7890AA] mb-3">
-            Belum punya KTP siap?{" "}
-            <button onClick={() => setStep(3)} className="text-[#1D4196] font-bold hover:underline">
-              Lewati untuk sekarang
-            </button>
-          </p>
-        )}
-
         {/* Nav button */}
         {!(step === 0 && oauthLoading) && (
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) || submitting}
+            disabled={!canProceed(step, data, isLoggedInTechnician) || submitting}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) && !submitting
+              canProceed(step, data, isLoggedInTechnician) && !submitting
                 ? "bg-[#172E4D] hover:opacity-90 text-white"
                 : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}
           >
             {submitting ? (
-              "Mendaftarkan…"
+              step === 0 ? "Mendaftarkan…" : "Menyimpan…"
             ) : step === STEPS.length - 1 ? (
-              "Selesai & Daftarkan Akun"
+              "Selesai & Kirim Profil"
+            ) : step === 0 && !isLoggedInTechnician ? (
+              "Daftar & kirim verifikasi email"
             ) : (
               <>{step === 0 ? "Lanjutkan" : "Selanjutnya"} <ChevronRight size={16} /></>
             )}

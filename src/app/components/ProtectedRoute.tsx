@@ -14,7 +14,14 @@ export function ProtectedRoute({ children, role }: { children: React.ReactNode; 
   }
 
   if (!user) {
-    return <Navigate to="/masuk" state={{ from: location.pathname }} replace />;
+    const returnTo = location.pathname + location.search;
+    return (
+      <Navigate
+        to={"/masuk?next=" + encodeURIComponent(returnTo)}
+        state={{ from: returnTo }}
+        replace
+      />
+    );
   }
 
   if (role && user.role !== role) {

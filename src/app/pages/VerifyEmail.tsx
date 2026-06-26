@@ -51,10 +51,16 @@ export default function VerifyEmail() {
                 : "Email Anda sudah diverifikasi. Silakan masuk untuk melanjutkan."}
             </p>
             <Link
-              to="/masuk"
-              state={{
-                from: verifiedRole === "technician" ? "/daftar-tukang?resume=1" : undefined,
-              }}
+              to={
+                verifiedRole === "technician"
+                  ? "/masuk?next=" + encodeURIComponent("/daftar-tukang?resume=1")
+                  : "/masuk"
+              }
+              state={
+                verifiedRole === "technician"
+                  ? { from: "/daftar-tukang?resume=1" }
+                  : undefined
+              }
               className="inline-block bg-[#1D4196] text-white font-bold text-[14px] px-6 py-3 rounded-2xl hover:bg-[#173577]"
             >
               Masuk sekarang

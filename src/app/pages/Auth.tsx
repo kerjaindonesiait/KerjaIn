@@ -4,6 +4,7 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Arrow
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
+import type { User } from "../../types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -188,7 +189,7 @@ function EmailForm({
   onBack,
 }: {
   mode: AuthMode;
-  onSuccess: (name: string, email: string, devVerifyLink?: string) => void;
+  onSuccess: (name: string, email: string, devVerifyLink?: string, loggedInUser?: User) => void;
   onBack: () => void;
 }) {
   const { login, register } = useAuth();
@@ -222,8 +223,8 @@ function EmailForm({
         const { devVerifyLink } = await register(email, password, name, "user", phone);
         onSuccess(name || email.split("@")[0], email, devVerifyLink);
       } else {
-        await login(email, password);
-        onSuccess(name || email.split("@")[0], email);
+        const loggedInUser = await login(email, password);
+        onSuccess(name || email.split("@")[0], email, undefined, loggedInUser);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Autentikasi gagal");
@@ -427,6 +428,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectFrom = (location.state as { from?: string } | null)?.from;
+  const nextParam = params.get("next");
   const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
@@ -452,10 +454,22 @@ export default function Auth() {
     window.location.href = api.oauthAuthUrl(provider);
   };
 
-  const handleEmailSuccess = (name: string, email: string, link?: string) => {
-    if (mode === "masuk" && redirectFrom) {
-      navigate(redirectFrom, { replace: true });
-      return;
+  const handleEmailSuccess = (
+    name: string,
+    email: string,
+    link?: string,
+    loggedInUser?: User,
+  ) => {
+    if (mode === "masuk") {
+      const destination = nextParam || redirectFrom;
+      if (destination) {
+        navigate(destination, { replace: true });
+        return;
+      }
+      if (loggedInUser?.role === "technician") {
+        navigate("/dasbor-tukang", { replace: true });
+        return;
+      }
     }
     setAuthProvider("email");
     setSuccessName(name);
