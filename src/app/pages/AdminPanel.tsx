@@ -17,13 +17,20 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deniedReason, setDeniedReason] = useState<"not_admin" | "api_error" | null>(null);
 
   useEffect(() => {
     if (authLoading || !user) return;
     api
       .adminMe()
-      .then(({ isAdmin: ok }) => setIsAdmin(ok))
-      .catch(() => setIsAdmin(false));
+      .then(({ isAdmin: ok }) => {
+        setIsAdmin(ok);
+        if (!ok) setDeniedReason("not_admin");
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setDeniedReason("api_error");
+      });
   }, [user, authLoading]);
 
   const load = () => {
@@ -80,7 +87,31 @@ export default function AdminPanel() {
   }
 
   if (!user) return <Navigate to="/masuk" replace />;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#F7F9FC] flex items-center justify-center px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
+        <div className="max-w-[440px] w-full bg-white rounded-3xl border border-[#D8E2F0] shadow-lg p-8 text-center">
+          <h1 className="font-black text-[22px] text-[#172E4D] mb-2">Akses admin ditolak</h1>
+          {deniedReason === "api_error" ? (
+            <p className="text-[14px] text-[#58708D] mb-6">
+              Tidak dapat memeriksa hak akses admin. Coba keluar lalu masuk kembali.
+            </p>
+          ) : (
+            <p className="text-[14px] text-[#58708D] mb-6">
+              Akun <span className="font-bold text-[#172E4D]">{user.email}</span> tidak ada di daftar{" "}
+              <code className="text-[12px] bg-[#F7F9FC] px-1 rounded">ADMIN_EMAILS</code> di server API.
+            </p>
+          )}
+          <p className="text-[12px] text-[#7890AA] mb-6">
+            Tambahkan email ini ke Environment Variables proyek <strong>Kerjain-Backend</strong> di Vercel, lalu redeploy API.
+          </p>
+          <Link to="/" className="inline-block bg-[#1D4196] text-white font-bold text-[14px] px-6 py-3 rounded-2xl hover:bg-[#173577]">
+            Kembali ke beranda
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "pending", label: "Menunggu verifikasi" },
