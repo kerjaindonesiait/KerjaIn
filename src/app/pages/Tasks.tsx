@@ -12,6 +12,18 @@ import type { Job, Offer } from "../../types";
 
 type Task = Job & { status: string };
 
+const STATUS_LABEL: Record<string, string> = {
+  open: "Terbuka",
+  assigned: "Menunggu bayar",
+  in_progress: "Sedang berjalan",
+  completed: "Selesai",
+  cancelled: "Dibatalkan",
+};
+
+function statusLabel(status: string) {
+  return STATUS_LABEL[status] ?? status;
+}
+
 const AVATAR_COLORS = ["#1D4196", "#6c47d9", "#e85d26", "#20bf6f", "#f59e0b", "#ec4899", "#14b8a6", "#8b5cf6"];
 
 function Avatar({ initials, id, size = "sm" }: { initials: string | null | undefined; id: string; size?: "sm" | "lg" }) {
@@ -86,7 +98,7 @@ function TaskCard({ task, selected, onClick }: { task: Task; selected: boolean; 
             )}
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[13px] font-bold text-[#1D4196]">{task.status}</span>
+            <span className="text-[13px] font-bold text-[#1D4196]">{statusLabel(task.status)}</span>
             {task.isOwner && task.offers != null && task.offers > 0 && (
               <span className="text-[12px] text-[#58708D]">
                 · {task.offers} penawaran
@@ -198,7 +210,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
         {/* Status row */}
         <div className="flex items-center gap-2 px-6 pb-3">
-          <span className="bg-[#EEF3FB] text-[#1D4196] text-[11px] font-bold px-2.5 py-0.5 rounded-full">{task.status}</span>
+          <span className="bg-[#EEF3FB] text-[#1D4196] text-[11px] font-bold px-2.5 py-0.5 rounded-full">{statusLabel(task.status)}</span>
           {task.isOwner && task.offers != null && (
             <span className="text-[12px] text-[#58708D]">{task.offers} penawaran</span>
           )}
@@ -440,7 +452,7 @@ export default function Tasks() {
 
   useEffect(() => {
     api.getJobs({ search: searchQuery || undefined })
-      .then(({ jobs }) => setTasks(jobs.map((j) => ({ ...j, status: j.status === "open" ? "Terbuka" : j.status }))))
+      .then(({ jobs }) => setTasks(jobs))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
   }, [searchQuery]);
