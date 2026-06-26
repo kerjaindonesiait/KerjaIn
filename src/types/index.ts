@@ -169,3 +169,30 @@ export interface AppSettings {
   requireVerifiedToQuote: boolean;
   maintenanceMode: boolean;
 }
+
+export interface ChatMessage {
+  id: string;
+  jobId: string;
+  technicianId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface ConversationPreview {
+  jobId: string;
+  jobTitle: string;
+  technicianId: string;
+  otherPartyName: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  isLastFromMe: boolean;
+}
+
+export interface JobChatThread {
+  job: { id: string; title: string };
+  technicianId: string;
+  owner: { id: string; name: string };
+  technician: { id: string; name: string };
+  messages: ChatMessage[];
+}

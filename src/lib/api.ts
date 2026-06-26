@@ -3,7 +3,10 @@ import type {
   AppSettings,
   AdminTechnician,
   AdminUser,
+  ChatMessage,
+  ConversationPreview,
   Job,
+  JobChatThread,
   LoginResponse,
   MineOffer,
   Offer,
@@ -337,6 +340,22 @@ export const api = {
     return request<{ settings: AppSettings }>("/api/admin/settings", {
       method: "PATCH",
       body: JSON.stringify(patch),
+    });
+  },
+
+  getConversations() {
+    return request<{ conversations: ConversationPreview[] }>("/api/messages/conversations");
+  },
+
+  getJobMessages(jobId: string, technicianId?: string) {
+    const qs = technicianId ? `?technicianId=${encodeURIComponent(technicianId)}` : "";
+    return request<JobChatThread>(`/api/messages/job/${jobId}${qs}`);
+  },
+
+  sendJobMessage(jobId: string, body: string, technicianId?: string) {
+    return request<{ message: ChatMessage }>(`/api/messages/job/${jobId}`, {
+      method: "POST",
+      body: JSON.stringify({ body, ...(technicianId ? { technicianId } : {}) }),
     });
   },
 };

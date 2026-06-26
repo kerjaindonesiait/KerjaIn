@@ -4,7 +4,8 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Arrow
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
-import type { User as AppUser } from "../../types";
+import { TermsAcceptance } from "../components/TermsAcceptance";
+import type { User } from "../../types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,10 +40,12 @@ function SocialButton({
   provider,
   onClick,
   loading,
+  disabled,
 }: {
   provider: OAuthProvider;
   onClick: () => void;
   loading: boolean;
+  disabled?: boolean;
 }) {
   const config = {
     google: {
@@ -64,8 +67,8 @@ function SocialButton({
   return (
     <button
       onClick={onClick}
-      disabled={loading}
-      className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all ${config.bg} ${config.border} ${config.text} ${loading ? "opacity-60 cursor-not-allowed" : "shadow-sm hover:shadow-md active:scale-[0.98]"}`}
+      disabled={loading || disabled}
+      className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all ${config.bg} ${config.border} ${config.text} ${loading || disabled ? "opacity-60 cursor-not-allowed" : "shadow-sm hover:shadow-md active:scale-[0.98]"}`}
     >
       <span className="shrink-0 w-5 h-5 flex items-center justify-center">{config.logo}</span>
       {config.label}
@@ -187,10 +190,12 @@ function EmailForm({
   mode,
   onSuccess,
   onBack,
+  initialTermsAccepted = false,
 }: {
   mode: AuthMode;
-  onSuccess: (name: string, email: string, devVerifyLink?: string, loggedInUser?: AppUser) => void;
+  onSuccess: (name: string, email: string, devVerifyLink?: string, loggedInUser?: User) => void;
   onBack: () => void;
+  initialTermsAccepted?: boolean;
 }) {
   const { login, register } = useAuth();
   const [name, setName] = useState("");
@@ -203,13 +208,15 @@ function EmailForm({
   const [resendSent, setResendSent] = useState(false);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(initialTermsAccepted);
   const needsEmailVerification = error === "Email belum terverifikasi";
 
   const valid =
     (mode === "masuk" || name.trim().length >= 2) &&
     email.includes("@") &&
     password.length >= 6 &&
-    (mode === "masuk" || phone.replace(/\D/g, "").length >= 8);
+    (mode === "masuk" || phone.replace(/\D/g, "").length >= 8) &&
+    (mode === "masuk" || acceptedTerms);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -389,12 +396,11 @@ function EmailForm({
       )}
 
       {mode === "daftar" && (
-        <p className="text-[12px] text-[#58708D]">
-          Dengan mendaftar, kamu menyetujui{" "}
-          <span className="text-[#1D4196] font-semibold cursor-pointer hover:underline">Syarat & Ketentuan</span>{" "}
-          dan{" "}
-          <span className="text-[#1D4196] font-semibold cursor-pointer hover:underline">Kebijakan Privasi</span> kami.
-        </p>
+        <TermsAcceptance
+          id="auth-email-terms"
+          checked={acceptedTerms}
+          onChange={setAcceptedTerms}
+        />
       )}
 
       <button
@@ -437,6 +443,7 @@ export default function Auth() {
   const [successName, setSuccessName] = useState("");
   const [successEmail, setSuccessEmail] = useState("");
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const oauthError = params.get("error");
   const oauthErrorMessage =
@@ -451,6 +458,7 @@ export default function Auth() {
           : null;
 
   const handleOAuth = (provider: OAuthProvider) => {
+    if (mode === "daftar" && !acceptedTerms) return;
     window.location.href = api.oauthAuthUrl(provider);
   };
 
@@ -458,7 +466,7 @@ export default function Auth() {
     name: string,
     email: string,
     link?: string,
-    loggedInUser?: AppUser,
+    loggedInUser?: User,
   ) => {
     if (mode === "masuk") {
       const destination = nextParam || redirectFrom;
@@ -482,6 +490,7 @@ export default function Auth() {
     setMode(m);
     setScreen(m === "daftar" ? "role" : "main");
     setActiveProvider(null);
+    setAcceptedTerms(false);
   };
 
   return (
@@ -565,6 +574,7 @@ export default function Auth() {
                 mode={mode}
                 onSuccess={handleEmailSuccess}
                 onBack={() => setScreen("main")}
+                initialTermsAccepted={acceptedTerms}
               />
             </div>
           ) : (
@@ -607,17 +617,29 @@ export default function Auth() {
                   </div>
                 )}
 
+                {mode === "daftar" && (
+                  <div className="mb-5">
+                    <TermsAcceptance
+                      id="auth-main-terms"
+                      checked={acceptedTerms}
+                      onChange={setAcceptedTerms}
+                    />
+                  </div>
+                )}
+
                 {/* Social buttons */}
                 <div className="flex flex-col gap-3 mb-5">
                   <SocialButton
                     provider="google"
                     onClick={() => handleOAuth("google")}
                     loading={activeProvider !== null}
+                    disabled={mode === "daftar" && !acceptedTerms}
                   />
                   <SocialButton
                     provider="facebook"
                     onClick={() => handleOAuth("facebook")}
                     loading={activeProvider !== null}
+                    disabled={mode === "daftar" && !acceptedTerms}
                   />
                 </div>
 
@@ -631,7 +653,12 @@ export default function Auth() {
                 {/* Email button */}
                 <button
                   onClick={() => setScreen("email-form")}
-                  className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
+                  disabled={mode === "daftar" && !acceptedTerms}
+                  className={`w-full border-2 font-bold text-[14px] py-3.5 rounded-2xl transition-all ${
+                    mode === "daftar" && !acceptedTerms
+                      ? "border-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
+                      : "border-[#D8E2F0] text-[#294566] hover:border-[#1D4196] hover:text-[#1D4196]"
+                  }`}
                 >
                   {mode === "masuk" ? "Masuk dengan email" : "Daftar dengan email"}
                 </button>

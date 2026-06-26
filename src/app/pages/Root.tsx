@@ -122,6 +122,9 @@ export default function Root() {
                     Pekerjaan Saya
                   </Link>
                 )}
+                <Link to="/pesan" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
+                  Pesan
+                </Link>
                 <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#D8E2F0]" />
@@ -194,6 +197,9 @@ export default function Root() {
                       <UserIcon size={16} /> Pekerjaan Saya
                     </Link>
                   )}
+                  <Link to="/pesan" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#294566] py-2">
+                    Pesan
+                  </Link>
                   <button onClick={handleLogout} className="flex items-center justify-center gap-2 border border-red-200 text-red-600 font-semibold text-[13px] py-2.5 rounded-full">
                     <LogOut size={15} /> Keluar
                   </button>
@@ -217,6 +223,15 @@ export default function Root() {
       {/* FOOTER */}
       {!isTasksPage && (
         <footer className="bg-[#172E4D] text-white">
+          {/* Popular locations */}
+          <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
+            <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">Lokasi Populer di Jakarta</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {POPULAR_LOCATIONS.map((loc) => (
+                <a key={loc} href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{loc}</a>
+              ))}
+            </div>
+          </div>
 
           {/* Main footer grid */}
           <div className="px-6 py-12 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">

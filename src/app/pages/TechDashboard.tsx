@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronDown, Bell, Star, SlidersHorizontal, Send,
-  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2,
+  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -905,6 +905,12 @@ export default function TechDashboard() {
                       )}
                       <span className="font-bold text-[#172E4D]">{formatPrice(offer.price)}</span>
                     </div>
+                    <Link
+                      to={`/pesan/${offer.job_id}`}
+                      className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
+                    >
+                      <MessageCircle size={15} /> Kirim pesan ke pelanggan
+                    </Link>
                   </div>
                 );
               })}
@@ -948,6 +954,13 @@ export default function TechDashboard() {
                     <span className="flex items-center gap-1"><MapPin size={13} className="text-[#1D4196]"/>{job.area}</span>
                     {job.date && <span className="flex items-center gap-1"><Clock size={13}/>{job.date}</span>}
                   </div>
+
+                  <Link
+                    to={`/pesan/${job.id}`}
+                    className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[13px] py-3 rounded-xl transition-colors"
+                  >
+                    <MessageCircle size={15} /> Hubungi pelanggan
+                  </Link>
 
                   <button
                     type="button"
