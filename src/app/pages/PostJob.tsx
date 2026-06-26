@@ -433,13 +433,13 @@ function StepReview({ data }: { data: FormData }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">Foto</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {data.photos.map((p, i) => (
-                  <div key={i} className="w-12 h-12 shrink-0 rounded-lg bg-[#EEF3FB] border border-[#FD6665] overflow-hidden flex items-center justify-center text-[18px]">
+                  <div key={i} className="w-12 h-12 rounded-lg bg-[#EEF3FB] border border-[#FD6665] overflow-hidden shrink-0">
                     {p.startsWith("http") ? (
                       <img src={p} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="truncate max-w-full px-1">{p.split(" ")[0]}</span>
+                      <div className="w-full h-full flex items-center justify-center text-[18px]">{p}</div>
                     )}
                   </div>
                 ))}
