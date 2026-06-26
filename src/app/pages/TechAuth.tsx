@@ -1087,7 +1087,12 @@ export default function TechAuth() {
               )}
 
               <button
-                onClick={() => navigate("/masuk", { state: { from: "/daftar-tukang?resume=1" } })}
+                onClick={() =>
+                  navigate(
+                    "/masuk?next=" + encodeURIComponent("/daftar-tukang?resume=1"),
+                    { state: { from: "/daftar-tukang?resume=1" } },
+                  )
+                }
                 className="w-full bg-[#172E4D] hover:opacity-90 text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors"
               >
                 Ke halaman masuk
