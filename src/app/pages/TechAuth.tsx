@@ -295,13 +295,25 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
   );
 }
 
+// ─── Upload helpers ───────────────────────────────────────────────────────────
+
+async function fileToBase64(file: File): Promise<{ base64: string; contentType: string }> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Gagal membaca file"));
+    reader.readAsDataURL(file);
+  });
+  return { base64: dataUrl.split(",")[1], contentType: file.type || "image/jpeg" };
+}
+
 // ─── Step 2 — KTP Verification ───────────────────────────────────────────────
 
 function UploadBox({
-  label, sublabel, icon, hasFile, onUpload, onRemove,
+  label, sublabel, icon, hasFile, uploading, onUpload, onRemove,
 }: {
   label: string; sublabel: string; icon: React.ReactNode;
-  hasFile: boolean; onUpload: () => void; onRemove: () => void;
+  hasFile: boolean; uploading?: boolean; onUpload: () => void; onRemove: () => void;
 }) {
   return (
     <div className={`border-2 border-dashed rounded-2xl p-5 transition-all ${hasFile ? "border-[#20bf6f] bg-[#f0fdf4]" : "border-[#D8E2F0] bg-[#F7F9FC] hover:border-[#172E4D]"}`}>
@@ -312,12 +324,12 @@ function UploadBox({
           </div>
           <div className="flex-1">
             <p className="font-bold text-[14px] text-[#166534]">{label} berhasil diunggah</p>
-            <p className="text-[12px] text-[#4ade80]">File siap diverifikasi</p>
+            <p className="text-[12px] text-[#4ade80]">{uploading ? "Mengunggah…" : "File siap diverifikasi"}</p>
           </div>
-          <button onClick={onRemove} className="text-[12px] text-[#7890AA] hover:text-red-500 font-semibold transition-colors">Hapus</button>
+          <button type="button" onClick={onRemove} disabled={uploading} className="text-[12px] text-[#7890AA] hover:text-red-500 font-semibold transition-colors disabled:opacity-50">Hapus</button>
         </div>
       ) : (
-        <button onClick={onUpload} className="w-full flex flex-col items-center gap-3 py-2">
+        <button type="button" onClick={onUpload} disabled={uploading} className="w-full flex flex-col items-center gap-3 py-2 disabled:opacity-60">
           <div className="w-12 h-12 rounded-xl bg-[#EEF3FB] flex items-center justify-center">
             {icon}
           </div>
@@ -326,7 +338,7 @@ function UploadBox({
             <p className="text-[12px] text-[#58708D] mt-0.5">{sublabel}</p>
           </div>
           <div className="flex items-center gap-2 bg-[#172E4D] text-white text-[12px] font-bold px-4 py-2 rounded-full">
-            <Upload size={13} /> Pilih file
+            <Upload size={13} /> {uploading ? "Mengunggah…" : "Pilih file"}
           </div>
         </button>
       )}
@@ -334,16 +346,72 @@ function UploadBox({
   );
 }
 
-function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<TechData>) => void }) {
-  const fileRef = useRef<HTMLInputElement>(null);
+function StepKTP({
+  data,
+  onChange,
+  isLoggedIn,
+  pendingKtp,
+  pendingSelfie,
+  onPendingKtp,
+  onPendingSelfie,
+  uploadError,
+  onUploadError,
+}: {
+  data: TechData;
+  onChange: (d: Partial<TechData>) => void;
+  isLoggedIn: boolean;
+  pendingKtp: File | null;
+  pendingSelfie: File | null;
+  onPendingKtp: (file: File | null) => void;
+  onPendingSelfie: (file: File | null) => void;
+  uploadError: string | null;
+  onUploadError: (msg: string | null) => void;
+}) {
+  const ktpRef = useRef<HTMLInputElement>(null);
   const selfieRef = useRef<HTMLInputElement>(null);
-
-  const simulateUpload = (field: "ktpPhoto" | "selfiePhoto") => {
-    setTimeout(() => onChange({ [field]: "uploaded" }), 800);
-  };
+  const [uploadingField, setUploadingField] = useState<"ktp" | "selfie" | null>(null);
 
   const formatNIK = (v: string) =>
     v.replace(/\D/g, "").slice(0, 16).replace(/(\d{6})(\d{6})(\d{4})/, "$1 $2 $3").trim();
+
+  const handleFile = async (file: File, field: "ktp" | "selfie") => {
+    onUploadError(null);
+    if (isLoggedIn) {
+      setUploadingField(field);
+      try {
+        const { base64, contentType } = await fileToBase64(file);
+        const { path } = await api.uploadKtpDocument(base64, contentType, field);
+        onChange(field === "ktp" ? { ktpPhoto: path } : { selfiePhoto: path });
+        if (field === "ktp") onPendingKtp(null);
+        else onPendingSelfie(null);
+      } catch (e) {
+        onUploadError(e instanceof Error ? e.message : "Gagal mengunggah foto");
+      } finally {
+        setUploadingField(null);
+      }
+    } else {
+      if (field === "ktp") onPendingKtp(file);
+      else onPendingSelfie(file);
+    }
+  };
+
+  const handleRemove = async (field: "ktp" | "selfie") => {
+    onUploadError(null);
+    const path = field === "ktp" ? data.ktpPhoto : data.selfiePhoto;
+    if (path && isLoggedIn) {
+      try {
+        await api.deleteKtpDocument(path);
+      } catch {
+        /* best-effort */
+      }
+    }
+    onChange(field === "ktp" ? { ktpPhoto: null } : { selfiePhoto: null });
+    if (field === "ktp") onPendingKtp(null);
+    else onPendingSelfie(null);
+  };
+
+  const hasKtp = !!data.ktpPhoto || !!pendingKtp;
+  const hasSelfie = !!data.selfiePhoto || !!pendingSelfie;
 
   return (
     <div className="space-y-5">
@@ -352,7 +420,6 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
         <p className="text-[#58708D] text-[14px] mb-1">Upload KTP agar pelanggan tahu profilmu sudah dicek.</p>
       </div>
 
-      {/* Info bar */}
       <div className="flex items-start gap-3 bg-[#172E4D] rounded-xl p-4">
         <AlertCircle size={16} className="text-[#FD6665] shrink-0 mt-0.5" />
         <div className="text-[12px] text-white/80">
@@ -360,34 +427,77 @@ function StepKTP({ data, onChange }: { data: TechData; onChange: (d: Partial<Tec
         </div>
       </div>
 
-      {/* KTP Upload */}
+      <div>
+        <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nomor KTP (NIK)</label>
+        <input
+          value={data.nik}
+          onChange={(e) => onChange({ nik: formatNIK(e.target.value) })}
+          placeholder="0000 0000 0000 0000"
+          inputMode="numeric"
+          className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all tracking-wider"
+        />
+        <p className="text-[11px] text-[#7890AA] mt-1">16 digit sesuai KTP</p>
+      </div>
+
       <UploadBox
         label="Foto KTP (Bagian Depan)"
         sublabel="Format JPG, PNG — maks. 5MB. Pastikan seluruh teks terbaca jelas"
         icon={<Upload size={22} className="text-[#1D4196]" />}
-        hasFile={!!data.ktpPhoto}
-        onUpload={() => simulateUpload("ktpPhoto")}
-        onRemove={() => onChange({ ktpPhoto: null })}
+        hasFile={hasKtp}
+        uploading={uploadingField === "ktp"}
+        onUpload={() => ktpRef.current?.click()}
+        onRemove={() => handleRemove("ktp")}
       />
 
-      {/* Selfie */}
       <UploadBox
         label="Foto Selfie"
         sublabel="Foto wajah yang jelas — pastikan wajah terlihat penuh dan terang"
         icon={<Camera size={22} className="text-[#1D4196]" />}
-        hasFile={!!data.selfiePhoto}
-        onUpload={() => simulateUpload("selfiePhoto")}
-        onRemove={() => onChange({ selfiePhoto: null })}
+        hasFile={hasSelfie}
+        uploading={uploadingField === "selfie"}
+        onUpload={() => selfieRef.current?.click()}
+        onRemove={() => handleRemove("selfie")}
       />
 
-      {/* Verification note */}
+      {!isLoggedIn && (pendingKtp || pendingSelfie) && (
+        <p className="text-[12px] text-[#58708D] bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3">
+          Foto disimpan sementara. Setelah verifikasi email dan masuk kembali, dokumen akan diunggah otomatis saat menyelesaikan pendaftaran.
+        </p>
+      )}
+
+      {uploadError && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-600">
+          <AlertCircle size={15} className="shrink-0" /> {uploadError}
+        </div>
+      )}
+
       <div className="flex items-start gap-3 bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl p-4 text-[12px] text-[#58708D]">
         <Clock size={14} className="text-[#7890AA] shrink-0 mt-0.5" />
         Verifikasi KTP biasanya selesai dalam <span className="font-bold text-[#172E4D] mx-1">1×24 jam</span> kerja. Kamu bisa tetap melengkapi profil sambil menunggu.
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" />
-      <input ref={selfieRef} type="file" accept="image/*" className="hidden" />
+      <input
+        ref={ktpRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file, "ktp");
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={selfieRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file, "selfie");
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
@@ -590,15 +700,49 @@ function SuccessScreen({ data }: { data: TechData }) {
 
 // ─── can proceed logic ────────────────────────────────────────────────────────
 
-function canProceed(step: number, data: TechData, isLoggedInTechnician: boolean): boolean {
+function canProceed(
+  step: number,
+  data: TechData,
+  isLoggedInTechnician: boolean,
+  pending: { ktp: File | null; selfie: File | null },
+): boolean {
   if (step === 0) {
     return isLoggedInTechnician || !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
   }
   if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
-  if (step === 2) return !!data.ktpPhoto && !!data.selfiePhoto;
+  if (step === 2) {
+    const nikOk = data.nik.replace(/\D/g, "").length === 16;
+    const hasKtp = !!data.ktpPhoto || !!pending.ktp;
+    const hasSelfie = !!data.selfiePhoto || !!pending.selfie;
+    return nikOk && hasKtp && hasSelfie;
+  }
   if (step === 3) return data.keahlian.length >= 1;
   if (step === 4) return !!data.pengalaman;
   return true;
+}
+
+const TECH_DRAFT_KEY = "kerjain_tech_draft";
+
+async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null) {
+  const draft: {
+    data: TechData;
+    pendingKtp?: { base64: string; contentType: string };
+    pendingSelfie?: { base64: string; contentType: string };
+  } = { data };
+  if (pendingKtp) {
+    draft.pendingKtp = await fileToBase64(pendingKtp);
+  }
+  if (pendingSelfie) {
+    draft.pendingSelfie = await fileToBase64(pendingSelfie);
+  }
+  sessionStorage.setItem(TECH_DRAFT_KEY, JSON.stringify(draft));
+}
+
+function base64ToFile(base64: string, contentType: string, name: string): File {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], name, { type: contentType });
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -621,6 +765,9 @@ export default function TechAuth() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
+  const [pendingKtp, setPendingKtp] = useState<File | null>(null);
+  const [pendingSelfie, setPendingSelfie] = useState<File | null>(null);
+  const [ktpUploadError, setKtpUploadError] = useState<string | null>(null);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
@@ -633,6 +780,32 @@ export default function TechAuth() {
       const providerParam = searchParams.get("provider");
       const authMethod: OAuthProvider = providerParam === "facebook" ? "facebook" : "google";
       setStep(1);
+      const raw = sessionStorage.getItem(TECH_DRAFT_KEY);
+      if (raw) {
+        try {
+          const draft = JSON.parse(raw) as {
+            data: TechData;
+            pendingKtp?: { base64: string; contentType: string };
+            pendingSelfie?: { base64: string; contentType: string };
+          };
+          setData((d) => ({
+            ...draft.data,
+            nama: draft.data.nama || user.fullName || "",
+            email: draft.data.email || user.email,
+            authMethod: draft.data.authMethod ?? authMethod,
+          }));
+          if (draft.pendingKtp) {
+            setPendingKtp(base64ToFile(draft.pendingKtp.base64, draft.pendingKtp.contentType, "ktp.jpg"));
+          }
+          if (draft.pendingSelfie) {
+            setPendingSelfie(base64ToFile(draft.pendingSelfie.base64, draft.pendingSelfie.contentType, "selfie.jpg"));
+          }
+          sessionStorage.removeItem(TECH_DRAFT_KEY);
+          return;
+        } catch {
+          sessionStorage.removeItem(TECH_DRAFT_KEY);
+        }
+      }
       setData((d) => ({
         ...d,
         nama: d.nama || user.fullName || "",
@@ -657,6 +830,9 @@ export default function TechAuth() {
     try {
       if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
         await register(data.email, data.password, data.nama, "technician");
+        if (pendingKtp || pendingSelfie) {
+          await saveTechDraft(data, pendingKtp, pendingSelfie);
+        }
         setPendingEmailVerify(true);
         setSubmitted(true);
         return;
@@ -664,17 +840,31 @@ export default function TechAuth() {
       if (!isLoggedInTechnician && !user) {
         throw new Error("Silakan buat akun terlebih dahulu di langkah 1");
       }
+
+      let ktpPhoto = data.ktpPhoto;
+      let selfiePhoto = data.selfiePhoto;
+
+      if (pendingKtp && !ktpPhoto) {
+        const { base64, contentType } = await fileToBase64(pendingKtp);
+        ktpPhoto = (await api.uploadKtpDocument(base64, contentType, "ktp")).path;
+      }
+      if (pendingSelfie && !selfiePhoto) {
+        const { base64, contentType } = await fileToBase64(pendingSelfie);
+        selfiePhoto = (await api.uploadKtpDocument(base64, contentType, "selfie")).path;
+      }
+
       await api.saveTechnicianProfile({
         phone: data.phone,
         area: data.area,
-        nik: data.nik,
-        ktpPhoto: data.ktpPhoto,
-        selfiePhoto: data.selfiePhoto,
+        nik: data.nik.replace(/\D/g, ""),
+        ktpPhoto,
+        selfiePhoto,
         keahlian: data.keahlian,
         pengalaman: data.pengalaman,
         tarif: data.tarif,
         bio: data.bio,
       });
+      sessionStorage.removeItem(TECH_DRAFT_KEY);
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Pendaftaran gagal");
@@ -772,7 +962,19 @@ export default function TechAuth() {
             />
           )}
           {step === 1 && <StepProfil data={data} onChange={update} />}
-          {step === 2 && <StepKTP data={data} onChange={update} />}
+          {step === 2 && (
+            <StepKTP
+              data={data}
+              onChange={update}
+              isLoggedIn={isLoggedInTechnician}
+              pendingKtp={pendingKtp}
+              pendingSelfie={pendingSelfie}
+              onPendingKtp={setPendingKtp}
+              onPendingSelfie={setPendingSelfie}
+              uploadError={ktpUploadError}
+              onUploadError={setKtpUploadError}
+            />
+          )}
           {step === 3 && <StepKeahlian data={data} onChange={update} />}
           {step === 4 && <StepPengalaman data={data} onChange={update} />}
         </div>
@@ -791,9 +993,9 @@ export default function TechAuth() {
         {!(step === 0 && oauthLoading) && (
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data, isLoggedInTechnician) || submitting}
+            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) || submitting}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data, isLoggedInTechnician) && !submitting
+              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) && !submitting
                 ? "bg-[#172E4D] hover:opacity-90 text-white"
                 : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}

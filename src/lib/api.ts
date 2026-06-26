@@ -150,6 +150,20 @@ export const api = {
     });
   },
 
+  uploadKtpDocument(fileBase64: string, contentType: string, kind: "ktp" | "selfie") {
+    return request<{ path: string; previewUrl: string | null }>("/api/upload/ktp-document", {
+      method: "POST",
+      body: JSON.stringify({ fileBase64, contentType, kind }),
+    });
+  },
+
+  deleteKtpDocument(path: string) {
+    return request<{ ok: boolean }>("/api/upload/ktp-document", {
+      method: "DELETE",
+      body: JSON.stringify({ path }),
+    });
+  },
+
   createJob(data: PostJobFormData) {
     return request<{ job: Job }>("/api/jobs", {
       method: "POST",
