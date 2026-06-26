@@ -4,7 +4,7 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Arrow
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
-import type { User } from "../../types";
+import type { User as AppUser } from "../../types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,7 +189,7 @@ function EmailForm({
   onBack,
 }: {
   mode: AuthMode;
-  onSuccess: (name: string, email: string, devVerifyLink?: string, loggedInUser?: User) => void;
+  onSuccess: (name: string, email: string, devVerifyLink?: string, loggedInUser?: AppUser) => void;
   onBack: () => void;
 }) {
   const { login, register } = useAuth();
@@ -458,7 +458,7 @@ export default function Auth() {
     name: string,
     email: string,
     link?: string,
-    loggedInUser?: User,
+    loggedInUser?: AppUser,
   ) => {
     if (mode === "masuk") {
       const destination = nextParam || redirectFrom;

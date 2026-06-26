@@ -87,7 +87,6 @@ const PROS = [
   { name: "Sari P.", initials: "SP", color: "#20bf6f", rating: 5.0, reviews: 57,  completion: 100, specialty: "perbaikan keramik, bersih talang & perawatan atap",         review: "Sari memasang ulang silikon kamar mandi dan hasilnya terlihat jauh lebih rapi. Tepat waktu dan harganya masuk akal.", reviewer: "Hana A." },
 ];
 
-const SERVICE_TABS = ["Plumbing", "Perawatan Umum", "Panduan Biaya", "Panduan Cara", "Checklist"];
 const SERVICE_LINKS: Record<string, string[]> = {
   "Plumbing": ["Perbaikan Pipa Pecah","Saluran Mampet","Tukang Ledeng Darurat","Pemasangan Gas","Perbaikan Pemanas Air","Pasang Pemanas Air","Deteksi Kebocoran","Relining Pipa","Ganti Pipa","Perbaikan Kran","Pasang Kran","Perbaikan WC","Pasang WC","Perbaikan Shower","Pasang Wastafel","Plumbing Kamar Mandi","Plumbing Dapur","Perbaikan Saluran Pembuangan","Masalah Tekanan Air"],
   "Perawatan Umum": ["Tukang Serba Bisa","Perbaikan Pintu","Perbaikan Kunci","Ganti Engsel","Bersih Talang","Inspeksi Atap","Perbaikan Keramik & Nat","Pengapuran","Aplikasi Sealant","Perbaikan Pagar","Perbaikan Kasa Nyamuk","Perbaikan Jendela","Kedap Air","Perawatan Properti"],
@@ -95,6 +94,7 @@ const SERVICE_LINKS: Record<string, string[]> = {
   "Panduan Cara": ["Cara Perbaiki Kran Bocor","Cara Buka Saluran Mampet","Cara Kuras Pemanas Air","Cara Temukan Kebocoran Air","Cara Perbaiki Nat Keramik","Cara Bersih Talang dengan Aman","Cara Rawat Atap","Cara Perbaiki WC Terus Mengalir","Cara Pasang Silikon Shower"],
   "Checklist": ["Checklist Plumbing Tahunan","Checklist Perawatan Pra-Hujan","Checklist Plumbing Rumah Baru","Checklist Perawatan Kamar Mandi","Checklist Perawatan Dapur","Checklist Perawatan Rumah Musiman","Checklist Pra-Jual Properti"],
 };
+const SERVICE_DIRECTORY_ITEMS = Object.values(SERVICE_LINKS).flat();
 
 // ─── Animations (injected once) ───────────────────────────────────────────────
 
@@ -107,6 +107,9 @@ const SCROLL_CSS = `
   @keyframes kj-tasks { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   .kj-tasks { animation: kj-tasks 36s linear infinite; }
   .kj-tasks:hover { animation-play-state: paused; }
+  @keyframes kj-directory { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .kj-directory { animation: kj-directory 78s linear infinite; }
+  .kj-directory:hover { animation-play-state: paused; }
 `;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -148,11 +151,28 @@ function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
   );
 }
 
+function ServiceDirectoryMarquee() {
+  return (
+    <div className="overflow-hidden py-1">
+      <div className="kj-directory grid w-max grid-flow-col grid-rows-2 gap-3">
+        {[...SERVICE_DIRECTORY_ITEMS, ...SERVICE_DIRECTORY_ITEMS].map((item, index) => (
+          <div
+            key={`${item}-${index}`}
+            className="flex h-[70px] w-[280px] shrink-0 items-center gap-3 rounded-xl border border-[#D8E2F0] bg-white px-4 py-3.5 text-[14px] font-semibold text-[#294566] sm:w-[340px]"
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D4196]" />
+            <span className="truncate">{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [taskTab, setTaskTab] = useState("plumbing");
-  const [activeTab, setActiveTab] = useState("Plumbing");
   const [searchQuery, setSearchQuery] = useState("");
 
   const tasks = COMPLETED_TASKS[taskTab] ?? [];
@@ -441,29 +461,8 @@ export default function Home() {
               <p className="text-[13px] text-[#58708D] mt-1">kategori pekerjaan yang bisa kamu pilih</p>
             </div>
           </div>
-          <div className="flex gap-3 mb-10 flex-wrap">
-            {SERVICE_TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`text-[15px] font-bold px-5 py-3 rounded-full transition-all ${
-                  activeTab === tab ? "bg-[#172E4D] text-white shadow-lg shadow-[#172E4D]/10" : "bg-white text-[#294566] border border-[#D8E2F0] hover:border-[#1D4196] hover:text-[#1D4196] hover:shadow-sm"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {(SERVICE_LINKS[activeTab] || []).map((link) => (
-              <div
-                key={link}
-                className="flex items-center gap-3 bg-white border border-[#D8E2F0] rounded-xl px-4 py-3.5 text-[14px] font-semibold text-[#294566]"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#1D4196] shrink-0" />
-                <span className="truncate">{link}</span>
-              </div>
-            ))}
+          <div className="-mx-6 overflow-hidden px-6">
+            <ServiceDirectoryMarquee />
           </div>
         </div>
       </section>

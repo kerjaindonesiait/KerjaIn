@@ -3,7 +3,7 @@ import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search, MapPin, ChevronDown, Clock, Calendar, Grid3x3,
   SlidersHorizontal, Shield,
-  CheckCircle, Heart, Share2, ChevronLeft,
+  CheckCircle, Heart, Share2, ChevronLeft, Image as ImageIcon,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -271,6 +271,35 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             <div className="text-[14px] text-[#294566] leading-relaxed whitespace-pre-line mb-6">
               {task.description}
             </div>
+
+            {task.photos.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-bold text-[12px] text-[#7890AA] uppercase tracking-wider mb-3">Foto pekerjaan</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {task.photos.map((photo, i) => (
+                    <a
+                      key={`${photo}-${i}`}
+                      href={photo}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-[#D8E2F0] bg-[#F7F9FC]"
+                    >
+                      {photo.startsWith("http") ? (
+                        <img
+                          src={photo}
+                          alt={`Foto pekerjaan ${i + 1}`}
+                          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[#7890AA]">
+                          <ImageIcon size={24} />
+                        </div>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex items-start gap-3 bg-[#F7F9FC] rounded-xl p-4">
               <Shield size={16} className="text-[#1D4196] shrink-0 mt-0.5" />
