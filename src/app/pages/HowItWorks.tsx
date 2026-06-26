@@ -249,11 +249,6 @@ export default function HowItWorks() {
         </div>
 
         <div className="relative mx-auto flex max-w-[1180px] flex-col items-center px-5 py-20 text-center md:px-6 md:py-28">
-          <div className="mb-8 inline-flex w-full max-w-[300px] items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[12px] font-semibold text-white/75 sm:max-w-full sm:text-[13px]">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-[#FD6665]" />
-            <span className="min-w-0 leading-snug">Tukang plumbing & perawatan rumah di Jakarta</span>
-          </div>
-
           <h1 className="mb-6 w-full max-w-3xl text-[38px] font-extrabold leading-[1.06] tracking-tight text-white sm:text-[64px] md:text-[76px]">
             Post Kerjaan.
             <br />

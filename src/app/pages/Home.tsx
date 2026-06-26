@@ -194,11 +194,6 @@ export default function Home() {
 
           {/* Left: text */}
           <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-[13px] text-white/80 font-semibold mb-7">
-              <span className="w-2 h-2 rounded-full bg-[#FD6665] animate-pulse" />
-              Tukang plumbing & perawatan rumah di Jakarta
-            </div>
-
             <h1 className="font-[1000] leading-[0.9] tracking-tight uppercase mb-6">
               <span className="block text-[64px] sm:text-[84px] text-white">Atasi</span>
               <span className="block text-[64px] sm:text-[84px] text-[#FD6665]">Masalah.</span>
