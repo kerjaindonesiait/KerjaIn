@@ -154,6 +154,15 @@ export interface AdminTechnician {
   hasKtpSubmission: boolean;
 }
 
+export interface AdminUser {
+  userId: string;
+  email: string;
+  fullName: string | null;
+  role: string;
+  emailVerified: boolean;
+  memberSince: string;
+}
+
 export interface AppSettings {
   requireVerifiedToQuote: boolean;
   maintenanceMode: boolean;

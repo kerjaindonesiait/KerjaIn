@@ -3,16 +3,17 @@ import { Link, Navigate } from "react-router";
 import { CheckCircle, Loader2, Settings, Users, XCircle } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import type { AdminTechnician, AppSettings } from "../../types";
+import type { AdminTechnician, AdminUser, AppSettings } from "../../types";
 
-type Tab = "pending" | "verified" | "settings";
+type Tab = "emails" | "pending" | "verified" | "settings";
 
 export default function AdminPanel() {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<Tab>("pending");
-  const [stats, setStats] = useState({ pendingVerification: 0, verifiedTechnicians: 0, totalTechnicians: 0, openJobs: 0 });
+  const [tab, setTab] = useState<Tab>("emails");
+  const [stats, setStats] = useState({ pendingVerification: 0, verifiedTechnicians: 0, totalTechnicians: 0, openJobs: 0, pendingEmailVerification: 0 });
   const [technicians, setTechnicians] = useState<AdminTechnician[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -42,6 +43,8 @@ export default function AdminPanel() {
     ];
     if (tab === "settings") {
       tasks.push(api.adminGetSettings().then(({ settings: s }) => setSettings(s)));
+    } else if (tab === "emails") {
+      tasks.push(api.adminUsers("unverified_email").then(({ users: list }) => setUsers(list)));
     } else {
       const filter = tab === "pending" ? "pending" : "verified";
       tasks.push(api.adminTechnicians(filter).then(({ technicians: list }) => setTechnicians(list)));
@@ -62,6 +65,18 @@ export default function AdminPanel() {
       load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Gagal memperbarui verifikasi");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleVerifyEmail = async (userId: string) => {
+    setActionId(userId);
+    try {
+      await api.adminVerifyUserEmail(userId, true);
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Gagal memverifikasi email");
     } finally {
       setActionId(null);
     }
@@ -114,8 +129,9 @@ export default function AdminPanel() {
   }
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: "pending", label: "Menunggu verifikasi" },
-    { id: "verified", label: "Terverifikasi" },
+    { id: "emails", label: "Email belum verified" },
+    { id: "pending", label: "Verifikasi tukang" },
+    { id: "verified", label: "Tukang verified" },
     { id: "settings", label: "Pengaturan" },
   ];
 
@@ -130,8 +146,9 @@ export default function AdminPanel() {
       </div>
 
       <div className="max-w-[960px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {[
+            { label: "Email belum verified", value: stats.pendingEmailVerification, icon: Users },
             { label: "Menunggu KTP", value: stats.pendingVerification, icon: Users },
             { label: "Tukang verified", value: stats.verifiedTechnicians, icon: CheckCircle },
             { label: "Total tukang", value: stats.totalTechnicians, icon: Users },
@@ -192,6 +209,36 @@ export default function AdminPanel() {
                 className="w-5 h-5 accent-[#1D4196]"
               />
             </label>
+          </div>
+        ) : tab === "emails" ? (
+          <div className="space-y-4">
+            {users.length === 0 ? (
+              <p className="text-[#7890AA] text-[14px] py-8 text-center">Semua email sudah terverifikasi.</p>
+            ) : (
+              users.map((u) => (
+                <div key={u.userId} className="bg-white rounded-2xl border border-[#D8E2F0] p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div>
+                      <p className="font-bold text-[15px] text-[#172E4D]">{u.fullName ?? u.email}</p>
+                      <p className="text-[12px] text-[#7890AA]">{u.email}</p>
+                      <p className="text-[11px] text-[#58708D] mt-1 capitalize">Peran: {u.role}</p>
+                    </div>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-200">
+                      Email belum verified
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={actionId === u.userId}
+                    onClick={() => handleVerifyEmail(u.userId)}
+                    className="flex items-center gap-1.5 bg-[#20bf6f] text-white font-bold text-[13px] px-4 py-2 rounded-xl disabled:opacity-50"
+                  >
+                    {actionId === u.userId ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                    Verifikasi email
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         ) : (
           <div className="space-y-4">

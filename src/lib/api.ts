@@ -2,6 +2,7 @@ import { API_URL } from "../constants";
 import type {
   AppSettings,
   AdminTechnician,
+  AdminUser,
   Job,
   LoginResponse,
   MineOffer,
@@ -216,6 +217,13 @@ export const api = {
     });
   },
 
+  resendVerificationEmail(email: string) {
+    return request<{ ok: boolean; message: string; devVerifyLink?: string }>("/api/auth/resend-verification-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }, false);
+  },
+
   updateProfile(body: { fullName?: string; avatarUrl?: string; phone?: string }) {
     return request<{ user: User }>("/api/auth/profile", {
       method: "PATCH",
@@ -264,12 +272,24 @@ export const api = {
         verifiedTechnicians: number;
         totalTechnicians: number;
         openJobs: number;
+        pendingEmailVerification: number;
       };
     }>("/api/admin/stats");
   },
 
   adminTechnicians(filter: "pending" | "verified" | "unverified" | "all" = "pending") {
     return request<{ technicians: AdminTechnician[] }>(`/api/admin/technicians?filter=${filter}`);
+  },
+
+  adminUsers(filter: "unverified_email" | "all" = "unverified_email") {
+    return request<{ users: AdminUser[] }>(`/api/admin/users?filter=${filter}`);
+  },
+
+  adminVerifyUserEmail(userId: string, verified = true) {
+    return request<{ user: AdminUser }>(`/api/admin/users/${userId}/email-verified`, {
+      method: "PATCH",
+      body: JSON.stringify({ verified }),
+    });
   },
 
   adminVerifyTechnician(userId: string, verified: boolean) {

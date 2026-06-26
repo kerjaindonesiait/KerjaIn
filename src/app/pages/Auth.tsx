@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
+import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
@@ -198,6 +199,10 @@ function EmailForm({
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
+  const needsEmailVerification = error === "Email belum terverifikasi";
 
   const valid =
     (mode === "masuk" || name.trim().length >= 2) &&
@@ -208,6 +213,8 @@ function EmailForm({
     e.preventDefault();
     if (!valid) return;
     setError("");
+    setResendSent(false);
+    setDevVerifyLink(null);
     setLoading(true);
     try {
       if (mode === "daftar") {
@@ -221,6 +228,22 @@ function EmailForm({
       setError(err instanceof Error ? err.message : "Autentikasi gagal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email.includes("@")) return;
+    setResendLoading(true);
+    setResendSent(false);
+    setDevVerifyLink(null);
+    try {
+      const res = await api.resendVerificationEmail(email);
+      setResendSent(true);
+      if (res.devVerifyLink) setDevVerifyLink(res.devVerifyLink);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengirim ulang email verifikasi");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -318,6 +341,30 @@ function EmailForm({
       {error && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-600">
           <AlertCircle size={15} className="shrink-0" /> {error}
+        </div>
+      )}
+
+      {needsEmailVerification && (
+        <div className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-4 py-3 space-y-2">
+          <p className="text-[12px] text-[#58708D]">
+            Periksa inbox untuk tautan verifikasi, atau kirim ulang email verifikasi.
+          </p>
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resendLoading}
+            className="text-[13px] font-bold text-[#1D4196] hover:underline disabled:opacity-50"
+          >
+            {resendLoading ? "Mengirim…" : "Kirim ulang email verifikasi"}
+          </button>
+          {resendSent && (
+            <p className="text-[12px] text-[#20bf6f] font-semibold">Email verifikasi dikirim. Periksa inbox.</p>
+          )}
+          {devVerifyLink && (
+            <a href={devVerifyLink} className="block text-[11px] text-[#1D4196] break-all hover:underline">
+              Dev link verifikasi
+            </a>
+          )}
         </div>
       )}
 
