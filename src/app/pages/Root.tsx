@@ -203,15 +203,6 @@ export default function Root() {
       {/* FOOTER */}
       {!isTasksPage && (
         <footer className="bg-[#172E4D] text-white">
-          {/* Popular locations */}
-          <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
-            <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">Lokasi Populer di Jakarta</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {POPULAR_LOCATIONS.map((loc) => (
-                <a key={loc} href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{loc}</a>
-              ))}
-            </div>
-          </div>
 
           {/* Main footer grid */}
           <div className="px-6 py-12 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
