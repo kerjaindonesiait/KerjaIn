@@ -7,7 +7,7 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "../components/ui/input-otp";
+import { PhoneOtpVerification } from "../components/PhoneOtpVerification";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -83,7 +83,6 @@ interface TechData {
   authMethod: OAuthProvider | "email" | null;
   nama: string;
   phone: string;
-  phoneVerified: boolean;
   area: string;
   nik: string;
   ktpPhoto: string | null;
@@ -98,7 +97,7 @@ interface TechData {
 
 // ─── Progress steps ───────────────────────────────────────────────────────────
 
-const STEPS = ["Akun", "Profil", "Verifikasi HP", "Verifikasi KTP", "Keahlian", "Pengalaman"];
+const STEPS = ["Akun", "Profil", "Verifikasi KTP", "Keahlian", "Pengalaman"];
 
 function ProgressBar({ step }: { step: number }) {
   return (
@@ -244,7 +243,19 @@ function StepAuth({
 
 // ─── Step 1 — Info Pribadi ────────────────────────────────────────────────────
 
-function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<TechData>) => void }) {
+function StepProfil({
+  data,
+  onChange,
+  phoneVerified,
+  onPhoneVerified,
+  onPhoneReset,
+}: {
+  data: TechData;
+  onChange: (d: Partial<TechData>) => void;
+  phoneVerified: boolean;
+  onPhoneVerified: () => void;
+  onPhoneReset: () => void;
+}) {
   return (
     <div className="space-y-4">
       <div>
@@ -268,14 +279,26 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
           <span className="flex items-center px-3 border-2 border-r-0 border-[#D8E2F0] rounded-l-xl bg-[#EEF3FB] text-[#294566] font-semibold text-[14px]">+62</span>
           <input
             value={data.phone}
-            onChange={(e) => onChange({ phone: e.target.value.replace(/\D/g, "") })}
+            onChange={(e) => {
+              onPhoneReset();
+              onChange({ phone: e.target.value.replace(/\D/g, "") });
+            }}
             placeholder="812 3456 7890"
             type="tel"
-            className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all"
+            disabled={phoneVerified}
+            className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#172E4D] transition-all disabled:opacity-70"
           />
         </div>
         <p className="text-[11px] text-[#7890AA] mt-1">Pelanggan bisa menghubungimu via WhatsApp setelah penawaran diterima</p>
       </div>
+
+      <PhoneOtpVerification
+        phone={data.phone}
+        verified={phoneVerified}
+        onVerified={onPhoneVerified}
+        onReset={onPhoneReset}
+        disabled={data.phone.length < 8}
+      />
 
       <div>
         <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Area kerja utama</label>
@@ -293,148 +316,6 @@ function StepProfil({ data, onChange }: { data: TechData; onChange: (d: Partial<
         </select>
         <p className="text-[11px] text-[#7890AA] mt-1">Kamu tetap bisa menerima pekerjaan di area lain, tapi area utama membantu pencocokan.</p>
       </div>
-    </div>
-  );
-}
-
-// ─── Step 2 — Phone OTP ───────────────────────────────────────────────────────
-
-function StepPhoneVerify({
-  phone,
-  phoneVerified,
-  onVerified,
-}: {
-  phone: string;
-  phoneVerified: boolean;
-  onVerified: () => void;
-}) {
-  const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState("");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [cooldown]);
-
-  const displayPhone = phone ? `+62 ${phone.replace(/^0/, "")}` : "";
-
-  const handleSend = async () => {
-    if (phone.length < 8) {
-      setError("Nomor telepon tidak valid");
-      return;
-    }
-    setSending(true);
-    setError("");
-    setDevOtp(null);
-    try {
-      const res = await api.sendPhoneOtp(phone);
-      setSent(true);
-      setCooldown(60);
-      if (res.devOtp) setDevOtp(res.devOtp);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal mengirim kode");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleVerify = async () => {
-    if (code.length !== 6) return;
-    setVerifying(true);
-    setError("");
-    try {
-      await api.verifyPhoneOtp(phone, code);
-      onVerified();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Verifikasi gagal");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  if (phoneVerified) {
-    return (
-      <div className="space-y-4 text-center py-6">
-        <div className="w-16 h-16 rounded-full bg-[#f0fdf4] flex items-center justify-center mx-auto">
-          <CheckCircle size={32} className="text-[#20bf6f]" />
-        </div>
-        <h2 className="font-black text-[22px] text-[#172E4D]">Nomor HP terverifikasi</h2>
-        <p className="text-[14px] text-[#58708D]">{displayPhone}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="font-black text-[22px] text-[#172E4D] mb-1">Verifikasi nomor HP</h2>
-        <p className="text-[#58708D] text-[14px]">
-          Kami kirim kode 6 digit ke <span className="font-bold text-[#172E4D]">{displayPhone}</span> via SMS.
-        </p>
-      </div>
-
-      {!sent ? (
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={sending || phone.length < 8}
-          className="w-full bg-[#172E4D] hover:opacity-90 disabled:opacity-50 text-white font-bold text-[14px] py-3.5 rounded-2xl transition-all"
-        >
-          {sending ? "Mengirim…" : "Kirim kode SMS"}
-        </button>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            <InputOTP maxLength={6} value={code} onChange={setCode}>
-              <InputOTPGroup>
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <InputOTPSlot
-                    key={i}
-                    index={i}
-                    className="h-12 w-11 border-2 border-[#D8E2F0] rounded-xl text-[18px] font-bold text-[#172E4D] bg-[#F7F9FC] data-[active=true]:border-[#1D4196]"
-                  />
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleVerify}
-            disabled={verifying || code.length !== 6}
-            className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:bg-[#D8E2F0] disabled:text-[#7890AA] text-white font-bold text-[14px] py-3.5 rounded-2xl transition-all"
-          >
-            {verifying ? "Memverifikasi…" : "Verifikasi kode"}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={sending || cooldown > 0}
-            className="w-full text-[13px] font-bold text-[#1D4196] hover:underline disabled:text-[#7890AA] disabled:no-underline"
-          >
-            {cooldown > 0 ? `Kirim ulang (${cooldown}s)` : "Kirim ulang kode"}
-          </button>
-
-          {devOtp && (
-            <p className="text-[11px] text-[#7890AA] text-center bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl px-3 py-2">
-              Dev OTP: <span className="font-mono font-bold text-[#172E4D]">{devOtp}</span>
-            </p>
-          )}
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-600">
-          <AlertCircle size={15} className="shrink-0" /> {error}
-        </div>
-      )}
     </div>
   );
 }
@@ -807,7 +688,6 @@ function SuccessScreen({ data }: { data: TechData }) {
         {[
           { label: "Akun dibuat", done: true },
           { label: "Informasi profil", done: !!data.nama && !!data.phone },
-          { label: "Verifikasi HP", done: data.phoneVerified, pending: !data.phoneVerified },
           { label: "Verifikasi KTP", done: !!data.ktpPhoto, pending: !data.ktpPhoto },
           { label: "Keahlian dikonfirmasi", done: data.keahlian.length > 0 },
           { label: "Akun disetujui & aktif", done: false, pending: true },
@@ -850,31 +730,32 @@ function canProceed(
   data: TechData,
   isLoggedInTechnician: boolean,
   pending: { ktp: File | null; selfie: File | null },
+  phoneVerified: boolean,
 ): boolean {
   if (step === 0) {
     return isLoggedInTechnician || !!(data.authMethod || (data.email.includes("@") && data.password.length >= 6));
   }
-  if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
-  if (step === 2) return data.phoneVerified;
-  if (step === 3) {
+  if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area && phoneVerified;
+  if (step === 2) {
     const nikOk = data.nik.replace(/\D/g, "").length === 16;
     const hasKtp = !!data.ktpPhoto || !!pending.ktp;
     const hasSelfie = !!data.selfiePhoto || !!pending.selfie;
     return nikOk && hasKtp && hasSelfie;
   }
-  if (step === 4) return data.keahlian.length >= 1;
-  if (step === 5) return !!data.pengalaman;
+  if (step === 3) return data.keahlian.length >= 1;
+  if (step === 4) return !!data.pengalaman;
   return true;
 }
 
 const TECH_DRAFT_KEY = "kerjain_tech_draft";
 
-async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null) {
+async function saveTechDraft(data: TechData, pendingKtp: File | null, pendingSelfie: File | null, phoneVerified: boolean) {
   const draft: {
     data: TechData;
+    phoneVerified: boolean;
     pendingKtp?: { base64: string; contentType: string };
     pendingSelfie?: { base64: string; contentType: string };
-  } = { data };
+  } = { data, phoneVerified };
   if (pendingKtp) {
     draft.pendingKtp = await fileToBase64(pendingKtp);
   }
@@ -894,7 +775,7 @@ function base64ToFile(base64: string, contentType: string, name: string): File {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const INITIAL: TechData = {
-  authMethod: null, nama: "", phone: "", phoneVerified: false, area: "",
+  authMethod: null, nama: "", phone: "", area: "",
   nik: "", ktpPhoto: null, selfiePhoto: null,
   keahlian: [], pengalaman: "", tarif: "", bio: "",
   email: "", password: "",
@@ -913,17 +794,10 @@ export default function TechAuth() {
   const [pendingEmailVerify, setPendingEmailVerify] = useState(false);
   const [pendingKtp, setPendingKtp] = useState<File | null>(null);
   const [pendingSelfie, setPendingSelfie] = useState<File | null>(null);
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const [ktpUploadError, setKtpUploadError] = useState<string | null>(null);
 
-  const update = (patch: Partial<TechData>) => {
-    setData((d) => {
-      const next = { ...d, ...patch };
-      if (patch.phone !== undefined && patch.phone !== d.phone) {
-        next.phoneVerified = false;
-      }
-      return next;
-    });
-  };
+  const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
   const isLoggedInTechnician = user?.role === "technician";
 
@@ -939,6 +813,7 @@ export default function TechAuth() {
         try {
           const draft = JSON.parse(raw) as {
             data: TechData;
+            phoneVerified?: boolean;
             pendingKtp?: { base64: string; contentType: string };
             pendingSelfie?: { base64: string; contentType: string };
           };
@@ -948,6 +823,7 @@ export default function TechAuth() {
             email: draft.data.email || user.email,
             authMethod: draft.data.authMethod ?? authMethod,
           }));
+          setPhoneVerified(!!draft.phoneVerified);
           if (draft.pendingKtp) {
             setPendingKtp(base64ToFile(draft.pendingKtp.base64, draft.pendingKtp.contentType, "ktp.jpg"));
           }
@@ -985,7 +861,7 @@ export default function TechAuth() {
       if (!isLoggedInTechnician && (data.authMethod === "email" || data.email)) {
         await register(data.email, data.password, data.nama, "technician");
         if (pendingKtp || pendingSelfie) {
-          await saveTechDraft(data, pendingKtp, pendingSelfie);
+          await saveTechDraft(data, pendingKtp, pendingSelfie, phoneVerified);
         }
         setPendingEmailVerify(true);
         setSubmitted(true);
@@ -1115,15 +991,16 @@ export default function TechAuth() {
               loggedInUser={isLoggedInTechnician ? user : null}
             />
           )}
-          {step === 1 && <StepProfil data={data} onChange={update} />}
-          {step === 2 && (
-            <StepPhoneVerify
-              phone={data.phone}
-              phoneVerified={data.phoneVerified}
-              onVerified={() => update({ phoneVerified: true })}
+          {step === 1 && (
+            <StepProfil
+              data={data}
+              onChange={update}
+              phoneVerified={phoneVerified}
+              onPhoneVerified={() => setPhoneVerified(true)}
+              onPhoneReset={() => setPhoneVerified(false)}
             />
           )}
-          {step === 3 && (
+          {step === 2 && (
             <StepKTP
               data={data}
               onChange={update}
@@ -1136,15 +1013,15 @@ export default function TechAuth() {
               onUploadError={setKtpUploadError}
             />
           )}
-          {step === 4 && <StepKeahlian data={data} onChange={update} />}
-          {step === 5 && <StepPengalaman data={data} onChange={update} />}
+          {step === 3 && <StepKeahlian data={data} onChange={update} />}
+          {step === 4 && <StepPengalaman data={data} onChange={update} />}
         </div>
 
         {/* KTP skip note */}
-        {step === 3 && (
+        {step === 2 && (
           <p className="text-center text-[12px] text-[#7890AA] mb-3">
             Belum punya KTP siap?{" "}
-            <button type="button" onClick={() => setStep(4)} className="text-[#1D4196] font-bold hover:underline">
+            <button onClick={() => setStep(3)} className="text-[#1D4196] font-bold hover:underline">
               Lewati untuk sekarang
             </button>
           </p>
@@ -1154,9 +1031,9 @@ export default function TechAuth() {
         {!(step === 0 && oauthLoading) && (
           <button
             onClick={handleNext}
-            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) || submitting}
+            disabled={!canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }, phoneVerified) || submitting}
             className={`w-full flex items-center justify-center gap-2 font-bold text-[15px] py-3.5 rounded-2xl transition-all ${
-              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }) && !submitting
+              canProceed(step, data, isLoggedInTechnician, { ktp: pendingKtp, selfie: pendingSelfie }, phoneVerified) && !submitting
                 ? "bg-[#172E4D] hover:opacity-90 text-white"
                 : "bg-[#D8E2F0] text-[#7890AA] cursor-not-allowed"
             }`}

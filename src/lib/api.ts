@@ -71,10 +71,10 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 export const api = {
-  register(email: string, password: string, fullName: string, role: "user" | "technician" = "user") {
+  register(email: string, password: string, fullName: string, role: "user" | "technician" = "user", phone?: string) {
     return request<RegisterResponse>("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password, fullName, role }),
+      body: JSON.stringify({ email, password, fullName, role, ...(phone ? { phone } : {}) }),
     }, false);
   },
 
@@ -239,14 +239,14 @@ export const api = {
   },
 
   sendPhoneOtp(phone: string) {
-    return request<{ ok: boolean; message: string; devOtp?: string }>("/api/auth/phone/send-otp", {
+    return request<{ ok: boolean; message: string; devCode?: string }>("/api/auth/phone/send-otp", {
       method: "POST",
       body: JSON.stringify({ phone }),
     }, false);
   },
 
   verifyPhoneOtp(phone: string, code: string) {
-    return request<{ ok: boolean; phone: string }>("/api/auth/phone/verify-otp", {
+    return request<{ ok: boolean; phone: string; phoneVerified: boolean }>("/api/auth/phone/verify-otp", {
       method: "POST",
       body: JSON.stringify({ phone, code }),
     }, false);

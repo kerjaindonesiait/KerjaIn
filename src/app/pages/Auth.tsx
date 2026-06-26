@@ -5,6 +5,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
+import { PhoneOtpVerification } from "../components/PhoneOtpVerification";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -202,12 +203,15 @@ function EmailForm({
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
   const needsEmailVerification = error === "Email belum terverifikasi";
 
   const valid =
     (mode === "masuk" || name.trim().length >= 2) &&
     email.includes("@") &&
-    password.length >= 6;
+    password.length >= 6 &&
+    (mode === "masuk" || (phone.replace(/\D/g, "").length >= 8 && phoneVerified));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,7 +222,7 @@ function EmailForm({
     setLoading(true);
     try {
       if (mode === "daftar") {
-        const { devVerifyLink } = await register(email, password, name, "user");
+        const { devVerifyLink } = await register(email, password, name, "user", phone);
         onSuccess(name || email.split("@")[0], email, devVerifyLink);
       } else {
         await login(email, password);
@@ -299,6 +303,35 @@ function EmailForm({
           className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all"
         />
       </div>
+
+      {mode === "daftar" && (
+        <>
+          <div>
+            <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nomor WhatsApp</label>
+            <div className="flex">
+              <span className="flex items-center px-3 border-2 border-r-0 border-[#D8E2F0] rounded-l-xl bg-[#EEF3FB] text-[#294566] font-semibold text-[14px]">+62</span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => {
+                  setPhoneVerified(false);
+                  setPhone(e.target.value.replace(/\D/g, ""));
+                }}
+                placeholder="812 3456 7890"
+                disabled={phoneVerified}
+                className="flex-1 border-2 border-[#D8E2F0] rounded-r-xl px-4 py-3 text-[14px] text-[#172E4D] placeholder-[#7890AA] bg-[#F7F9FC] outline-none focus:border-[#1D4196] focus:bg-white transition-all disabled:opacity-70"
+              />
+            </div>
+          </div>
+          <PhoneOtpVerification
+            phone={phone}
+            verified={phoneVerified}
+            onVerified={() => setPhoneVerified(true)}
+            onReset={() => setPhoneVerified(false)}
+            disabled={phone.length < 8}
+          />
+        </>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
