@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { BrandLogo } from "../components/BrandLogo";
+import { TermsAcceptance } from "../components/TermsAcceptance";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -92,6 +93,7 @@ interface TechData {
   bio: string;
   email: string;
   password: string;
+  acceptedTerms: boolean;
 }
 
 // ─── Progress steps ───────────────────────────────────────────────────────────
@@ -168,6 +170,14 @@ function StepAuth({
 
       <h2 className="font-black text-[22px] text-[#172E4D] mb-5">Pilih cara masuk</h2>
 
+      <div className="mb-5">
+        <TermsAcceptance
+          id="tech-auth-terms"
+          checked={data.acceptedTerms}
+          onChange={(acceptedTerms) => onChange({ acceptedTerms })}
+        />
+      </div>
+
       <div className="flex flex-col gap-3 mb-5">
         {([
           { id: "google" as OAuthProvider,   label: "Lanjutkan dengan Google",   logo: <GoogleLogo />,   bg: "bg-white border border-[#D8E2F0] text-[#172E4D]" },
@@ -176,8 +186,8 @@ function StepAuth({
           <button
             key={id}
             onClick={() => onOAuth(id)}
-            disabled={oauthLoading !== null}
-            className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all shadow-sm hover:shadow-md active:scale-[0.98] ${bg} ${oauthLoading ? "opacity-60" : ""}`}
+            disabled={oauthLoading !== null || !data.acceptedTerms}
+            className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all shadow-sm hover:shadow-md active:scale-[0.98] ${bg} ${oauthLoading || !data.acceptedTerms ? "opacity-60 cursor-not-allowed" : ""}`}
           >
             {oauthLoading === id ? (
               <div className="w-5 h-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
@@ -198,7 +208,12 @@ function StepAuth({
       {!showEmail ? (
         <button
           onClick={() => setShowEmail(true)}
-          className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3.5 rounded-2xl hover:border-[#172E4D] hover:text-[#172E4D] transition-all"
+          disabled={!data.acceptedTerms}
+          className={`w-full border-2 font-bold text-[14px] py-3.5 rounded-2xl transition-all ${
+            data.acceptedTerms
+              ? "border-[#D8E2F0] text-[#294566] hover:border-[#172E4D] hover:text-[#172E4D]"
+              : "border-[#D8E2F0] text-[#7890AA] cursor-not-allowed opacity-60"
+          }`}
         >
           Daftar dengan email
         </button>
@@ -678,7 +693,8 @@ function SuccessScreen({ data }: { data: TechData }) {
 
 function canProceed(step: number, data: TechData, isLoggedInTechnician: boolean): boolean {
   if (step === 0) {
-    return isLoggedInTechnician || !!(data.email.includes("@") && data.password.length >= 6);
+    if (isLoggedInTechnician) return true;
+    return data.acceptedTerms && !!(data.email.includes("@") && data.password.length >= 6);
   }
   if (!isLoggedInTechnician) return false;
   if (step === 1) return data.nama.trim().length >= 2 && data.phone.length >= 8 && !!data.area;
@@ -715,7 +731,7 @@ const INITIAL: TechData = {
   authMethod: null, nama: "", phone: "", area: "",
   nik: "", ktpPhoto: null, selfiePhoto: null,
   keahlian: [], pengalaman: "", tarif: "", bio: "",
-  email: "", password: "",
+  email: "", password: "", acceptedTerms: false,
 };
 
 export default function TechAuth() {
@@ -791,6 +807,7 @@ export default function TechAuth() {
   }, [loading, user, searchParams, navigate]);
 
   const handleOAuth = (provider: OAuthProvider) => {
+    if (!data.acceptedTerms) return;
     setOauthLoading(provider);
     window.location.href = api.oauthAuthUrl(provider, { role: "technician" });
   };
