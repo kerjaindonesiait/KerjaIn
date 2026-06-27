@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AccountSettings from "./pages/AccountSettings";
 import MyJobs from "./pages/MyJobs";
+import MyReviews from "./pages/MyReviews";
 import TechProfile from "./pages/TechProfile";
 import AdminPanel from "./pages/AdminPanel";
 import Messages from "./pages/Messages";
@@ -49,6 +50,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute role="user">
             <MyJobs />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "ulasan-saya",
+        element: (
+          <ProtectedRoute role="user">
+            <MyReviews />
           </ProtectedRoute>
         ),
       },

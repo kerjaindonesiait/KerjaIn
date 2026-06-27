@@ -43,6 +43,9 @@ function JobReviewSection({
           ))}
         </div>
         {review.comment && <p className="text-[13px] text-[#58708D] italic">"{review.comment}"</p>}
+        <Link to="/ulasan-saya" className="inline-block mt-2 text-[12px] font-semibold text-[#1D4196] hover:underline">
+          Lihat semua ulasan saya →
+        </Link>
       </div>
     );
   }
@@ -201,6 +204,9 @@ export default function MyJobs() {
         <div className="max-w-[860px] mx-auto px-6 py-6">
           <h1 className="font-black text-[26px] text-[#172E4D]">Pekerjaan Saya</h1>
           <p className="text-[14px] text-[#58708D] mt-1">Kelola pekerjaan yang kamu posting</p>
+          <Link to="/ulasan-saya" className="inline-block mt-2 text-[13px] font-semibold text-[#1D4196] hover:underline">
+            Lihat ulasan yang saya berikan →
+          </Link>
         </div>
       </div>
 

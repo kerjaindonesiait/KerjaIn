@@ -202,6 +202,16 @@ export default function AccountSettings() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
+          {user.role === "user" && (
+            <Link to="/ulasan-saya" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
+              Ulasan saya
+            </Link>
+          )}
+          {user.role === "technician" && (
+            <Link to={`/tukang/${user.id}`} className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
+              Profil & ulasan
+            </Link>
+          )}
           {user.role === "technician" && (
             <Link to="/dasbor-tukang" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
               Dasbor Tukang

@@ -127,7 +127,12 @@ export default function TechProfile() {
               {reviews.map((r) => (
                 <div key={r.id} className="border-b border-[#EEF3FB] pb-4 last:border-0 last:pb-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="font-semibold text-[13px] text-[#172E4D]">{r.reviewerName ?? "Pelanggan"}</p>
+                    <div>
+                      <p className="font-semibold text-[13px] text-[#172E4D]">{r.reviewerName ?? "Pelanggan"}</p>
+                      {r.jobTitle && (
+                        <p className="text-[11px] text-[#7890AA] mt-0.5">{r.jobTitle}</p>
+                      )}
+                    </div>
                     <StarDisplay rating={r.rating} size={12} />
                   </div>
                   {r.comment && <p className="text-[13px] text-[#58708D] italic">"{r.comment}"</p>}

@@ -113,6 +113,7 @@ function Avatar({
 }
 
 function StarRow({ rating, count }: { rating: number; count: number }) {
+  if (count <= 0 || rating <= 0) return null;
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex gap-0.5">
@@ -482,6 +483,12 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                               {offer.technicianName}
                             </Link>
                           </p>
+                          {(offer.technicianReviewCount ?? 0) > 0 && (
+                            <StarRow
+                              rating={offer.technicianRating ?? 0}
+                              count={offer.technicianReviewCount ?? 0}
+                            />
+                          )}
                         </div>
                         <div className="text-right shrink-0">
                           <p className="font-black text-[16px] text-[#172E4D]">
@@ -532,7 +539,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   {task.poster.name}
                 </p>
                 <StarRow
-                  rating={task.poster.rating}
+                  rating={task.poster.rating ?? 0}
                   count={task.poster.reviews}
                 />
                 <div className="flex flex-wrap gap-3 mt-3">
@@ -545,9 +552,9 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                   <div className="w-px bg-[#EEF3FB]" />
                   <div className="text-center">
                     <p className="font-black text-[15px] text-[#172E4D]">
-                      {task.poster.reviews}
+                      {task.poster.jobsPosted ?? 0}
                     </p>
-                    <p className="text-[11px] text-[#7890AA]">Ulasan</p>
+                    <p className="text-[11px] text-[#7890AA]">Pekerjaan</p>
                   </div>
                   <div className="w-px bg-[#EEF3FB]" />
                   <div className="text-center">
@@ -576,9 +583,12 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 ["Bergabung sejak", `${task.poster.memberSince}`],
                 [
                   "Pekerjaan selesai",
-                  `${task.poster.completionRate}% dari semua pekerjaan`,
+                  `${task.poster.jobsCompleted ?? 0} dari ${task.poster.jobsPosted ?? 0} pekerjaan`,
                 ],
-                ["Total ulasan", `${task.poster.reviews} ulasan dari tukang`],
+                [
+                  "Tingkat penyelesaian",
+                  `${task.poster.completionRate}%`,
+                ],
               ].map(([label, val]) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-[#7890AA] font-medium">{label}</span>
