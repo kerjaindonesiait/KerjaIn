@@ -1,0 +1,97 @@
+{
+  "variant": "light",
+  "metadata": {
+    "name": "KerjaIn Standard",
+    "description": "Clean task map: Standard light theme, minimal POI/landmarks, fewer labels, roads visible."
+  },
+  "styles": [
+    {
+      "id": "pointOfInterest",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.landmark",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.entertainment",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.foodAndDrink",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.retail",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.service",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.recreation",
+      "geometry": { "visible": true },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.recreation.park",
+      "geometry": { "visible": true },
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation",
+      "geometry": { "visible": false },
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.railwayTrack",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.building",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.neighborhood",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.sublocality",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.landParcel",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.roadSign",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.local",
+      "geometry": { "visible": true },
+      "label": { "visible": true }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.arterial",
+      "geometry": { "visible": true },
+      "label": { "visible": true }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.highway",
+      "geometry": { "visible": true },
+      "label": { "visible": true }
+    },
+    {
+      "id": "natural.water",
+      "label": { "visible": false }
+    }
+  ]
+}
