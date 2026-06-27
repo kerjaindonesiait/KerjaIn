@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
+import { ScrollToTop } from "../components/ScrollToTop";
 import { appShellClass } from "../../lib/layout";
 
 const NAV_LINKS = [
@@ -70,6 +71,7 @@ export default function Root() {
 
   return (
     <div className={`flex flex-col bg-[#F7F9FC] ${isTasksPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
+      <ScrollToTop />
       {/* NAV */}
       <header className="bg-white border-b border-[#D8E2F0] sticky top-0 z-50">
         <div className={`flex items-center h-[72px] ${appShellClass}`}>

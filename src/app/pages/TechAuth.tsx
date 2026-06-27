@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
+import { useScrollToTop } from "../../lib/useScrollToTop";
 import { BrandLogo } from "../components/BrandLogo";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 
@@ -750,6 +751,8 @@ export default function TechAuth() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const resumeHandled = useRef(false);
+
+  useScrollToTop(step, submitted, pendingEmailVerify);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
