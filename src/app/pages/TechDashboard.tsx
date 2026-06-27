@@ -612,6 +612,10 @@ function jobStatusFromOffer(o: MineOffer) {
   return j?.status ?? "";
 }
 
+function isPenawaranTabOffer(o: MineOffer) {
+  return jobStatusFromOffer(o) !== "completed";
+}
+
 function canMessageOnJob(status: string) {
   return status === "in_progress" || status === "completed";
 }
@@ -651,7 +655,7 @@ export default function TechDashboard() {
       .then(({ offers }) => {
         const q: Record<string, number> = {};
         for (const o of offers) {
-          if (o.status === "pending" || o.status === "accepted") {
+          if ((o.status === "pending" || o.status === "accepted") && isPenawaranTabOffer(o)) {
             q[o.job_id] = o.price;
           }
         }
@@ -666,7 +670,7 @@ export default function TechDashboard() {
     if (navTab === "penawaran") {
       api
         .getOffersMine()
-        .then(({ offers }) => setMyOffers(offers))
+        .then(({ offers }) => setMyOffers(offers.filter(isPenawaranTabOffer)))
         .catch(() => setMyOffers([]))
         .finally(() => setLoadingTab(false));
     } else if (navTab === "aktif") {
