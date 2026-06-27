@@ -685,14 +685,17 @@ export default function TechDashboard() {
   }, [navTab]);
 
   const handleCompleteJob = async (jobId: string) => {
-    if (!confirm("Tandai pekerjaan ini selesai?")) return;
+    if (!confirm("Tandai pekerjaan ini sudah selesai? Pelanggan perlu mengonfirmasi sebelum dana dicairkan.")) return;
     setCompletingId(jobId);
     try {
-      await api.completeJob(jobId);
-      setActiveJobs((prev) => prev.filter((j) => j.id !== jobId));
-      setNavTab("selesai");
+      await api.markJobDone(jobId);
+      setActiveJobs((prev) =>
+        prev.map((j) =>
+          j.id === jobId ? { ...j, technicianCompletedAt: new Date().toISOString() } : j,
+        ),
+      );
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal menyelesaikan pekerjaan");
+      alert(e instanceof Error ? e.message : "Gagal menandai pekerjaan selesai");
     } finally {
       setCompletingId(null);
     }
@@ -973,15 +976,21 @@ export default function TechDashboard() {
                     <MessageCircle size={15} /> Hubungi pelanggan
                   </Link>
 
-                  <button
-                    type="button"
-                    disabled={completingId === job.id}
-                    onClick={() => handleCompleteJob(job.id)}
-                    className="w-full border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {completingId === job.id ? <Loader2 size={14} className="animate-spin" /> : null}
-                    Tandai Selesai ✓
-                  </button>
+                  {job.technicianCompletedAt ? (
+                    <div className="w-full text-center bg-[#fef9c3] border border-yellow-200 text-yellow-800 font-semibold text-[13px] py-3 rounded-xl">
+                      Menunggu konfirmasi pelanggan
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={completingId === job.id}
+                      onClick={() => handleCompleteJob(job.id)}
+                      className="w-full border-2 border-[#20bf6f] text-[#20bf6f] font-bold text-[13px] py-3 rounded-xl hover:bg-[#f0fdf4] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {completingId === job.id ? <Loader2 size={14} className="animate-spin" /> : null}
+                      Tandai Selesai ✓
+                    </button>
+                  )}
                 </div>
               </div>
             ))

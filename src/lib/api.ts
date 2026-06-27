@@ -135,6 +135,14 @@ export const api = {
     return request<{ job: Job }>(`/api/jobs/${id}/complete`, { method: "POST" });
   },
 
+  markJobDone(id: string) {
+    return request<{ job: Job }>(`/api/jobs/${id}/mark-done`, { method: "POST" });
+  },
+
+  confirmJobComplete(id: string) {
+    return request<{ job: Job }>(`/api/jobs/${id}/confirm-complete`, { method: "POST" });
+  },
+
   getOffersMine() {
     return request<{ offers: MineOffer[] }>("/api/offers/mine");
   },

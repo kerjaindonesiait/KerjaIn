@@ -48,6 +48,7 @@ export interface Job {
     completionRate: number;
   } | null;
   createdAt: string;
+  technicianCompletedAt?: string | null;
 }
 
 export interface Offer {

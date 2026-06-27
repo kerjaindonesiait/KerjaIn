@@ -98,6 +98,7 @@ export default function MyJobs() {
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [jobReviews, setJobReviews] = useState<Record<string, Review | null>>({});
+  const [confirmJob, setConfirmJob] = useState<Job | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -108,13 +109,14 @@ export default function MyJobs() {
       .then(async ({ jobs: data }) => {
         setJobs(data);
         const assigned = data.filter((j) => j.status === "assigned");
+        const inProgress = data.filter((j) => j.status === "in_progress");
         const open = data.filter((j) => j.status === "open" && (j.offers ?? 0) > 0);
         const completed = data.filter((j) => j.status === "completed");
         const offerMap: Record<string, Offer> = {};
         const pendingMap: Record<string, Offer[]> = {};
         const reviewMap: Record<string, Review | null> = {};
         await Promise.all([
-          ...assigned.map(async (job) => {
+          ...[...assigned, ...inProgress].map(async (job) => {
             try {
               const { offers } = await api.getOffers(job.id);
               const accepted = offers.find((o) => o.status === "accepted");
@@ -165,14 +167,15 @@ export default function MyJobs() {
     }
   };
 
-  const handleComplete = async (jobId: string) => {
-    if (!confirm("Tandai pekerjaan ini selesai dan lepas dana escrow?")) return;
-    setActionId(jobId);
+  const handleConfirmComplete = async () => {
+    if (!confirmJob) return;
+    setActionId(confirmJob.id);
     try {
-      await api.completeJob(jobId);
+      await api.confirmJobComplete(confirmJob.id);
+      setConfirmJob(null);
       load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal menyelesaikan pekerjaan");
+      alert(e instanceof Error ? e.message : "Gagal mengonfirmasi pekerjaan");
     } finally {
       setActionId(null);
     }
@@ -230,7 +233,10 @@ export default function MyJobs() {
 
         <div className="flex flex-col gap-4">
           {jobs.map((job) => {
-            const st = STATUS_LABEL[job.status] ?? { label: job.status, className: "bg-[#EEF3FB] text-[#58708D]" };
+            const st =
+              job.status === "in_progress" && job.technicianCompletedAt
+                ? { label: "Perlu konfirmasi", className: "bg-amber-50 text-amber-700 border-amber-200" }
+                : STATUS_LABEL[job.status] ?? { label: job.status, className: "bg-[#EEF3FB] text-[#58708D]" };
             const offer = acceptedOffers[job.id];
             const busy = actionId === job.id;
 
@@ -298,14 +304,21 @@ export default function MyJobs() {
                     </Link>
                   )}
 
-                  {job.status === "in_progress" && (
+                  {job.status === "in_progress" && !job.technicianCompletedAt && (
+                    <span className="text-[13px] text-[#58708D] font-semibold flex items-center gap-1.5 px-3 py-2 bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl">
+                      <Clock size={14} /> Menunggu tukang menandai selesai
+                    </span>
+                  )}
+
+                  {job.status === "in_progress" && job.technicianCompletedAt && (
                     <button
+                      type="button"
                       disabled={busy}
-                      onClick={() => handleComplete(job.id)}
-                      className="flex items-center gap-1.5 bg-[#20bf6f] hover:bg-[#1a9d5c] text-white font-bold text-[13px] px-5 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                      onClick={() => setConfirmJob(job)}
+                      className="flex items-center gap-1.5 bg-[#20bf6f] hover:bg-[#1a9d5c] text-white font-bold text-[13px] px-5 py-2.5 rounded-xl transition-colors disabled:opacity-50 animate-pulse"
                     >
                       {busy ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                      Tandai selesai
+                      Konfirmasi pekerjaan selesai
                     </button>
                   )}
 
@@ -360,6 +373,41 @@ export default function MyJobs() {
           })}
         </div>
       </div>
+
+      {confirmJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-white rounded-2xl border border-[#D8E2F0] shadow-xl max-w-[420px] w-full p-6">
+            <div className="w-14 h-14 rounded-full bg-[#f0fdf4] border-2 border-[#bbf7d0] flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={28} className="text-[#20bf6f]" />
+            </div>
+            <h3 className="font-black text-[20px] text-[#172E4D] text-center mb-2">Konfirmasi pekerjaan selesai?</h3>
+            <p className="text-[14px] text-[#58708D] text-center mb-1">
+              Tukang menandai pekerjaan <span className="font-bold text-[#172E4D]">"{confirmJob.title}"</span> sudah selesai.
+            </p>
+            <p className="text-[13px] text-[#7890AA] text-center mb-6">
+              Pastikan pekerjaan benar-benar selesai. Dana escrow akan dilepaskan ke tukang setelah konfirmasi.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={actionId === confirmJob.id}
+                onClick={handleConfirmComplete}
+                className="w-full bg-[#20bf6f] hover:bg-[#1a9d5c] disabled:opacity-60 text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {actionId === confirmJob.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                Ya, pekerjaan selesai — lepas dana
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmJob(null)}
+                className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-xl hover:border-[#1D4196] transition-colors"
+              >
+                Belum selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
