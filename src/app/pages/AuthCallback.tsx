@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../lib/auth";
+import { defaultRouteForUser } from "../../lib/defaultRoute";
 
 export default function AuthCallback() {
   const [params] = useSearchParams();
@@ -28,7 +29,7 @@ export default function AuthCallback() {
           if (next) {
             navigate(next, { replace: true });
           } else {
-            navigate(user.role === "technician" ? "/dasbor-tukang" : "/", { replace: true });
+            navigate(defaultRouteForUser(user), { replace: true });
           }
         } catch {
           navigate("/masuk?error=oauth_failed", { replace: true });

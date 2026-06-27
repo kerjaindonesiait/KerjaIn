@@ -43,6 +43,7 @@ import {
 } from "../../lib/jobFilters";
 import type { Job, Offer } from "../../types";
 import { appShellClass, appShellClassMobileFlush } from "../../lib/layout";
+import { useShowTasksMap } from "../../lib/useShowTasksMap";
 
 type Task = Job & { status: string };
 
@@ -1034,12 +1035,18 @@ export default function Tasks() {
     [categorySearch],
   );
 
-  const mapPanelClassName = selectedTask
-    ? "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-auto md:h-auto md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]"
-    : "order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0 md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]";
-  const taskListClassName = selectedTask
-    ? "hidden md:flex order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden"
-    : "order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden";
+  const showMap = useShowTasksMap();
+
+  useEffect(() => {
+    if (!showMap) setMapPreviewId(null);
+  }, [showMap]);
+
+  const mapPanelClassName =
+    "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-full md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]";
+  const taskListClassName =
+    "order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex flex-col bg-[#F7F9FC] md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden";
+  const portraitListClassName =
+    "flex-1 flex flex-col w-full min-h-0 overflow-hidden bg-[#F7F9FC]";
 
   if (!authLoading && user?.role === "technician") {
     return <Navigate to="/dasbor-tukang" replace />;
@@ -1047,20 +1054,24 @@ export default function Tasks() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Filter bar — aligned with header logo / Keluar rails */}
+      {/* Filter bar — horizontal scroll on mobile */}
       <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
-        <div className={`${appShellClass} flex flex-wrap items-center gap-x-2 gap-y-2 py-3`}>
-          <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] w-full sm:w-auto sm:min-w-[220px] sm:max-w-[280px] border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
-            <Search size={15} className="text-[#7890AA] shrink-0" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari pekerjaan, cth. pipa bocor…"
-              className="bg-transparent text-[13px] text-[#294566] placeholder-[#7890AA] outline-none w-full"
-            />
-          </div>
-          <div className="hidden sm:block w-px h-6 bg-[#f5eded] shrink-0" />
-          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+        <div className={`${appShellClass} py-3`}>
+          <div
+            className="overflow-x-auto overscroll-x-contain -mx-1 px-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+          >
+            <div className="flex items-center gap-2 flex-nowrap min-w-max pr-2">
+              <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[220px] max-w-[280px] shrink-0 border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
+                <Search size={15} className="text-[#7890AA] shrink-0" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari pekerjaan, cth. pipa bocor…"
+                  className="bg-transparent text-[13px] text-[#294566] placeholder-[#7890AA] outline-none w-full min-w-0"
+                />
+              </div>
+              <div className="w-px h-6 bg-[#f5eded] shrink-0" />
           <FilterPopover
             open={openMenu === "area"}
             onOpenChange={(open) => (open ? openFilter("area") : closeFilter())}
@@ -1178,43 +1189,46 @@ export default function Tasks() {
               }}
             />
           </FilterPopover>
-          <div className="ml-auto shrink-0">
-            <FilterPopover
-              open={openMenu === "sort"}
-              onOpenChange={(open) => (open ? openFilter("sort") : closeFilter())}
-              align="right"
-              width="auto"
-              trigger={
-                <FilterTextTrigger
-                  active={sortOption !== "newest"}
-                  open={openMenu === "sort"}
-                  label={sortOption === "newest" ? "Urutkan" : SORT_LABELS[sortOption]}
+          <FilterPopover
+            open={openMenu === "sort"}
+            onOpenChange={(open) => (open ? openFilter("sort") : closeFilter())}
+            align="right"
+            width="auto"
+            trigger={
+              <FilterTextTrigger
+                active={sortOption !== "newest"}
+                open={openMenu === "sort"}
+                label={sortOption === "newest" ? "Urutkan" : SORT_LABELS[sortOption]}
+              />
+            }
+          >
+            <div className="p-2 min-w-[220px]">
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                <FilterSortItem
+                  key={key}
+                  active={sortOption === key}
+                  icon={SORT_ICONS[key]}
+                  label={SORT_LABELS[key]}
+                  onClick={() => {
+                    setSortOption(key);
+                    closeFilter();
+                  }}
                 />
-              }
-            >
-              <div className="p-2 min-w-[220px]">
-                {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
-                  <FilterSortItem
-                    key={key}
-                    active={sortOption === key}
-                    icon={SORT_ICONS[key]}
-                    label={SORT_LABELS[key]}
-                    onClick={() => {
-                      setSortOption(key);
-                      closeFilter();
-                    }}
-                  />
-                ))}
-              </div>
-            </FilterPopover>
-          </div>
+              ))}
+            </div>
+          </FilterPopover>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Body — map + list within same rails as header */}
-      <div className={`${appShellClassMobileFlush} flex flex-col md:flex-row flex-1 min-h-0 md:pb-4 md:gap-3`}>
-        {/* Map — top on mobile, right panel on desktop */}
+      {/* Body — portrait phone: list only; landscape/tablet/desktop: map + list */}
+      <div
+        className={`${appShellClassMobileFlush} flex flex-1 min-h-0 ${
+          showMap ? "flex-col md:flex-row md:pb-4 md:gap-3" : "flex-col"
+        }`}
+      >
+        {showMap && (
         <div className={mapPanelClassName}>
           <div
             className={`absolute inset-0 transition-opacity duration-300 ${selectedTask ? "opacity-0 pointer-events-none" : "opacity-100"}`}
@@ -1250,9 +1264,24 @@ export default function Tasks() {
             )}
           </div>
         </div>
+        )}
 
-        {/* Task list */}
-        <div className={taskListClassName}>
+        {!showMap && selectedTask ? (
+          <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
+            <TaskDetail
+              task={selectedTask}
+              onClose={() => {
+                setSelectedId(null);
+                setMapPreviewId(null);
+              }}
+            />
+          </div>
+        ) : (
+        <div
+          className={`${showMap ? taskListClassName : portraitListClassName}${
+            showMap && selectedTask ? " hidden md:flex" : ""
+          }`}
+        >
           <div className="px-4 py-2.5 border-b border-[#D8E2F0] bg-white">
             <p className="text-[12px] text-[#7890AA] font-semibold">
               {filtered.length} pekerjaan tersedia
@@ -1282,6 +1311,7 @@ export default function Tasks() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

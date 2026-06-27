@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams, useLocation } from "react-router";
+import { Link, useNavigate, useSearchParams, useLocation, Navigate } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
+import { defaultRouteForUser } from "../../lib/defaultRoute";
 import { BrandLogo } from "../components/BrandLogo";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 import type { User } from "../../types";
@@ -168,16 +169,16 @@ function SuccessScreen({
 
       <div className="flex flex-col gap-3 w-full">
         <button
-          onClick={() => navigate("/post-job")}
+          onClick={() => navigate("/tasks")}
           className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
         >
-          Post Kerjaan sekarang <ArrowRight size={16} />
+          {mode === "masuk" ? "Cari pekerjaan" : "Post Kerjaan sekarang"} <ArrowRight size={16} />
         </button>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate(mode === "masuk" ? "/post-job" : "/tasks")}
           className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
         >
-          Lihat beranda
+          {mode === "masuk" ? "Post kerjaan" : "Cari pekerjaan"}
         </button>
       </div>
     </div>
@@ -433,6 +434,7 @@ export default function Auth() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const redirectFrom = (location.state as { from?: string } | null)?.from;
   const nextParam = params.get("next");
   const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
@@ -462,6 +464,10 @@ export default function Auth() {
     window.location.href = api.oauthAuthUrl(provider);
   };
 
+  if (!authLoading && user) {
+    return <Navigate to={defaultRouteForUser(user)} replace />;
+  }
+
   const handleEmailSuccess = (
     name: string,
     email: string,
@@ -478,6 +484,8 @@ export default function Auth() {
         navigate("/dasbor-tukang", { replace: true });
         return;
       }
+      navigate("/tasks", { replace: true });
+      return;
     }
     setAuthProvider("email");
     setSuccessName(name);
