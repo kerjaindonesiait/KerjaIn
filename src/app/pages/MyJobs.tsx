@@ -339,22 +339,14 @@ export default function MyJobs() {
                         {offer.message && (
                           <p className="text-[12px] text-[#58708D] italic mb-3">"{offer.message}"</p>
                         )}
-                        <div className="flex flex-col gap-2">
-                          <Link
-                            to={`/pesan/${job.id}?technicianId=${encodeURIComponent(offer.technicianId)}`}
-                            className="w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
-                          >
-                            <MessageCircle size={15} /> Kirim pesan
-                          </Link>
-                          <button
-                            type="button"
-                            disabled={actionId === offer.id}
-                            onClick={() => handleAcceptOffer(job.id, offer.id)}
-                            className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                          >
-                            {actionId === offer.id ? "Memproses..." : "Terima penawaran ini"}
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          disabled={actionId === offer.id}
+                          onClick={() => handleAcceptOffer(job.id, offer.id)}
+                          className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                        >
+                          {actionId === offer.id ? "Memproses..." : "Terima penawaran ini"}
+                        </button>
                       </div>
                     ))}
                   </div>

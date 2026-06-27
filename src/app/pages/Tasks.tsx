@@ -470,27 +470,25 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                           "{offer.message}"
                         </p>
                       )}
-                      {task.isOwner && (
-                        <div className={`flex flex-col gap-2 ${canAcceptOffers ? "" : ""}`}>
-                          <Link
-                            to={`/pesan/${task.id}?technicianId=${encodeURIComponent(offer.technicianId)}`}
-                            className="w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
-                          >
-                            <MessageCircle size={15} /> Kirim pesan
-                          </Link>
-                          {canAcceptOffers && (
-                            <button
-                              type="button"
-                              disabled={acceptingId === offer.id}
-                              onClick={() => handleAcceptOffer(offer.id)}
-                              className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
-                            >
-                              {acceptingId === offer.id
-                                ? "Memproses..."
-                                : "Terima penawaran ini"}
-                            </button>
-                          )}
-                        </div>
+                      {task.isOwner && offer.status === "accepted" && (
+                        <Link
+                          to={`/pesan/${task.id}?technicianId=${encodeURIComponent(offer.technicianId)}`}
+                          className="w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
+                        >
+                          <MessageCircle size={15} /> Kirim pesan
+                        </Link>
+                      )}
+                      {task.isOwner && canAcceptOffers && (
+                        <button
+                          type="button"
+                          disabled={acceptingId === offer.id}
+                          onClick={() => handleAcceptOffer(offer.id)}
+                          className="w-full bg-[#1D4196] hover:bg-[#173577] disabled:opacity-60 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+                        >
+                          {acceptingId === offer.id
+                            ? "Memproses..."
+                            : "Terima penawaran ini"}
+                        </button>
                       )}
                     </div>
                   );
@@ -584,6 +582,17 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               <div className="flex items-center justify-center gap-2 bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] font-bold text-[14px] rounded-xl py-3">
                 <CheckCircle size={16} /> Penawaran diterima!
               </div>
+              {(() => {
+                const accepted = offers.find((o) => o.id === acceptedOfferId);
+                return accepted ? (
+                  <Link
+                    to={`/pesan/${task.id}?technicianId=${encodeURIComponent(accepted.technicianId)}`}
+                    className="w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
+                  >
+                    <MessageCircle size={15} /> Kirim pesan ke tukang
+                  </Link>
+                ) : null;
+              })()}
               <Link
                 to={`/bayar?jobId=${task.id}&offerId=${acceptedOfferId}`}
                 className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-xl transition-colors"

@@ -905,12 +905,14 @@ export default function TechDashboard() {
                       )}
                       <span className="font-bold text-[#172E4D]">{formatPrice(offer.price)}</span>
                     </div>
-                    <Link
-                      to={`/pesan/${offer.job_id}`}
-                      className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
-                    >
-                      <MessageCircle size={15} /> Kirim pesan ke pelanggan
-                    </Link>
+                    {offer.status === "accepted" && (
+                      <Link
+                        to={`/pesan/${offer.job_id}`}
+                        className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"
+                      >
+                        <MessageCircle size={15} /> Kirim pesan ke pelanggan
+                      </Link>
+                    )}
                   </div>
                 );
               })}
