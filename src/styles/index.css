@@ -1,3 +1,38 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Thin horizontal scrollbar hint for swipeable rows */
+.kj-hscroll {
+  scrollbar-width: thin;
+  scrollbar-color: #b8c9de transparent;
+}
+
+.kj-hscroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.kj-hscroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kj-hscroll::-webkit-scrollbar-thumb {
+  background: #b8c9de;
+  border-radius: 999px;
+}
+
+.kj-hscroll::-webkit-scrollbar-thumb:hover {
+  background: #1d4196;
+}
+
+.kj-hscroll-dark {
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+.kj-hscroll-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.kj-hscroll-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.55);
+}

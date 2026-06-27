@@ -36,6 +36,7 @@ import {
 } from "../../lib/jobFilters";
 import type { FilterMenuId } from "../../lib/useJobBrowseFilters";
 import { appShellClass } from "../../lib/layout";
+import { HorizontalScrollRow } from "./HorizontalScrollRow";
 
 const SORT_ICONS: Record<SortOption, ReactNode> = {
   newest: <Clock size={18} strokeWidth={2} />,
@@ -423,10 +424,7 @@ export function JobBrowseFilterBar(props: JobBrowseFilterBarProps) {
   return (
     <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
       <div className={`${appShellClass} py-3`}>
-        <div
-          className="overflow-x-auto overscroll-x-contain -mx-1 px-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
-        >
+        <HorizontalScrollRow fadeEdge="light" innerClassName="-mx-1 px-1 pb-1">
           <div className="flex items-center gap-2 flex-nowrap min-w-max pr-2">
             <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[220px] max-w-[280px] shrink-0 border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
               <Search size={15} className="text-[#7890AA] shrink-0" />
@@ -584,7 +582,7 @@ export function JobBrowseFilterBar(props: JobBrowseFilterBarProps) {
               </div>
             </FilterPopover>
           </div>
-        </div>
+        </HorizontalScrollRow>
       </div>
     </div>
   );

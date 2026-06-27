@@ -11,6 +11,7 @@ import type { Job, MineOffer, TechnicianStats } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
 import { JobsMap } from "../components/JobsMap";
 import { JobBrowseFilterBar } from "../components/JobBrowseFilterBar";
+import { HorizontalScrollRow } from "../components/HorizontalScrollRow";
 import { useJobBrowseFilters } from "../../lib/useJobBrowseFilters";
 import { appShellClassMobileFlush } from "../../lib/layout";
 import { useShowTasksMap } from "../../lib/useShowTasksMap";
@@ -169,18 +170,27 @@ function Avatar({ initials, color, size = "sm" }: { initials: string; color: str
   );
 }
 
-function StarRow({ rating }: { rating: number | null | undefined }) {
-  if (rating == null || rating <= 0) return null;
+function HeaderRating({ rating, reviewCount }: { rating: number; reviewCount: number }) {
+  if (reviewCount <= 0) {
+    return <p className="text-[10px] text-white/50 font-semibold mt-0.5">Belum ada ulasan</p>;
+  }
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 mt-0.5">
       <div className="flex gap-0.5">
-        {[1,2,3,4,5].map((i) => (
-          <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(rating) ? "#f59e0b" : "#e5e7eb"}>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <svg
+            key={i}
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill={i <= Math.round(rating) ? "#f59e0b" : "rgba(255,255,255,0.25)"}
+          >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
         ))}
       </div>
-      <span className="text-[11px] text-[#58708D] font-semibold">{rating}</span>
+      <span className="text-[10px] text-white font-bold">{rating.toFixed(1)}</span>
+      <span className="text-[10px] text-white/50">({reviewCount})</span>
     </div>
   );
 }
@@ -764,12 +774,8 @@ export default function TechDashboard() {
   const TUKANG = {
     name: user?.fullName ?? "Tukang",
     initials: (user?.fullName ?? "T").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-    area: techStats?.area ?? "Jakarta",
     rating: techStats?.rating ?? 0,
     reviews: techStats?.reviewCount ?? 0,
-    selesai: techStats?.completedJobs ?? 0,
-    penawaran_aktif: techStats?.activeOffers ?? Object.keys(quotedJobs).length,
-    penghasilan: "Rp 0",
   };
 
   return (
@@ -810,12 +816,9 @@ export default function TechDashboard() {
                   {TUKANG.initials}
                 </div>
               )}
-              <div className="hidden sm:block">
-                <p className="font-bold text-[13px] text-white leading-none">{TUKANG.name}</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <CheckCircle size={10} className="text-[#20bf6f]" />
-                  <span className="text-[10px] text-[#20bf6f] font-bold">Terverifikasi</span>
-                </div>
+              <div className="min-w-0">
+                <p className="font-bold text-[13px] text-white leading-none truncate max-w-[100px] sm:max-w-[160px]">{TUKANG.name}</p>
+                <HeaderRating rating={TUKANG.rating} reviewCount={TUKANG.reviews} />
               </div>
             </Link>
             <button
@@ -828,33 +831,18 @@ export default function TechDashboard() {
             </button>
           </div>
         </div>
-
-        {/* Stats strip */}
-        <div className="border-t border-white/10 px-6 py-2.5 max-w-[1400px] mx-auto">
-          <div className="flex gap-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {[
-              { label: "Rating",             value: techStats && techStats.reviewCount > 0 ? `${TUKANG.rating.toFixed(1)} ⭐ (${TUKANG.reviews})` : "Belum ada ulasan" },
-              { label: "Pekerjaan selesai",  value: `${TUKANG.selesai}` },
-              { label: "Penawaran aktif",    value: `${TUKANG.penawaran_aktif}` },
-              { label: "Penghasilan bulan ini", value: TUKANG.penghasilan },
-            ].map((s) => (
-              <div key={s.label} className="shrink-0">
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">{s.label}</p>
-                <p className="font-black text-[15px] text-white">{s.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </header>
 
       {/* ── Nav tabs ── */}
       <div className="bg-white border-b border-[#f5eded] shrink-0">
-        <div className="max-w-[1400px] mx-auto px-6 flex">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <HorizontalScrollRow fadeEdge="light" innerClassName="pb-0.5">
+            <div className="flex flex-nowrap min-w-max">
           {NAV_TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setNavTab(t.id as typeof navTab)}
-              className={`flex items-center gap-1.5 px-4 py-3.5 text-[13px] font-bold transition-all relative border-b-2 ${
+              className={`flex shrink-0 items-center gap-1.5 px-4 py-3.5 text-[13px] font-bold transition-all relative border-b-2 whitespace-nowrap ${
                 navTab === t.id
                   ? "text-[#1D4196] border-[#1D4196]"
                   : "text-[#7890AA] border-transparent hover:text-[#58708D]"
@@ -863,6 +851,8 @@ export default function TechDashboard() {
               {t.icon} {t.label}
             </button>
           ))}
+            </div>
+          </HorizontalScrollRow>
         </div>
       </div>
 
