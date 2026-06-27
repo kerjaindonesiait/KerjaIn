@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
+import { appShellClass } from "../../lib/layout";
 
 const NAV_LINKS = [
   { label: "Cari Pekerjaan", href: "/tasks" },
@@ -71,7 +72,7 @@ export default function Root() {
     <div className={`flex flex-col bg-[#F7F9FC] ${isTasksPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
       {/* NAV */}
       <header className="bg-white border-b border-[#D8E2F0] sticky top-0 z-50">
-        <div className="flex items-center h-[72px] px-6 max-w-[1400px] mx-auto w-full">
+        <div className={`flex items-center h-[72px] ${appShellClass}`}>
           {/* Logo */}
           <Link to="/" className="flex items-center mr-5 shrink-0">
             <BrandLogo imgClassName="h-12" />

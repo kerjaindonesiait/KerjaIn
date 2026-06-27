@@ -42,6 +42,7 @@ import {
   type JobCategoryFilter,
 } from "../../lib/jobFilters";
 import type { Job, Offer } from "../../types";
+import { appShellClass, appShellClassMobileFlush } from "../../lib/layout";
 
 type Task = Job & { status: string };
 
@@ -1024,11 +1025,11 @@ export default function Tasks() {
   );
 
   const mapPanelClassName = selectedTask
-    ? "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-auto md:h-auto"
-    : "order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0";
+    ? "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-auto md:h-auto md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]"
+    : "order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0 md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]";
   const taskListClassName = selectedTask
-    ? "hidden md:flex order-2 md:order-1 w-full md:w-[410px] shrink-0 flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0"
-    : "order-2 md:order-1 w-full md:w-[410px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0";
+    ? "hidden md:flex order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden"
+    : "order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden";
 
   if (!authLoading && user?.role === "technician") {
     return <Navigate to="/dasbor-tukang" replace />;
@@ -1036,10 +1037,10 @@ export default function Tasks() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Filter bar */}
+      {/* Filter bar — aligned with header logo / Keluar rails */}
       <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 px-6 py-3 max-w-[1400px] mx-auto w-full">
-          <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[200px] border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
+        <div className={`${appShellClass} flex flex-wrap items-center gap-x-2 gap-y-2 py-3`}>
+          <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] w-full sm:w-auto sm:min-w-[220px] sm:max-w-[280px] border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
             <Search size={15} className="text-[#7890AA] shrink-0" />
             <input
               value={searchQuery}
@@ -1048,7 +1049,8 @@ export default function Tasks() {
               className="bg-transparent text-[13px] text-[#294566] placeholder-[#7890AA] outline-none w-full"
             />
           </div>
-          <div className="w-px h-6 bg-[#f5eded] shrink-0" />
+          <div className="hidden sm:block w-px h-6 bg-[#f5eded] shrink-0" />
+          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
           <FilterPopover
             open={openMenu === "area"}
             onOpenChange={(open) => (open ? openFilter("area") : closeFilter())}
@@ -1196,11 +1198,12 @@ export default function Tasks() {
               </div>
             </FilterPopover>
           </div>
+          </div>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
+      {/* Body — map + list within same rails as header */}
+      <div className={`${appShellClassMobileFlush} flex flex-col md:flex-row flex-1 min-h-0 md:pb-4 md:gap-3`}>
         {/* Map — top on mobile, right panel on desktop */}
         <div className={mapPanelClassName}>
           <div
