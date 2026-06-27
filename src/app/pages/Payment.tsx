@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   ChevronLeft, Shield, CheckCircle, Copy, Clock,
-  AlertCircle, ChevronRight, Lock, Smartphone, CreditCard, Building2,
+  AlertCircle, ChevronRight, Lock, Smartphone, CreditCard, Building2, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { MIDTRANS_CLIENT_KEY, MIDTRANS_IS_PRODUCTION } from "../../constants";
@@ -413,9 +413,20 @@ function ProcessingScreen() {
 
 // ─── Success screen ───────────────────────────────────────────────────────────
 
-function SuccessScreen({ summary, total }: { summary: PaymentSummary; total: number }) {
+function SuccessScreen({
+  summary,
+  total,
+  jobId,
+  technicianId,
+}: {
+  summary: PaymentSummary;
+  total: number;
+  jobId: string;
+  technicianId: string;
+}) {
   const navigate = useNavigate();
   const txId = `TXN${Date.now().toString().slice(-10)}`;
+  const chatUrl = `/pesan/${jobId}?technicianId=${encodeURIComponent(technicianId)}`;
 
   return (
     <div className="flex flex-col items-center text-center gap-5 py-4">
@@ -490,10 +501,16 @@ function SuccessScreen({ summary, total }: { summary: PaymentSummary; total: num
       </div>
 
       <div className="flex flex-col gap-3 w-full">
-        <button onClick={() => navigate("/tasks")} className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors">
+        <Link
+          to={chatUrl}
+          className="w-full flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[15px] py-3.5 rounded-2xl transition-colors"
+        >
+          <MessageCircle size={16} /> Kirim pesan ke tukang
+        </Link>
+        <button onClick={() => navigate("/tasks")} className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all">
           Lacak pekerjaan
         </button>
-        <button onClick={() => navigate("/")} className="w-full border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all">
+        <button onClick={() => navigate("/")} className="w-full border-2 border-[#D8E2F0] text-[#7890AA] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all">
           Kembali ke beranda
         </button>
       </div>
@@ -515,6 +532,7 @@ export default function Payment() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [vaNumber, setVaNumber] = useState("8277 0091 4821 7365");
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [technicianId, setTechnicianId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
@@ -546,6 +564,7 @@ export default function Payment() {
           },
           quotePrice: offer.price,
         });
+        setTechnicianId(offer.technicianId);
         setTotal(offer.price);
       })
       .catch(() => setLoadError("Gagal memuat detail penawaran."))
@@ -644,7 +663,9 @@ export default function Payment() {
 
       <div className="max-w-[860px] mx-auto px-4 py-8">
         {screen === "processing" && <ProcessingScreen />}
-        {screen === "success"    && <SuccessScreen summary={summary} total={total} />}
+        {screen === "success" && jobId && technicianId && (
+          <SuccessScreen summary={summary} total={total} jobId={jobId} technicianId={technicianId} />
+        )}
         {screen === "pending" && selected && (
           <div className="max-w-[520px] mx-auto">
             <VAPendingScreen
