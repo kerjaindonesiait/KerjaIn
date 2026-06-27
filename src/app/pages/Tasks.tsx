@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, Navigate } from "react-router";
 import {
@@ -616,6 +616,24 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
 type FilterMenuId = "area" | "price" | "more" | "sort";
 
+function getMenuPosition(el: HTMLElement, align: "left" | "right"): CSSProperties {
+  const rect = el.getBoundingClientRect();
+  if (align === "right") {
+    return {
+      position: "fixed",
+      top: rect.bottom + 6,
+      right: window.innerWidth - rect.right,
+      zIndex: 9999,
+    };
+  }
+  return {
+    position: "fixed",
+    top: rect.bottom + 6,
+    left: rect.left,
+    zIndex: 9999,
+  };
+}
+
 function FilterDropdown({
   open,
   onOpenChange,
@@ -631,37 +649,38 @@ function FilterDropdown({
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const updatePosition = useCallback(() => {
     const el = triggerRef.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (align === "right") {
-      setMenuStyle({
-        position: "fixed",
-        top: rect.bottom + 6,
-        right: window.innerWidth - rect.right,
-        zIndex: 9999,
-      });
-    } else {
-      setMenuStyle({
-        position: "fixed",
-        top: rect.bottom + 6,
-        left: rect.left,
-        zIndex: 9999,
-      });
-    }
+    setMenuStyle(getMenuPosition(el, align));
   }, [align]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuStyle(null);
+      return;
+    }
+    updatePosition();
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
-    updatePosition();
-    window.addEventListener("scroll", updatePosition, true);
-    window.addEventListener("resize", updatePosition);
+    const onScrollOrResize = () => {
+      if (rafRef.current != null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        updatePosition();
+      });
+    };
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
     return () => {
-      window.removeEventListener("scroll", updatePosition, true);
-      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
   }, [open, updatePosition]);
 
@@ -676,10 +695,22 @@ function FilterDropdown({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open, onOpenChange]);
 
+  const handleToggle = () => {
+    if (!open && triggerRef.current) {
+      setMenuStyle(getMenuPosition(triggerRef.current, align));
+    }
+    onOpenChange(!open);
+  };
+
   return (
     <div ref={triggerRef} className="relative shrink-0">
-      <div onClick={() => onOpenChange(!open)}>{trigger}</div>
-      {open &&
+      <div
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={handleToggle}
+      >
+        {trigger}
+      </div>
+      {open && menuStyle &&
         createPortal(
           <div
             ref={menuRef}
@@ -776,7 +807,7 @@ export default function Tasks() {
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Filter bar */}
       <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
-        <div className="flex items-center gap-2 px-6 py-3 max-w-[1400px] mx-auto w-full overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2 px-6 py-3 max-w-[1400px] mx-auto w-full">
           <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[200px] border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
             <Search size={15} className="text-[#7890AA] shrink-0" />
             <input
