@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
+import { AutoScrollReel } from "../components/AutoScrollReel";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
 
@@ -98,20 +99,8 @@ const SERVICE_LINKS: Record<string, string[]> = {
 };
 const SERVICE_DIRECTORY_ITEMS = Object.values(SERVICE_LINKS).flat();
 
-// ─── Animations (injected once) ───────────────────────────────────────────────
-
-const SCROLL_CSS = `
-  @keyframes kj-left  { from { transform: translateX(0);    } to { transform: translateX(-50%); } }
-  @keyframes kj-right { from { transform: translateX(-50%); } to { transform: translateX(0);    } }
-  .kj-row1 { animation: kj-left  32s linear infinite; }
-  .kj-row2 { animation: kj-right 28s linear infinite; }
-  .kj-row1:hover, .kj-row2:hover { animation-play-state: paused; }
-  @keyframes kj-tasks { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  .kj-tasks { animation: kj-tasks 36s linear infinite; }
-  .kj-tasks:hover { animation-play-state: paused; }
-  @keyframes kj-directory { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  .kj-directory { animation: kj-directory 78s linear infinite; }
-  .kj-directory:hover { animation-play-state: paused; }
+const REEL_CSS = `
+  .kj-reel::-webkit-scrollbar { display: none; }
 `;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -155,9 +144,9 @@ function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
 
 function ServiceDirectoryMarquee() {
   return (
-    <div className="overflow-hidden py-1">
-      <div className="kj-directory grid w-max grid-flow-col grid-rows-2 gap-3">
-        {[...SERVICE_DIRECTORY_ITEMS, ...SERVICE_DIRECTORY_ITEMS].map((item, index) => (
+    <AutoScrollReel speed={0.35} className="py-1">
+      <div className="grid w-max grid-flow-col grid-rows-2 gap-3">
+        {SERVICE_DIRECTORY_ITEMS.map((item, index) => (
           <div
             key={`${item}-${index}`}
             className="flex h-[70px] w-[280px] shrink-0 items-center gap-3 rounded-xl border border-[#D8E2F0] bg-white px-4 py-3.5 text-[14px] font-semibold text-[#294566] sm:w-[340px]"
@@ -167,7 +156,7 @@ function ServiceDirectoryMarquee() {
           </div>
         ))}
       </div>
-    </div>
+    </AutoScrollReel>
   );
 }
 
@@ -186,7 +175,7 @@ export default function Home() {
 
   return (
     <div className="bg-white" style={{ fontFamily: "Manrope, sans-serif" }}>
-      <style>{SCROLL_CSS}</style>
+      <style>{REEL_CSS}</style>
 
       {/* ── HERO ── */}
       <section className="bg-[#172E4D] relative overflow-hidden">
@@ -313,13 +302,11 @@ export default function Home() {
         </div>
 
         {/* Scrolling task cards */}
-        <div className="overflow-hidden">
-          <div className="kj-tasks flex gap-4 w-max px-6">
-            {[...tasks, ...tasks].map((t, i) => (
-              <TaskCard key={i} t={t} />
-            ))}
-          </div>
-        </div>
+        <AutoScrollReel key={taskTab} speed={0.55} className="px-6" segmentClassName="gap-4">
+          {tasks.map((t, i) => (
+            <TaskCard key={i} t={t} />
+          ))}
+        </AutoScrollReel>
 
         <div className="max-w-[1400px] mx-auto px-6 mt-7">
           <Link to="/tasks" className="inline-flex items-center gap-2 text-[#1D4196] font-bold text-[14px] hover:underline">
@@ -462,6 +449,18 @@ export default function Home() {
               <p className="font-black text-[28px] text-[#172E4D] leading-none">50+</p>
               <p className="text-[13px] text-[#58708D] mt-1">kategori pekerjaan yang bisa kamu pilih</p>
             </div>
+          </div>
+          <div className="flex flex-col gap-4 mb-8 -mx-6 px-6">
+            <AutoScrollReel speed={0.45} segmentClassName="gap-3">
+              {SERVICES_ROW1.map((s) => (
+                <ServiceCard key={s.label} label={s.label} desc={s.desc} />
+              ))}
+            </AutoScrollReel>
+            <AutoScrollReel speed={0.4} direction="right" segmentClassName="gap-3">
+              {SERVICES_ROW2.map((s) => (
+                <ServiceCard key={s.label} label={s.label} desc={s.desc} />
+              ))}
+            </AutoScrollReel>
           </div>
           <div className="-mx-6 overflow-hidden px-6">
             <ServiceDirectoryMarquee />

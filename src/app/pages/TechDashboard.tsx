@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Search, MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronDown, Bell, Star, SlidersHorizontal, Send,
@@ -637,6 +637,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function TechDashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<ApiJob[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [navTab, setNavTab] = useState<"lowongan" | "penawaran" | "aktif" | "selesai">("lowongan");
@@ -650,6 +651,12 @@ export default function TechDashboard() {
   const [loadingTab, setLoadingTab] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [techStats, setTechStats] = useState<TechnicianStats | null>(null);
+  const [conversationCount, setConversationCount] = useState(0);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     api.getTechnicianStats().then(({ stats }) => setTechStats(stats)).catch(() => setTechStats(null));
@@ -665,6 +672,10 @@ export default function TechDashboard() {
         setQuotedJobs(q);
       })
       .catch(() => {});
+    api
+      .getConversations()
+      .then(({ conversations }) => setConversationCount(conversations.length))
+      .catch(() => setConversationCount(0));
   }, []);
 
   useEffect(() => {
@@ -735,14 +746,14 @@ export default function TechDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex flex-col" style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className="h-full bg-[#F7F9FC] flex flex-col overflow-hidden" style={{ fontFamily: "Manrope, sans-serif" }}>
 
       {/* ── Top nav ── */}
-      <header className="bg-[#172E4D] text-white shrink-0">
+      <header className="bg-[#172E4D] text-white shrink-0 sticky top-0 z-50">
         <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
           {/* Logo + badge */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="hover:opacity-90 transition-opacity">
+            <Link to="/dasbor-tukang" className="hover:opacity-90 transition-opacity">
               <BrandLogo variant="dark" imgClassName="h-9" />
             </Link>
             <span className="text-[10px] font-bold bg-[#1D4196] text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
@@ -752,14 +763,26 @@ export default function TechDashboard() {
 
           {/* Profile */}
           <div className="flex items-center gap-4">
-            <button className="relative text-white/70 hover:text-white transition-colors">
+            <Link
+              to="/pesan"
+              className="relative text-white/70 hover:text-white transition-colors"
+              aria-label="Pesan"
+            >
               <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#1D4196] text-white text-[9px] font-black rounded-full flex items-center justify-center">3</span>
-            </button>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px]">
-                {TUKANG.initials}
-              </div>
+              {conversationCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#1D4196] text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                  {conversationCount > 9 ? "9+" : conversationCount}
+                </span>
+              )}
+            </Link>
+            <Link to="/akun" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-white/20" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px]">
+                  {TUKANG.initials}
+                </div>
+              )}
               <div className="hidden sm:block">
                 <p className="font-bold text-[13px] text-white leading-none">{TUKANG.name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
@@ -767,10 +790,15 @@ export default function TechDashboard() {
                   <span className="text-[10px] text-[#20bf6f] font-bold">Terverifikasi</span>
                 </div>
               </div>
-            </div>
-            <Link to="/" className="text-white/50 hover:text-white transition-colors">
-              <LogOut size={18} />
             </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-white/50 hover:text-white transition-colors"
+              aria-label="Keluar"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
 

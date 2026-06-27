@@ -41,6 +41,9 @@ export default function Root() {
   const { user, loading, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isTasksPage = location.pathname === "/tasks";
+  const isTechDashboard = location.pathname === "/dasbor-tukang";
+  const hideSiteHeader = isTechDashboard;
+  const hideSiteFooter = isTasksPage || isTechDashboard;
   const browseJobsHref = user?.role === "technician" ? "/dasbor-tukang" : "/tasks";
 
   const navHref = (item: (typeof NAV_LINKS)[number]) =>
@@ -70,9 +73,10 @@ export default function Root() {
     .toUpperCase();
 
   return (
-    <div className={`flex flex-col bg-[#F7F9FC] ${isTasksPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
+    <div className={`flex flex-col bg-[#F7F9FC] ${isTasksPage || isTechDashboard ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
       <ScrollToTop />
-      {/* NAV */}
+      {/* NAV — hidden on tukang dashboard (uses its own blue header) */}
+      {!hideSiteHeader && (
       <header className="bg-white border-b border-[#D8E2F0] sticky top-0 z-50">
         <div className={`flex items-center h-[72px] ${appShellClass}`}>
           {/* Logo */}
@@ -217,14 +221,15 @@ export default function Root() {
           </div>
         )}
       </header>
+      )}
 
       {/* PAGE CONTENT */}
-      <main className={`flex-1 min-h-0 ${isTasksPage ? "flex flex-col overflow-hidden" : ""}`}>
+      <main className={`flex-1 min-h-0 ${isTasksPage || isTechDashboard ? "flex flex-col overflow-hidden" : ""}`}>
         <Outlet />
       </main>
 
       {/* FOOTER */}
-      {!isTasksPage && (
+      {!hideSiteFooter && (
         <footer className="bg-[#172E4D] text-white">
           {/* Popular locations */}
           <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
