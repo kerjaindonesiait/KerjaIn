@@ -226,7 +226,7 @@ export default function Home() {
             {/* CTAs */}
             <div className="flex flex-wrap gap-3 mb-10">
               <Link to="/post-job" className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] px-7 py-3.5 rounded-full transition-colors">
-                Post Kerjaan gratis
+                Post Kerjaan
               </Link>
               <Link to="/daftar-tukang" className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-[14px] px-7 py-3.5 rounded-full transition-colors">
                 Daftar jadi tukang
@@ -352,7 +352,7 @@ export default function Home() {
             </div>
 
             <Link to="/post-job" className="inline-flex items-center gap-2 bg-[#1D4196] text-white font-bold text-[15px] px-8 py-4 rounded-full hover:bg-[#173577] transition-colors shadow-lg shadow-[#1D4196]/30">
-              Post Kerjaan gratis <ArrowRight size={16} />
+              Post Kerjaan <ArrowRight size={16} />
             </Link>
           </div>
 
@@ -478,7 +478,7 @@ export default function Home() {
             to="/post-job"
             className="inline-flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[16px] px-9 py-4 rounded-full transition-colors shrink-0 shadow-lg shadow-[#1D4196]/20"
           >
-            Post Kerjaan gratis <ArrowRight size={18} />
+            Post Kerjaan <ArrowRight size={18} />
           </Link>
         </div>
       </section>

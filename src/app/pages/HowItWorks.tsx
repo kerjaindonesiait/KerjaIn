@@ -141,7 +141,7 @@ const TRUST_ITEMS = [
 ];
 
 const TRUST_PILLS = [
-  "Post Kerjaan gratis",
+  "Post Kerjaan",
   "Tanpa kontrak mengikat",
   "Tukang terverifikasi",
   "Ulasan asli",
@@ -268,7 +268,7 @@ export default function HowItWorks() {
               to="/post-job"
               className="rounded-full bg-[#1D4196] px-8 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-[#173577]"
             >
-              Post Kerjaan gratis
+              Post Kerjaan
             </Link>
             <Link
               to="/tasks"
@@ -389,7 +389,7 @@ export default function HowItWorks() {
               to="/post-job"
               className="rounded-full bg-[#FD6665] px-8 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-[#f05251]"
             >
-              Post Kerjaan gratis
+              Post Kerjaan
             </Link>
             <Link
               to="/tasks"
