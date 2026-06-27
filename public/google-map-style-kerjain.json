@@ -4,7 +4,7 @@
   "backgroundColor": "#fafafa",
   "metadata": {
     "name": "KerjaIn Minimal",
-    "description": "Two-tone gray map so KerjaIn pins stand out. Re-import in Cloud Console, then set Map settings: Labels=minimum, Landmarks=minimum, Roads=medium."
+    "description": "Two-tone gray map so KerjaIn pins stand out. Set Map settings: Labels=minimum, Landmarks=minimum, Roads=medium."
   },
   "styles": [
     {
@@ -22,22 +22,15 @@
     },
     {
       "id": "pointOfInterest",
-      "geometry": { "visible": false },
       "label": { "visible": false }
     },
     {
       "id": "pointOfInterest.landmark",
-      "geometry": { "visible": false },
-      "label": { "visible": false }
-    },
-    {
-      "id": "pointOfInterest.recreation",
-      "geometry": { "visible": false },
       "label": { "visible": false }
     },
     {
       "id": "pointOfInterest.recreation.park",
-      "geometry": { "fillColor": "#f2f2f2", "visible": true },
+      "geometry": { "fillColor": "#f2f2f2" },
       "label": { "visible": false }
     },
     {
@@ -51,7 +44,7 @@
     {
       "id": "political.city",
       "label": {
-        "visible": { "z0": false, "z14": true },
+        "visible": false,
         "textFillColor": "#b0b0b0",
         "textStrokeColor": "#f5f5f5"
       }
@@ -62,26 +55,23 @@
     },
     {
       "id": "political.sublocality",
-      "label": { "visible": { "z0": false, "z15": true }, "textFillColor": "#b8b8b8" }
-    },
-    {
-      "id": "political.landParcel",
-      "label": { "visible": false }
+      "label": {
+        "visible": false,
+        "textFillColor": "#b8b8b8"
+      }
     },
     {
       "id": "infrastructure.building",
-      "geometry": { "fillColor": "#eeeeee", "visible": true },
+      "geometry": { "fillColor": "#eeeeee" },
       "label": { "visible": false }
     },
     {
       "id": "infrastructure.transitStation",
-      "geometry": { "visible": false },
       "label": { "visible": false }
     },
     {
       "id": "infrastructure.railwayTrack",
-      "geometry": { "strokeColor": "#dddddd" },
-      "label": { "visible": false }
+      "geometry": { "strokeColor": "#dddddd" }
     },
     {
       "id": "infrastructure.roadNetwork",
@@ -89,17 +79,17 @@
     },
     {
       "id": "infrastructure.roadNetwork.road.local",
-      "geometry": { "strokeColor": "#e8e8e8", "visible": true },
-      "label": { "visible": { "z0": false, "z16": true }, "textFillColor": "#c4c4c4" }
+      "geometry": { "strokeColor": "#e8e8e8" },
+      "label": { "visible": false, "textFillColor": "#c4c4c4" }
     },
     {
       "id": "infrastructure.roadNetwork.road.arterial",
-      "geometry": { "strokeColor": "#dcdcdc", "visible": true },
-      "label": { "visible": { "z0": false, "z15": true }, "textFillColor": "#bcbcbc" }
+      "geometry": { "strokeColor": "#dcdcdc" },
+      "label": { "visible": false, "textFillColor": "#bcbcbc" }
     },
     {
       "id": "infrastructure.roadNetwork.road.highway",
-      "geometry": { "strokeColor": "#d4d4d4", "visible": true },
+      "geometry": { "strokeColor": "#d4d4d4" },
       "label": { "visible": false }
     },
     {
