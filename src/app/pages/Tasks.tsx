@@ -5,6 +5,7 @@ import {
   Search,
   MapPin,
   ChevronDown,
+  ChevronUp,
   Clock,
   Calendar,
   Grid3x3,
@@ -15,6 +16,11 @@ import {
   Share2,
   ChevronLeft,
   MessageCircle,
+  History,
+  Banknote,
+  TrendingDown,
+  TrendingUp,
+  Star,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -616,36 +622,46 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
 type FilterMenuId = "area" | "price" | "more" | "sort";
 
+const SORT_ICONS: Record<SortOption, ReactNode> = {
+  newest: <Clock size={18} strokeWidth={2} />,
+  oldest: <History size={18} strokeWidth={2} />,
+  price_asc: <TrendingDown size={18} strokeWidth={2} />,
+  price_desc: <TrendingUp size={18} strokeWidth={2} />,
+  offers: <Star size={18} strokeWidth={2} />,
+};
+
 function getMenuPosition(el: HTMLElement, align: "left" | "right"): CSSProperties {
   const rect = el.getBoundingClientRect();
   if (align === "right") {
     return {
       position: "fixed",
-      top: rect.bottom + 6,
+      top: rect.bottom + 8,
       right: window.innerWidth - rect.right,
       zIndex: 9999,
     };
   }
   return {
     position: "fixed",
-    top: rect.bottom + 6,
+    top: rect.bottom + 8,
     left: rect.left,
     zIndex: 9999,
   };
 }
 
-function FilterDropdown({
+function FilterPopover({
   open,
   onOpenChange,
   trigger,
   children,
   align = "left",
+  width,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger: ReactNode;
   children: ReactNode;
   align?: "left" | "right";
+  width?: number | "auto";
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -702,20 +718,22 @@ function FilterDropdown({
     onOpenChange(!open);
   };
 
+  const panelWidth =
+    width === "auto" || width == null
+      ? { width: "max-content", maxWidth: "min(calc(100vw - 32px), 280px)" }
+      : { width: `${width}px` };
+
   return (
     <div ref={triggerRef} className="relative shrink-0">
-      <div
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={handleToggle}
-      >
+      <div onMouseDown={(e) => e.preventDefault()} onClick={handleToggle}>
         {trigger}
       </div>
       {open && menuStyle &&
         createPortal(
           <div
             ref={menuRef}
-            style={menuStyle}
-            className="w-max min-w-[168px] max-w-[240px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5"
+            style={{ ...menuStyle, ...panelWidth }}
+            className="bg-white border border-[#E8EDF5] rounded-2xl shadow-[0_8px_32px_rgba(23,46,77,0.14)] overflow-hidden"
           >
             {children}
           </div>,
@@ -725,7 +743,99 @@ function FilterDropdown({
   );
 }
 
-function FilterOption({
+function FilterPillTrigger({
+  active,
+  open,
+  icon,
+  label,
+}: {
+  active: boolean;
+  open: boolean;
+  icon?: ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex items-center gap-1.5 text-[13px] font-semibold rounded-full px-4 py-2 transition-all whitespace-nowrap border-2 ${
+        active || open
+          ? "text-[#1D4196] border-[#1D4196] bg-white"
+          : "text-[#294566] border-[#D8E2F0] bg-white hover:border-[#1D4196] hover:text-[#1D4196]"
+      }`}
+    >
+      {icon}
+      {label}
+      {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+    </button>
+  );
+}
+
+function FilterTextTrigger({
+  active,
+  open,
+  label,
+}: {
+  active: boolean;
+  open: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex items-center gap-1.5 text-[13px] font-semibold px-3 py-2 rounded-full transition-all whitespace-nowrap ${
+        open
+          ? "text-[#1D4196] bg-[#EEF3FB]"
+          : active
+            ? "text-[#1D4196]"
+            : "text-[#294566] hover:text-[#1D4196]"
+      }`}
+    >
+      {label}
+      {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+    </button>
+  );
+}
+
+function FilterPanelSection({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="p-4">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-[#7890AA] mb-2">{label}</p>
+      {value && <p className="text-[15px] font-bold text-[#172E4D] mb-3">{value}</p>}
+      {children}
+    </div>
+  );
+}
+
+function FilterPanelFooter({ onCancel, onApply }: { onCancel: () => void; onApply: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[#EEF3FB] bg-[#FAFBFD]">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="flex-1 text-[13px] font-bold text-[#1D4196] bg-[#EEF3FB] hover:bg-[#E3EBF8] rounded-full py-2.5 transition-colors"
+      >
+        Batal
+      </button>
+      <button
+        type="button"
+        onClick={onApply}
+        className="flex-1 text-[13px] font-bold text-white bg-[#1D4196] hover:bg-[#173577] rounded-full py-2.5 transition-colors"
+      >
+        Terapkan
+      </button>
+    </div>
+  );
+}
+
+function FilterRadioOption({
   active,
   onClick,
   children,
@@ -738,13 +848,43 @@ function FilterOption({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full text-left px-4 py-2.5 text-[13px] whitespace-nowrap transition-colors ${
-        active
-          ? "bg-[#EEF3FB] text-[#1D4196] font-bold"
-          : "text-[#294566] hover:bg-[#F7F9FC] font-medium"
+      className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl text-[13px] transition-colors ${
+        active ? "bg-[#EEF3FB] text-[#1D4196] font-semibold" : "text-[#294566] hover:bg-[#F7F9FC] font-medium"
       }`}
     >
-      {children}
+      <span
+        className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${
+          active ? "border-[#1D4196]" : "border-[#C5D3E8]"
+        }`}
+      >
+        {active && <span className="w-2 h-2 rounded-full bg-[#1D4196]" />}
+      </span>
+      <span className="flex-1">{children}</span>
+    </button>
+  );
+}
+
+function FilterSortItem({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl text-[13px] transition-colors ${
+        active ? "bg-[#EEF3FB] text-[#1D4196] font-semibold" : "text-[#172E4D] hover:bg-[#F7F9FC] font-medium"
+      }`}
+    >
+      <span className="text-[#1D4196] shrink-0">{icon}</span>
+      {label}
     </button>
   );
 }
@@ -761,6 +901,22 @@ export default function Tasks() {
   const [categoryFilter, setCategoryFilter] = useState<JobCategoryFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
   const [openMenu, setOpenMenu] = useState<FilterMenuId | null>(null);
+  const [draftArea, setDraftArea] = useState("Semua area");
+  const [draftPrice, setDraftPrice] = useState<PriceFilter>("all");
+  const [draftCategory, setDraftCategory] = useState<JobCategoryFilter>("all");
+  const [categorySearch, setCategorySearch] = useState("");
+
+  const openFilter = (id: FilterMenuId) => {
+    if (id === "area") setDraftArea(areaFilter);
+    if (id === "price") setDraftPrice(priceFilter);
+    if (id === "more") {
+      setDraftCategory(categoryFilter);
+      setCategorySearch("");
+    }
+    setOpenMenu(id);
+  };
+
+  const closeFilter = () => setOpenMenu(null);
 
   useEffect(() => {
     api
@@ -794,10 +950,13 @@ export default function Tasks() {
     JOB_CATEGORY_FILTERS.find((c) => c.id === categoryFilter)?.label ?? "Filter Lainnya";
   const moreFilterActive = categoryFilter !== "all";
 
-  const filterBtn =
-    "flex items-center gap-1.5 text-[13px] font-semibold bg-white border rounded-lg px-4 py-[9px] transition-all whitespace-nowrap";
-  const filterBtnIdle = `${filterBtn} text-[#294566] border-[#D8E2F0] hover:border-[#1D4196] hover:text-[#1D4196]`;
-  const filterBtnActive = `${filterBtn} text-[#1D4196] border-[#1D4196] bg-[#EEF3FB]`;
+  const filteredCategories = useMemo(
+    () =>
+      JOB_CATEGORY_FILTERS.filter((c) =>
+        c.label.toLowerCase().includes(categorySearch.trim().toLowerCase()),
+      ),
+    [categorySearch],
+  );
 
   if (!authLoading && user?.role === "technician") {
     return <Navigate to="/dasbor-tukang" replace />;
@@ -818,107 +977,162 @@ export default function Tasks() {
             />
           </div>
           <div className="w-px h-6 bg-[#f5eded] shrink-0" />
-          <FilterDropdown
+          <FilterPopover
             open={openMenu === "area"}
-            onOpenChange={(open) => setOpenMenu(open ? "area" : null)}
+            onOpenChange={(open) => (open ? openFilter("area") : closeFilter())}
+            width={288}
             trigger={
-              <button type="button" className={areaFilter !== "Semua area" ? filterBtnActive : filterBtnIdle}>
-                <MapPin size={13} className="text-[#1D4196]" /> {areaFilterLabel(areaFilter)}{" "}
-                <ChevronDown size={13} />
-              </button>
+              <FilterPillTrigger
+                active={areaFilter !== "Semua area"}
+                open={openMenu === "area"}
+                icon={<MapPin size={14} className="text-[#1D4196]" />}
+                label={areaFilterLabel(areaFilter)}
+              />
             }
           >
-            {JAKARTA_AREAS.map((area) => (
-              <FilterOption
-                key={area}
-                active={areaFilter === area}
-                onClick={() => {
-                  setAreaFilter(area);
-                  setOpenMenu(null);
-                }}
-              >
-                {areaFilterLabel(area)}
-              </FilterOption>
-            ))}
-          </FilterDropdown>
-          <FilterDropdown
+            <FilterPanelSection label="Area" value={areaFilterLabel(draftArea)}>
+              <div className="max-h-[220px] overflow-y-auto flex flex-col gap-0.5 -mx-1">
+                {JAKARTA_AREAS.map((area) => (
+                  <FilterRadioOption
+                    key={area}
+                    active={draftArea === area}
+                    onClick={() => setDraftArea(area)}
+                  >
+                    {areaFilterLabel(area)}
+                  </FilterRadioOption>
+                ))}
+              </div>
+            </FilterPanelSection>
+            <FilterPanelFooter
+              onCancel={closeFilter}
+              onApply={() => {
+                setAreaFilter(draftArea);
+                closeFilter();
+              }}
+            />
+          </FilterPopover>
+          <FilterPopover
             open={openMenu === "price"}
-            onOpenChange={(open) => setOpenMenu(open ? "price" : null)}
+            onOpenChange={(open) => (open ? openFilter("price") : closeFilter())}
+            width={288}
             trigger={
-              <button type="button" className={priceFilter !== "all" ? filterBtnActive : filterBtnIdle}>
-                {PRICE_FILTER_LABELS[priceFilter]} <ChevronDown size={13} />
-              </button>
+              <FilterPillTrigger
+                active={priceFilter !== "all"}
+                open={openMenu === "price"}
+                icon={<Banknote size={14} className="text-[#1D4196]" />}
+                label={PRICE_FILTER_LABELS[priceFilter]}
+              />
             }
           >
-            {(Object.keys(PRICE_FILTER_LABELS) as PriceFilter[]).map((key) => (
-              <FilterOption
-                key={key}
-                active={priceFilter === key}
-                onClick={() => {
-                  setPriceFilter(key);
-                  setOpenMenu(null);
-                }}
-              >
-                {PRICE_FILTER_LABELS[key]}
-              </FilterOption>
-            ))}
-          </FilterDropdown>
-          <FilterDropdown
+            <FilterPanelSection label="Harga pekerjaan" value={PRICE_FILTER_LABELS[draftPrice]}>
+              <div className="flex flex-col gap-0.5 -mx-1">
+                {(Object.keys(PRICE_FILTER_LABELS) as PriceFilter[]).map((key) => (
+                  <FilterRadioOption
+                    key={key}
+                    active={draftPrice === key}
+                    onClick={() => setDraftPrice(key)}
+                  >
+                    {PRICE_FILTER_LABELS[key]}
+                  </FilterRadioOption>
+                ))}
+              </div>
+            </FilterPanelSection>
+            <FilterPanelFooter
+              onCancel={closeFilter}
+              onApply={() => {
+                setPriceFilter(draftPrice);
+                closeFilter();
+              }}
+            />
+          </FilterPopover>
+          <FilterPopover
             open={openMenu === "more"}
-            onOpenChange={(open) => setOpenMenu(open ? "more" : null)}
+            onOpenChange={(open) => (open ? openFilter("more") : closeFilter())}
+            width={320}
             trigger={
-              <button type="button" className={moreFilterActive ? filterBtnActive : filterBtnIdle}>
-                <SlidersHorizontal size={13} />{" "}
-                {moreFilterActive ? categoryLabel : "Filter Lainnya"}{" "}
-                <ChevronDown size={13} />
-              </button>
+              <FilterPillTrigger
+                active={moreFilterActive}
+                open={openMenu === "more"}
+                icon={<SlidersHorizontal size={14} className="text-[#1D4196]" />}
+                label={moreFilterActive ? categoryLabel : "Filter Lainnya"}
+              />
             }
           >
-            {JOB_CATEGORY_FILTERS.map((cat) => (
-              <FilterOption
-                key={cat.id}
-                active={categoryFilter === cat.id}
-                onClick={() => {
-                  setCategoryFilter(cat.id);
-                  setOpenMenu(null);
-                }}
-              >
-                {cat.label}
-              </FilterOption>
-            ))}
-          </FilterDropdown>
-          <div className="ml-auto shrink-0">
-            <FilterDropdown
-              open={openMenu === "sort"}
-              onOpenChange={(open) => setOpenMenu(open ? "sort" : null)}
-              align="right"
-              trigger={
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 text-[13px] font-semibold px-3 py-[9px] transition-colors whitespace-nowrap ${
-                    sortOption !== "newest"
-                      ? "text-[#1D4196]"
-                      : "text-[#294566] hover:text-[#1D4196]"
-                  }`}
-                >
-                  {sortOption === "newest" ? "Urutkan" : SORT_LABELS[sortOption]}{" "}
-                  <ChevronDown size={13} />
-                </button>
+            <FilterPanelSection
+              label="Kategori"
+              value={
+                draftCategory === "all"
+                  ? "Semua kategori"
+                  : JOB_CATEGORY_FILTERS.find((c) => c.id === draftCategory)?.label
               }
             >
-              {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
-                <FilterOption
-                  key={key}
-                  active={sortOption === key}
-                  onClick={() => {
-                    setSortOption(key);
-                    setOpenMenu(null);
-                  }}
+              <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-xl px-3 py-2 mb-3 border border-[#E8EDF5]">
+                <Search size={14} className="text-[#7890AA] shrink-0" />
+                <input
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  placeholder="Cari kategori…"
+                  className="bg-transparent text-[13px] text-[#294566] placeholder-[#7890AA] outline-none w-full"
+                />
+              </div>
+              {draftCategory !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setDraftCategory("all")}
+                  className="text-[12px] font-semibold text-[#1D4196] mb-2 hover:underline"
                 >
-                  {SORT_LABELS[key]}
-                </FilterOption>
-              ))}
-            </FilterDropdown>
+                  Hapus semua
+                </button>
+              )}
+              <div className="max-h-[200px] overflow-y-auto flex flex-col gap-0.5 -mx-1">
+                {filteredCategories.map((cat) => (
+                  <FilterRadioOption
+                    key={cat.id}
+                    active={draftCategory === cat.id}
+                    onClick={() => setDraftCategory(cat.id)}
+                  >
+                    {cat.label}
+                  </FilterRadioOption>
+                ))}
+              </div>
+            </FilterPanelSection>
+            <FilterPanelFooter
+              onCancel={closeFilter}
+              onApply={() => {
+                setCategoryFilter(draftCategory);
+                closeFilter();
+              }}
+            />
+          </FilterPopover>
+          <div className="ml-auto shrink-0">
+            <FilterPopover
+              open={openMenu === "sort"}
+              onOpenChange={(open) => (open ? openFilter("sort") : closeFilter())}
+              align="right"
+              width="auto"
+              trigger={
+                <FilterTextTrigger
+                  active={sortOption !== "newest"}
+                  open={openMenu === "sort"}
+                  label={sortOption === "newest" ? "Urutkan" : SORT_LABELS[sortOption]}
+                />
+              }
+            >
+              <div className="p-2 min-w-[220px]">
+                {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                  <FilterSortItem
+                    key={key}
+                    active={sortOption === key}
+                    icon={SORT_ICONS[key]}
+                    label={SORT_LABELS[key]}
+                    onClick={() => {
+                      setSortOption(key);
+                      closeFilter();
+                    }}
+                  />
+                ))}
+              </div>
+            </FilterPopover>
           </div>
         </div>
       </div>
