@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { APIProvider, InfoWindow, Map, Marker, useMap } from "@vis.gl/react-google-maps";
-import { Crosshair, MapPin } from "lucide-react";
+import { Crosshair } from "lucide-react";
 import type { Job } from "../../types";
 import { JobMapPreviewCard } from "./JobMapPreviewCard";
 import {
@@ -11,6 +11,18 @@ import {
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 const MAPS_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined;
+
+const KERJAIN_PIN = "/map-pins/kerjain-pin.png";
+const KERJAIN_PIN_SELECTED = "/map-pins/kerjain-pin-selected.png";
+
+function kerjainMapPinIcon(selected: boolean): google.maps.Icon {
+  const size = selected ? 52 : 42;
+  return {
+    url: selected ? KERJAIN_PIN_SELECTED : KERJAIN_PIN,
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(size / 2, size),
+  };
+}
 
 function MapResizer() {
   const map = useMap();
@@ -101,9 +113,11 @@ function MapViewController({
 
 function JobMarkers({
   jobs,
+  previewId,
   onPinClick,
 }: {
   jobs: Job[];
+  previewId: string | null;
   onPinClick: (id: string) => void;
 }) {
   const pins = useMemo(
@@ -116,14 +130,19 @@ function JobMarkers({
 
   return (
     <>
-      {pins.map(({ job, coords }) => (
-        <Marker
-          key={job.id}
-          position={coords}
-          onClick={() => onPinClick(job.id)}
-          title={job.title}
-        />
-      ))}
+      {pins.map(({ job, coords }) => {
+        const selected = previewId === job.id;
+        return (
+          <Marker
+            key={job.id}
+            position={coords}
+            icon={kerjainMapPinIcon(selected)}
+            zIndex={selected ? 2 : 1}
+            onClick={() => onPinClick(job.id)}
+            title={job.title}
+          />
+        );
+      })}
     </>
   );
 }
@@ -145,7 +164,7 @@ function MapPreviewLayer({
   if (!previewJob || !coords) return null;
 
   return (
-    <InfoWindow position={coords} pixelOffset={[0, -36]} onCloseClick={onPreviewClose}>
+    <InfoWindow position={coords} pixelOffset={[0, -48]} onCloseClick={onPreviewClose}>
       <JobMapPreviewCard job={previewJob} onViewTask={() => onViewTask(previewJob.id)} />
     </InfoWindow>
   );
@@ -197,17 +216,16 @@ function OsmJobsMapFallback({
             key={job.id}
             type="button"
             onClick={() => onPinClick(job.id)}
-            className="absolute -translate-x-1/2 -translate-y-full z-10"
+            className="absolute -translate-x-1/2 -translate-y-full z-10 transition-transform"
             style={{ left: pos.left, top: pos.top }}
             title={job.title}
           >
-            <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full shadow-lg border-2 ${
-                active ? "bg-[#1D4196] border-white scale-125" : "bg-white border-[#1D4196]"
-              }`}
-            >
-              <MapPin size={13} className={active ? "text-white" : "text-[#1D4196]"} fill={active ? "currentColor" : "none"} />
-            </div>
+            <img
+              src={active ? KERJAIN_PIN_SELECTED : KERJAIN_PIN}
+              alt=""
+              className={`drop-shadow-md ${active ? "w-[52px] h-[52px]" : "w-[42px] h-[42px]"}`}
+              draggable={false}
+            />
           </button>
         );
       })}
@@ -281,7 +299,7 @@ export function JobsMap({
         >
           <MapResizer />
           <MapViewController jobs={jobs} previewId={previewId} recenterRequest={recenterRequest} />
-          <JobMarkers jobs={jobs} onPinClick={onPinClick} />
+          <JobMarkers jobs={jobs} previewId={previewId} onPinClick={onPinClick} />
           <MapClickCloser active={!!previewId} onClose={onPreviewClose} />
           <MapPreviewLayer
             jobs={jobs}
