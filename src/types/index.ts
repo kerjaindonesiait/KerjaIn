@@ -42,10 +42,13 @@ export interface Job {
     name: string;
     initials: string;
     color: string;
-    rating: number;
+    avatarUrl?: string | null;
+    rating: number | null;
     reviews: number;
     memberSince: string;
     completionRate: number;
+    jobsPosted?: number;
+    jobsCompleted?: number;
   } | null;
   createdAt: string;
   technicianCompletedAt?: string | null;
@@ -62,6 +65,9 @@ export interface Offer {
   scheduledTime?: string | null;
   status: string;
   technicianName: string;
+  technicianAvatarUrl?: string | null;
+  technicianRating?: number;
+  technicianReviewCount?: number;
   createdAt: string;
 }
 
@@ -122,7 +128,19 @@ export interface Review {
   rating: number;
   comment: string | null;
   reviewerName: string | null;
+  revieweeName?: string | null;
+  jobTitle?: string | null;
   createdAt: string;
+}
+
+export interface TechnicianStats {
+  rating: number;
+  reviewCount: number;
+  completedJobs: number;
+  completionRate: number | null;
+  activeOffers: number;
+  verified: boolean;
+  area: string | null;
 }
 
 export interface TechnicianPublic {

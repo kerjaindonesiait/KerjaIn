@@ -559,8 +559,8 @@ export default function Payment() {
             name: offer.technicianName,
             initials: offer.technicianName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
             color: "#1D4196",
-            rating: 5.0,
-            reviews: 0,
+            rating: offer.technicianRating ?? 0,
+            reviews: offer.technicianReviewCount ?? 0,
           },
           quotePrice: offer.price,
         });

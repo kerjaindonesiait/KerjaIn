@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
-import type { Job, MineOffer } from "../../types";
+import type { Job, MineOffer, TechnicianStats } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
 
 type ApiJob = {
@@ -21,7 +21,8 @@ type ApiJob = {
   date: string;
   time: string;
   posterName: string;
-  posterRating: number;
+  posterRating: number | null;
+  posterJobsPosted: number;
   offers: number;
   description: string;
 };
@@ -38,7 +39,8 @@ function mapJob(j: Job): ApiJob {
     date: j.date ?? "Fleksibel",
     time: j.time ?? "Kapan saja",
     posterName: j.poster?.name ?? "Pelanggan",
-    posterRating: j.poster?.rating ?? 4.8,
+    posterRating: j.poster?.rating ?? null,
+    posterJobsPosted: j.poster?.jobsPosted ?? 0,
     offers: j.offers,
     description: j.description,
   };
@@ -174,7 +176,8 @@ function Avatar({ initials, color, size = "sm" }: { initials: string; color: str
   );
 }
 
-function StarRow({ rating }: { rating: number }) {
+function StarRow({ rating }: { rating: number | null | undefined }) {
+  if (rating == null || rating <= 0) return null;
   return (
     <div className="flex items-center gap-1">
       <div className="flex gap-0.5">
@@ -538,7 +541,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
                 </div>
                 <div>
                   <p className="font-bold text-[13px] text-[#172E4D]">{job.posterName}</p>
-                  <StarRow rating={job.posterRating} />
+                  <p className="text-[11px] text-[#58708D]">{job.posterJobsPosted} pekerjaan diposting</p>
                 </div>
                 <div className="ml-auto">
                   <span className="text-[11px] font-bold text-[#20bf6f] bg-[#f0fdf4] border border-[#bbf7d0] px-2.5 py-0.5 rounded-full">
@@ -648,8 +651,10 @@ export default function TechDashboard() {
   const [completedJobs, setCompletedJobs] = useState<Job[]>([]);
   const [loadingTab, setLoadingTab] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [techStats, setTechStats] = useState<TechnicianStats | null>(null);
 
   useEffect(() => {
+    api.getTechnicianStats().then(({ stats }) => setTechStats(stats)).catch(() => setTechStats(null));
     api
       .getOffersMine()
       .then(({ offers }) => {
@@ -723,12 +728,11 @@ export default function TechDashboard() {
   const TUKANG = {
     name: user?.fullName ?? "Tukang",
     initials: (user?.fullName ?? "T").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
-    area: "Jakarta",
-    keahlian: ["Pipa Bocor Darurat", "Saluran Mampet"],
-    rating: 4.9,
-    reviews: 0,
-    selesai: 0,
-    penawaran_aktif: Object.keys(quotedJobs).length,
+    area: techStats?.area ?? "Jakarta",
+    rating: techStats?.rating ?? 0,
+    reviews: techStats?.reviewCount ?? 0,
+    selesai: techStats?.completedJobs ?? 0,
+    penawaran_aktif: techStats?.activeOffers ?? Object.keys(quotedJobs).length,
     penghasilan: "Rp 0",
   };
 
@@ -776,7 +780,7 @@ export default function TechDashboard() {
         <div className="border-t border-white/10 px-6 py-2.5 max-w-[1400px] mx-auto">
           <div className="flex gap-6 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             {[
-              { label: "Rating",             value: `${TUKANG.rating} ⭐` },
+              { label: "Rating",             value: techStats && techStats.reviewCount > 0 ? `${TUKANG.rating.toFixed(1)} ⭐ (${TUKANG.reviews})` : "Belum ada ulasan" },
               { label: "Pekerjaan selesai",  value: `${TUKANG.selesai}` },
               { label: "Penawaran aktif",    value: `${TUKANG.penawaran_aktif}` },
               { label: "Penghasilan bulan ini", value: TUKANG.penghasilan },
@@ -961,7 +965,9 @@ export default function TechDashboard() {
                     </div>
                     <div>
                       <p className="font-bold text-[14px] text-[#172E4D]">{job.poster?.name ?? "Pelanggan"}</p>
-                      {job.poster && <StarRow rating={job.poster.rating} />}
+                      {job.poster && (job.poster.jobsPosted ?? 0) > 0 && (
+                        <p className="text-[11px] text-[#58708D]">{job.poster.jobsPosted} pekerjaan diposting</p>
+                      )}
                     </div>
                     <div className="ml-auto text-right">
                       <p className="font-black text-[18px] text-[#1D4196]">{job.price}</p>

@@ -14,6 +14,7 @@ import type {
   RegisterResponse,
   Review,
   TechnicianPublic,
+  TechnicianStats,
   TechProfileData,
   User,
 } from "../types";
@@ -283,8 +284,18 @@ export const api = {
     return request<{ technician: TechnicianPublic }>(`/api/technicians/${id}/public`);
   },
 
-  getTechnicianReviews(id: string, limit = 10) {
-    return request<{ reviews: Review[] }>(`/api/reviews/technician/${id}?limit=${limit}`);
+  getTechnicianStats() {
+    return request<{ stats: TechnicianStats }>("/api/technicians/me/stats");
+  },
+
+  getTechnicianReviews(id: string, limit = 20, offset = 0) {
+    return request<{ reviews: Review[] }>(
+      `/api/reviews/technician/${id}?limit=${limit}&offset=${offset}`,
+    );
+  },
+
+  getMyReviews(limit = 50, offset = 0) {
+    return request<{ reviews: Review[] }>(`/api/reviews/mine?limit=${limit}&offset=${offset}`);
   },
 
   getJobReview(jobId: string) {

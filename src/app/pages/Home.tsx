@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
 import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
+import { useAuth } from "../../lib/auth";
+import { defaultRouteForUser } from "../../lib/defaultRoute";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -172,8 +174,13 @@ function ServiceDirectoryMarquee() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const { user, loading } = useAuth();
   const [taskTab, setTaskTab] = useState("plumbing");
   const [searchQuery, setSearchQuery] = useState("");
+
+  if (!loading && user) {
+    return <Navigate to={defaultRouteForUser(user)} replace />;
+  }
 
   const tasks = COMPLETED_TASKS[taskTab] ?? [];
 
