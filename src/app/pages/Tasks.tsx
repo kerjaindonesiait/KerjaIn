@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search,
@@ -18,6 +18,17 @@ import {
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { JobsMap } from "../components/JobsMap";
+import {
+  filterAndSortJobs,
+  JAKARTA_AREAS,
+  PRICE_FILTER_LABELS,
+  SORT_LABELS,
+  JOB_CATEGORY_FILTERS,
+  areaFilterLabel,
+  type PriceFilter,
+  type SortOption,
+  type JobCategoryFilter,
+} from "../../lib/jobFilters";
 import type { Job, Offer } from "../../types";
 
 type Task = Job & { status: string };
@@ -602,6 +613,74 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   );
 }
 
+type FilterMenuId = "area" | "price" | "more" | "sort";
+
+function FilterDropdown({
+  open,
+  onOpenChange,
+  trigger,
+  children,
+  align = "left",
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger: ReactNode;
+  children: ReactNode;
+  align?: "left" | "right";
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open, onOpenChange]);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <div onClick={() => onOpenChange(!open)}>{trigger}</div>
+      {open && (
+        <div
+          className={`absolute top-[calc(100%+6px)] z-50 min-w-[220px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5 ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterOption({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${
+        active
+          ? "bg-[#EEF3FB] text-[#1D4196] font-bold"
+          : "text-[#294566] hover:bg-[#F7F9FC] font-medium"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function Tasks() {
   const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -609,20 +688,48 @@ export default function Tasks() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [areaFilter, setAreaFilter] = useState("Semua area");
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
+  const [categoryFilter, setCategoryFilter] = useState<JobCategoryFilter>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [openMenu, setOpenMenu] = useState<FilterMenuId | null>(null);
 
   useEffect(() => {
     api
-      .getJobs({ search: searchQuery || undefined })
+      .getJobs()
       .then(({ jobs }) => setTasks(jobs))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
-  }, [searchQuery]);
+  }, []);
 
-  const filtered = tasks.filter((t) =>
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filtered = useMemo(
+    () =>
+      filterAndSortJobs(tasks, {
+        search: searchQuery,
+        area: areaFilter,
+        price: priceFilter,
+        sort: sortOption,
+        category: categoryFilter,
+      }),
+    [tasks, searchQuery, areaFilter, priceFilter, sortOption, categoryFilter],
   );
 
-  const selectedTask = tasks.find((t) => t.id === selectedId) ?? null;
+  useEffect(() => {
+    if (selectedId && !filtered.some((t) => t.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [filtered, selectedId]);
+
+  const selectedTask = filtered.find((t) => t.id === selectedId) ?? null;
+
+  const categoryLabel =
+    JOB_CATEGORY_FILTERS.find((c) => c.id === categoryFilter)?.label ?? "Filter Lainnya";
+  const moreFilterActive = categoryFilter !== "all";
+
+  const filterBtn =
+    "flex items-center gap-1.5 text-[13px] font-semibold bg-white border rounded-lg px-4 py-[9px] transition-all whitespace-nowrap";
+  const filterBtnIdle = `${filterBtn} text-[#294566] border-[#D8E2F0] hover:border-[#1D4196] hover:text-[#1D4196]`;
+  const filterBtnActive = `${filterBtn} text-[#1D4196] border-[#1D4196] bg-[#EEF3FB]`;
 
   if (!authLoading && user?.role === "technician") {
     return <Navigate to="/dasbor-tukang" replace />;
@@ -643,21 +750,107 @@ export default function Tasks() {
             />
           </div>
           <div className="w-px h-6 bg-[#f5eded] shrink-0" />
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#294566] bg-white border border-[#D8E2F0] rounded-lg px-4 py-[9px] hover:border-[#1D4196] hover:text-[#1D4196] transition-all whitespace-nowrap shrink-0">
-            <MapPin size={13} className="text-[#1D4196]" /> Jakarta & sekitarnya{" "}
-            <ChevronDown size={13} />
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#294566] bg-white border border-[#D8E2F0] rounded-lg px-4 py-[9px] hover:border-[#1D4196] hover:text-[#1D4196] transition-all whitespace-nowrap shrink-0">
-            Semua Harga <ChevronDown size={13} />
-          </button>
-          <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#294566] bg-white border border-[#D8E2F0] rounded-lg px-4 py-[9px] hover:border-[#1D4196] hover:text-[#1D4196] transition-all whitespace-nowrap shrink-0">
-            <SlidersHorizontal size={13} /> Filter Lainnya{" "}
-            <ChevronDown size={13} />
-          </button>
+          <FilterDropdown
+            open={openMenu === "area"}
+            onOpenChange={(open) => setOpenMenu(open ? "area" : null)}
+            trigger={
+              <button type="button" className={areaFilter !== "Semua area" ? filterBtnActive : filterBtnIdle}>
+                <MapPin size={13} className="text-[#1D4196]" /> {areaFilterLabel(areaFilter)}{" "}
+                <ChevronDown size={13} />
+              </button>
+            }
+          >
+            {JAKARTA_AREAS.map((area) => (
+              <FilterOption
+                key={area}
+                active={areaFilter === area}
+                onClick={() => {
+                  setAreaFilter(area);
+                  setOpenMenu(null);
+                }}
+              >
+                {areaFilterLabel(area)}
+              </FilterOption>
+            ))}
+          </FilterDropdown>
+          <FilterDropdown
+            open={openMenu === "price"}
+            onOpenChange={(open) => setOpenMenu(open ? "price" : null)}
+            trigger={
+              <button type="button" className={priceFilter !== "all" ? filterBtnActive : filterBtnIdle}>
+                {PRICE_FILTER_LABELS[priceFilter]} <ChevronDown size={13} />
+              </button>
+            }
+          >
+            {(Object.keys(PRICE_FILTER_LABELS) as PriceFilter[]).map((key) => (
+              <FilterOption
+                key={key}
+                active={priceFilter === key}
+                onClick={() => {
+                  setPriceFilter(key);
+                  setOpenMenu(null);
+                }}
+              >
+                {PRICE_FILTER_LABELS[key]}
+              </FilterOption>
+            ))}
+          </FilterDropdown>
+          <FilterDropdown
+            open={openMenu === "more"}
+            onOpenChange={(open) => setOpenMenu(open ? "more" : null)}
+            trigger={
+              <button type="button" className={moreFilterActive ? filterBtnActive : filterBtnIdle}>
+                <SlidersHorizontal size={13} />{" "}
+                {moreFilterActive ? categoryLabel : "Filter Lainnya"}{" "}
+                <ChevronDown size={13} />
+              </button>
+            }
+          >
+            {JOB_CATEGORY_FILTERS.map((cat) => (
+              <FilterOption
+                key={cat.id}
+                active={categoryFilter === cat.id}
+                onClick={() => {
+                  setCategoryFilter(cat.id);
+                  setOpenMenu(null);
+                }}
+              >
+                {cat.label}
+              </FilterOption>
+            ))}
+          </FilterDropdown>
           <div className="ml-auto shrink-0">
-            <button className="flex items-center gap-1.5 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] px-3 py-[9px] transition-colors whitespace-nowrap">
-              Urutkan <ChevronDown size={13} />
-            </button>
+            <FilterDropdown
+              open={openMenu === "sort"}
+              onOpenChange={(open) => setOpenMenu(open ? "sort" : null)}
+              align="right"
+              trigger={
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 text-[13px] font-semibold px-3 py-[9px] transition-colors whitespace-nowrap ${
+                    sortOption !== "newest"
+                      ? "text-[#1D4196]"
+                      : "text-[#294566] hover:text-[#1D4196]"
+                  }`}
+                >
+                  {sortOption === "newest" ? "Urutkan" : SORT_LABELS[sortOption]}{" "}
+                  <ChevronDown size={13} />
+                </button>
+              }
+            >
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                <FilterOption
+                  key={key}
+                  active={sortOption === key}
+                  onClick={() => {
+                    setSortOption(key);
+                    setOpenMenu(null);
+                  }}
+                >
+                  {SORT_LABELS[key]}
+                </FilterOption>
+              ))}
+            </FilterDropdown>
           </div>
         </div>
       </div>
@@ -713,6 +906,10 @@ export default function Tasks() {
               <p className="text-center py-16 text-[#7890AA] text-[14px]">
                 Memuat pekerjaan…
               </p>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16 text-[#7890AA] text-[14px] font-medium">
+                Tidak ada pekerjaan yang cocok
+              </div>
             ) : (
               filtered.map((task) => (
                 <TaskCard
@@ -725,11 +922,6 @@ export default function Tasks() {
                   }}
                 />
               ))
-            )}
-            {filtered.length === 0 && (
-              <div className="text-center py-16 text-[#7890AA] text-[14px] font-medium">
-                Tidak ada pekerjaan yang cocok
-              </div>
             )}
           </div>
         </div>

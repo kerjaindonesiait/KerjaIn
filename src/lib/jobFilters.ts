@@ -33,6 +33,28 @@ export const SORT_LABELS: Record<SortOption, string> = {
   offers: "Paling banyak penawaran",
 };
 
+export const JOB_CATEGORY_FILTERS = [
+  { id: "all", label: "Semua kategori" },
+  { id: "darurat", label: "Pipa Bocor Darurat" },
+  { id: "deteksi", label: "Deteksi Kebocoran" },
+  { id: "mampet", label: "Saluran Mampet" },
+  { id: "water", label: "Pemanas Air" },
+  { id: "pipa", label: "Ganti Pipa" },
+  { id: "bathroom", label: "Pasang Kamar Mandi" },
+  { id: "maintenance", label: "Perawatan Umum" },
+  { id: "handyman", label: "Tukang Serba Bisa" },
+  { id: "pintu", label: "Perbaikan Pintu" },
+  { id: "talang", label: "Bersih Talang" },
+  { id: "keramik", label: "Perbaikan Keramik" },
+  { id: "atap", label: "Perawatan Atap" },
+] as const;
+
+export type JobCategoryFilter = (typeof JOB_CATEGORY_FILTERS)[number]["id"];
+
+export function areaFilterLabel(area: string) {
+  return area === "Semua area" ? "Jakarta & sekitarnya" : area;
+}
+
 const AREA_COORDS: Record<string, { lat: number; lng: number }> = {
   "Jakarta Pusat": { lat: -6.1754, lng: 106.8272 },
   "Jakarta Selatan": { lat: -6.2615, lng: 106.8106 },
@@ -99,7 +121,13 @@ function matchesPrice(job: Job, filter: PriceFilter): boolean {
 
 export function filterAndSortJobs(
   jobs: Job[],
-  opts: { area?: string; price?: PriceFilter; sort?: SortOption; search?: string },
+  opts: {
+    area?: string;
+    price?: PriceFilter;
+    sort?: SortOption;
+    search?: string;
+    category?: string;
+  },
 ): Job[] {
   let list = [...jobs];
 
@@ -111,6 +139,10 @@ export function filterAndSortJobs(
         j.description.toLowerCase().includes(search) ||
         j.area.toLowerCase().includes(search),
     );
+  }
+
+  if (opts.category && opts.category !== "all") {
+    list = list.filter((j) => j.category === opts.category);
   }
 
   if (opts.area && opts.area !== "Semua area") {
