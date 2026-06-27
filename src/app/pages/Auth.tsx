@@ -153,7 +153,7 @@ function SuccessScreen({
           <p className="font-bold text-[13px] text-[#172E4D] mb-3">Kamu bisa mulai dari sini:</p>
           <div className="space-y-2.5">
             {[
-              { emoji: "🔧", text: "Post Kerjaan plumbing atau perawatan gratis" },
+              { emoji: "🔧", text: "Post Kerjaan plumbing atau perawatan rumah" },
               { emoji: "👷", text: "Tinjau profil & ulasan tukang terpercaya" },
               { emoji: "🔒", text: "Bayar dengan aman — uang dicairkan setelah selesai" },
             ].map((item) => (
@@ -710,7 +710,7 @@ export default function Auth() {
           <div className="hidden lg:flex flex-col gap-4 ml-8 mt-2 max-w-[280px]">
             <p className="font-black text-[16px] text-[#172E4D]">Dengan KerjaIn, kamu bisa:</p>
             {[
-              { emoji: "🏠", title: "Post Kerjaan gratis", desc: "Ceritakan masalah dan atur anggaran" },
+              { emoji: "🏠", title: "Post Kerjaan", desc: "Ceritakan masalah dan atur anggaran" },
               { emoji: "⚡", title: "Dapat penawaran cepat", desc: "Tukang Jakarta merespons dalam 15–30 menit" },
               { emoji: "🔒", title: "Bayar dengan aman", desc: "Dana diteruskan setelah pekerjaan selesai" },
               { emoji: "⭐", title: "Tukang terverifikasi", desc: "Profil tukang dicek sebelum menerima pekerjaan" },

@@ -967,7 +967,7 @@ export default function TechAuth() {
               <p className="font-black text-[16px] text-white">Daftar sebagai tukang</p>
               <p className="text-[12px] text-white/60 mt-0.5">Terima pekerjaan plumbing dan perawatan di Jakarta</p>
               <div className="flex gap-3 mt-2">
-                {["Gratis daftar", "Verifikasi KTP", "Langsung dapat pekerjaan"].map((t) => (
+                {["Daftar", "Verifikasi KTP", "Langsung dapat pekerjaan"].map((t) => (
                   <span key={t} className="text-[10px] font-bold text-[#FD6665]">✓ {t}</span>
                 ))}
               </div>

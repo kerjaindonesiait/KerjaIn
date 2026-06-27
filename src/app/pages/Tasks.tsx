@@ -297,7 +297,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
         {/* Title + price */}
         <div className="flex items-start justify-between gap-3 px-6 pb-3">
-          <h2 className="font-black text-[18px] text-[#172E4D] leading-snug">
+          <h2 className="min-w-0 break-words font-black text-[18px] text-[#172E4D] leading-snug">
             {task.title}
           </h2>
           <div className="text-right shrink-0">
@@ -1023,6 +1023,13 @@ export default function Tasks() {
     [categorySearch],
   );
 
+  const mapPanelClassName = selectedTask
+    ? "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-auto md:h-auto"
+    : "order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0";
+  const taskListClassName = selectedTask
+    ? "hidden md:flex order-2 md:order-1 w-full md:w-[410px] shrink-0 flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0"
+    : "order-2 md:order-1 w-full md:w-[410px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0";
+
   if (!authLoading && user?.role === "technician") {
     return <Navigate to="/dasbor-tukang" replace />;
   }
@@ -1195,7 +1202,7 @@ export default function Tasks() {
       {/* Body */}
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
         {/* Map — top on mobile, right panel on desktop */}
-        <div className="order-1 md:order-2 flex-1 min-w-0 relative h-[42vh] min-h-[280px] md:h-auto md:min-h-0">
+        <div className={mapPanelClassName}>
           <div
             className={`absolute inset-0 transition-opacity duration-300 ${selectedTask ? "opacity-0 pointer-events-none" : "opacity-100"}`}
           >
@@ -1232,7 +1239,7 @@ export default function Tasks() {
         </div>
 
         {/* Task list */}
-        <div className="order-2 md:order-1 w-full md:w-[410px] shrink-0 flex flex-col bg-[#F7F9FC] border-t md:border-t-0 md:border-r border-[#f5eded] flex-1 md:flex-none min-h-0">
+        <div className={taskListClassName}>
           <div className="px-4 py-2.5 border-b border-[#D8E2F0] bg-white">
             <p className="text-[12px] text-[#7890AA] font-semibold">
               {filtered.length} pekerjaan tersedia
