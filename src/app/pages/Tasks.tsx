@@ -539,32 +539,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 <p className="font-bold text-[16px] text-[#172E4D]">
                   {task.poster.name}
                 </p>
-                <StarRow
-                  rating={task.poster.rating ?? 0}
-                  count={task.poster.reviews}
-                />
-                <div className="flex flex-wrap gap-3 mt-3">
-                  <div className="text-center">
-                    <p className="font-black text-[15px] text-[#172E4D]">
-                      {task.poster.completionRate}%
-                    </p>
-                    <p className="text-[11px] text-[#7890AA]">Penyelesaian</p>
-                  </div>
-                  <div className="w-px bg-[#EEF3FB]" />
-                  <div className="text-center">
-                    <p className="font-black text-[15px] text-[#172E4D]">
-                      {task.poster.jobsPosted ?? 0}
-                    </p>
-                    <p className="text-[11px] text-[#7890AA]">Pekerjaan</p>
-                  </div>
-                  <div className="w-px bg-[#EEF3FB]" />
-                  <div className="text-center">
-                    <p className="font-black text-[15px] text-[#172E4D]">
-                      Sejak {task.poster.memberSince}
-                    </p>
-                    <p className="text-[11px] text-[#7890AA]">Anggota</p>
-                  </div>
-                </div>
+                <p className="text-[13px] text-[#58708D] mt-1">Pemilik pekerjaan</p>
               </div>
             </div>
 
@@ -579,26 +554,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
               ))}
             </div>
 
-            <div className="bg-[#F7F9FC] border border-[#D8E2F0] rounded-xl p-4 space-y-2.5 text-[13px]">
-              {[
-                ["Bergabung sejak", `${task.poster.memberSince}`],
-                [
-                  "Pekerjaan selesai",
-                  `${task.poster.jobsCompleted ?? 0} dari ${task.poster.jobsPosted ?? 0} pekerjaan`,
-                ],
-                [
-                  "Tingkat penyelesaian",
-                  `${task.poster.completionRate}%`,
-                ],
-              ].map(([label, val]) => (
-                <div key={label} className="flex items-center justify-between">
-                  <span className="text-[#7890AA] font-medium">{label}</span>
-                  <span className="font-semibold text-[#172E4D]">{val}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-start gap-3 bg-[#F7F9FC] rounded-xl p-4 mt-4 border border-[#D8E2F0]">
+            <div className="flex items-start gap-3 bg-[#F7F9FC] rounded-xl p-4 border border-[#D8E2F0]">
               <Shield size={16} className="text-[#1D4196] shrink-0 mt-0.5" />
               <p className="text-[12px] text-[#58708D]">
                 Identitas pemilik pekerjaan sudah diverifikasi oleh KerjaIn.
