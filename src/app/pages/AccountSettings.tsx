@@ -88,8 +88,8 @@ export default function AccountSettings() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] py-8 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="max-w-[560px] mx-auto">
-        <Link to="/" className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] mb-6">
-          <ChevronLeft size={15} /> Beranda
+        <Link to={user.role === "technician" ? "/dasbor-tukang" : "/"} className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] mb-6">
+          <ChevronLeft size={15} /> {user.role === "technician" ? "Dasbor Tukang" : "Beranda"}
         </Link>
 
         <div className="bg-white rounded-3xl border border-[#D8E2F0] shadow-lg overflow-hidden mb-6">
@@ -209,12 +209,7 @@ export default function AccountSettings() {
           )}
           {user.role === "technician" && (
             <Link to={`/tukang/${user.id}`} className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
-              Profil & ulasan
-            </Link>
-          )}
-          {user.role === "technician" && (
-            <Link to="/dasbor-tukang" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
-              Dasbor Tukang
+              Ulasan saya
             </Link>
           )}
           <button

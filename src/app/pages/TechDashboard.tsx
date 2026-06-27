@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  Search, MapPin, Calendar, Clock, Shield, CheckCircle,
-  ChevronDown, Bell, Star, SlidersHorizontal, Send,
-  Briefcase, FileText, TrendingUp, LogOut, Filter, Loader2, MessageCircle,
+  MapPin, Calendar, Clock, Shield, CheckCircle,
+  ChevronLeft, Bell, Send,
+  Briefcase, LogOut, Loader2, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import type { Job, MineOffer, TechnicianStats } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
+import { JobsMap } from "../components/JobsMap";
+import { JobBrowseFilterBar } from "../components/JobBrowseFilterBar";
+import { useJobBrowseFilters } from "../../lib/useJobBrowseFilters";
+import { appShellClassMobileFlush } from "../../lib/layout";
+import { useShowTasksMap } from "../../lib/useShowTasksMap";
 
 type ApiJob = {
   id: string;
@@ -139,18 +144,8 @@ const ALL_JOBS = [
   },
 ];
 
-const FILTER_TABS = [
-  { id: "semua",       label: "Semua" },
-  { id: "darurat",     label: "Darurat" },
-  { id: "mampet",      label: "Saluran Mampet" },
-  { id: "water",       label: "Pemanas Air" },
-  { id: "pipa",        label: "Ganti Pipa" },
-  { id: "bathroom",    label: "Kamar Mandi" },
-  { id: "maintenance", label: "Perawatan" },
-];
-
 const NAV_TABS = [
-  { id: "lowongan",  label: "Lowongan",       icon: <Search size={16} /> },
+  { id: "lowongan",  label: "Lowongan",       icon: <Briefcase size={16} /> },
   { id: "penawaran", label: "Penawaran Saya",  icon: <Send size={16} /> },
   { id: "aktif",     label: "Pekerjaan Aktif", icon: <Briefcase size={16} /> },
   { id: "selesai",   label: "Selesai",         icon: <CheckCircle size={16} /> },
@@ -447,11 +442,12 @@ function QuoteSuccess({ job, price, onBack }: { job: ApiJob; price: number; onBa
 
 // ─── Job Detail Panel ─────────────────────────────────────────────────────────
 
-function JobDetail({ job, quoted, quotedPrice, onQuote }: {
+function JobDetail({ job, quoted, quotedPrice, onQuote, onClose }: {
   job: ApiJob;
   quoted: boolean;
   quotedPrice: number;
   onQuote: (price: number) => void;
+  onClose?: () => void;
 }) {
   const [tab, setTab] = useState<"detail" | "ajukan">("detail");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -480,6 +476,17 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* Header */}
       <div className="shrink-0 border-b border-[#f5eded]">
+        {onClose && (
+          <div className="flex items-center px-6 pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors"
+            >
+              <ChevronLeft size={16} /> Kembali
+            </button>
+          </div>
+        )}
         <div className="px-6 py-4">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
@@ -638,12 +645,11 @@ const STATUS_STYLE: Record<string, string> = {
 export default function TechDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<ApiJob[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [navTab, setNavTab] = useState<"lowongan" | "penawaran" | "aktif" | "selesai">("lowongan");
-  const [filterTab, setFilterTab] = useState("semua");
-  const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [quotedJobs, setQuotedJobs] = useState<Record<string, number>>({});
   const [myOffers, setMyOffers] = useState<MineOffer[]>([]);
   const [activeJobs, setActiveJobs] = useState<Job[]>([]);
@@ -720,19 +726,40 @@ export default function TechDashboard() {
   };
 
   useEffect(() => {
-    api.getJobs({ search: search || undefined })
-      .then(({ jobs: data }) => setJobs(data.map(mapJob)))
+    api.getJobs()
+      .then(({ jobs: data }) => setJobs(data))
       .catch(() => setJobs([]))
       .finally(() => setLoadingJobs(false));
-  }, [search]);
+  }, []);
 
-  const filtered = jobs.filter((j) => {
-    const matchCat = filterTab === "semua" || j.category === filterTab;
-    const matchSearch = j.title.toLowerCase().includes(search.toLowerCase()) || j.area.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const browseFilters = useJobBrowseFilters(jobs);
+  const { filtered } = browseFilters;
+  const showMap = useShowTasksMap();
 
-  const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
+  useEffect(() => {
+    if (!showMap) setMapPreviewId(null);
+  }, [showMap]);
+
+  useEffect(() => {
+    if (selectedId && !filtered.some((j) => j.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [filtered, selectedId]);
+
+  const selectedJobRaw = filtered.find((j) => j.id === selectedId) ?? null;
+  const selectedJob = selectedJobRaw ? mapJob(selectedJobRaw) : null;
+
+  const mapPanelClassName =
+    "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-full md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]";
+  const taskListClassName =
+    "order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex flex-col bg-[#F7F9FC] md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden";
+  const portraitListClassName =
+    "flex-1 flex flex-col w-full min-h-0 overflow-hidden bg-[#F7F9FC]";
+
+  const closeSelectedJob = () => {
+    setSelectedId(null);
+    setMapPreviewId(null);
+  };
 
   const TUKANG = {
     name: user?.fullName ?? "Tukang",
@@ -841,82 +868,98 @@ export default function TechDashboard() {
 
       {/* ── LOWONGAN tab ── */}
       {navTab === "lowongan" && (
-        <div className="flex flex-1 min-h-0 max-w-[1400px] mx-auto w-full overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <JobBrowseFilterBar {...browseFilters} />
 
-          {/* Left: filter + list */}
-          <div className="w-[400px] shrink-0 flex flex-col border-r border-[#f5eded] overflow-hidden">
-            {/* Search */}
-            <div className="p-4 border-b border-[#D8E2F0]">
-              <div className="flex items-center gap-2 bg-[#EEF3FB] rounded-xl px-3 py-2.5 border border-transparent focus-within:border-[#1D4196] transition-all">
-                <Search size={15} className="text-[#7890AA] shrink-0" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari pekerjaan…"
-                  className="bg-transparent text-[13px] text-[#294566] placeholder-[#7890AA] outline-none w-full"
-                />
-              </div>
-            </div>
-
-            {/* Category filter tabs */}
-            <div className="flex gap-2 px-4 py-2.5 overflow-x-auto border-b border-[#D8E2F0]" style={{ scrollbarWidth: "none" }}>
-              {FILTER_TABS.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setFilterTab(f.id)}
-                  className={`text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap transition-all ${
-                    filterTab === f.id
-                      ? "bg-[#1D4196] text-white"
-                      : "bg-[#EEF3FB] text-[#58708D] hover:bg-[#EEF3FB]"
+          <div
+            className={`${appShellClassMobileFlush} flex flex-1 min-h-0 ${
+              showMap ? "flex-col md:flex-row md:pb-4 md:gap-3" : "flex-col"
+            }`}
+          >
+            {showMap && (
+              <div className={mapPanelClassName}>
+                <div
+                  className={`absolute inset-0 transition-opacity duration-300 ${selectedJob ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+                >
+                  <JobsMap
+                    jobs={filtered}
+                    previewId={mapPreviewId}
+                    onPinClick={(id) => setMapPreviewId((prev) => (prev === id ? null : id))}
+                    onPreviewClose={() => setMapPreviewId(null)}
+                    onViewTask={(id) => {
+                      setMapPreviewId(null);
+                      setSelectedId(id);
+                    }}
+                  />
+                </div>
+                <div
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    selectedJob
+                      ? "translate-x-0 opacity-100"
+                      : "translate-x-8 opacity-0 pointer-events-none"
                   }`}
                 >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Job count */}
-            <div className="px-4 py-2 border-b border-[#D8E2F0]">
-              <p className="text-[11px] text-[#7890AA] font-semibold">
-                {filtered.length} pekerjaan tersedia di area utama
-              </p>
-            </div>
-
-            {/* Job list */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2.5">
-              {filtered.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  selected={selectedId === job.id}
-                  quoted={job.id in quotedJobs}
-                  onClick={() => setSelectedId(selectedId === job.id ? null : job.id)}
-                />
-              ))}
-              {filtered.length === 0 && (
-                <div className="text-center py-16 text-[#7890AA]">
-                  <p className="text-[32px] mb-3">🔍</p>
-                  <p className="font-bold text-[14px]">Tidak ada pekerjaan</p>
-                  <p className="text-[12px] mt-1">Coba ubah filter atau kata kunci</p>
+                  {selectedJob && (
+                    <JobDetail
+                      job={selectedJob}
+                      quoted={selectedJob.id in quotedJobs}
+                      quotedPrice={quotedJobs[selectedJob.id] ?? 0}
+                      onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
+                      onClose={closeSelectedJob}
+                    />
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
 
-          {/* Right: detail */}
-          <div className="flex-1 min-w-0 overflow-hidden">
-            {selectedJob ? (
-              <JobDetail
-                job={selectedJob}
-                quoted={selectedJob.id in quotedJobs}
-                quotedPrice={quotedJobs[selectedJob.id] ?? 0}
-                onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
-              />
+            {!showMap && selectedJob ? (
+              <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
+                <JobDetail
+                  job={selectedJob}
+                  quoted={selectedJob.id in quotedJobs}
+                  quotedPrice={quotedJobs[selectedJob.id] ?? 0}
+                  onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
+                  onClose={closeSelectedJob}
+                />
+              </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-[#7890AA] gap-3">
-                <div className="w-20 h-20 rounded-full bg-[#EEF3FB] flex items-center justify-center text-[40px]">🔧</div>
-                <p className="font-bold text-[16px] text-[#294566]">Pilih pekerjaan untuk melihat detail</p>
-                <p className="text-[13px]">Klik salah satu lowongan di sebelah kiri</p>
+              <div
+                className={`${showMap ? taskListClassName : portraitListClassName}${
+                  showMap && selectedJob ? " hidden md:flex" : ""
+                }`}
+              >
+                <div className="px-4 py-2.5 border-b border-[#D8E2F0] bg-white">
+                  <p className="text-[12px] text-[#7890AA] font-semibold">
+                    {filtered.length} pekerjaan tersedia
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
+                  {loadingJobs ? (
+                    <div className="flex items-center justify-center gap-2 py-16 text-[#58708D]">
+                      <Loader2 size={18} className="animate-spin" /> Memuat pekerjaan…
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="text-center py-16 text-[#7890AA] text-[14px] font-medium">
+                      Tidak ada pekerjaan yang cocok
+                    </div>
+                  ) : (
+                    filtered.map((job) => {
+                      const cardJob = mapJob(job);
+                      return (
+                        <JobCard
+                          key={job.id}
+                          job={cardJob}
+                          selected={selectedId === job.id || mapPreviewId === job.id}
+                          quoted={job.id in quotedJobs}
+                          onClick={() => {
+                            setMapPreviewId(null);
+                            setSelectedId(selectedId === job.id ? null : job.id);
+                          }}
+                        />
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
