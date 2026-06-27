@@ -17,6 +17,35 @@ export const JAKARTA_AREAS = [
 export type PriceFilter = "all" | "under500" | "500to1000" | "over1000" | "open";
 export type SortOption = "newest" | "oldest" | "price_asc" | "price_desc" | "offers";
 
+export const PRICE_SLIDER_MIN = 50_000;
+export const PRICE_SLIDER_MAX = 10_000_000;
+export const PRICE_SLIDER_STEP = 50_000;
+
+export type PriceRange = { min: number; max: number };
+
+export const DEFAULT_PRICE_RANGE: PriceRange = {
+  min: PRICE_SLIDER_MIN,
+  max: PRICE_SLIDER_MAX,
+};
+
+export function isFullPriceRange(range: PriceRange): boolean {
+  return range.min <= PRICE_SLIDER_MIN && range.max >= PRICE_SLIDER_MAX;
+}
+
+export function formatPriceShort(n: number): string {
+  if (n >= 1_000_000) {
+    const jt = n / 1_000_000;
+    return Number.isInteger(jt) ? `Rp ${jt}jt` : `Rp ${jt.toFixed(1)}jt`;
+  }
+  if (n >= 1000) return `Rp ${Math.round(n / 1000)}rb`;
+  return `Rp ${n.toLocaleString("id-ID")}`;
+}
+
+export function formatPriceRangeLabel(range: PriceRange): string {
+  if (isFullPriceRange(range)) return "Semua Harga";
+  return `${formatPriceShort(range.min)} – ${formatPriceShort(range.max)}`;
+}
+
 export const PRICE_FILTER_LABELS: Record<PriceFilter, string> = {
   all: "Semua Harga",
   under500: "Di bawah Rp 500rb",
@@ -109,21 +138,19 @@ export function jobMapPosition(job: Job): { left: string; top: string } | null {
   };
 }
 
-function matchesPrice(job: Job, filter: PriceFilter): boolean {
-  if (filter === "all") return true;
-  if (filter === "open") return job.budgetType === "minta" || job.budgetRaw == null;
-  const price = job.budgetRaw ?? 0;
-  if (filter === "under500") return price > 0 && price < 500_000;
-  if (filter === "500to1000") return price >= 500_000 && price <= 1_000_000;
-  if (filter === "over1000") return price > 1_000_000;
-  return true;
+function matchesPriceRange(job: Job, range: PriceRange): boolean {
+  if (isFullPriceRange(range)) return true;
+  if (job.budgetType === "minta" || job.budgetRaw == null) {
+    return range.max >= PRICE_SLIDER_MAX;
+  }
+  return job.budgetRaw >= range.min && job.budgetRaw <= range.max;
 }
 
 export function filterAndSortJobs(
   jobs: Job[],
   opts: {
     area?: string;
-    price?: PriceFilter;
+    priceRange?: PriceRange;
     sort?: SortOption;
     search?: string;
     category?: string;
@@ -149,8 +176,8 @@ export function filterAndSortJobs(
     list = list.filter((j) => j.area === opts.area);
   }
 
-  if (opts.price && opts.price !== "all") {
-    list = list.filter((j) => matchesPrice(j, opts.price!));
+  if (opts.priceRange && !isFullPriceRange(opts.priceRange)) {
+    list = list.filter((j) => matchesPriceRange(j, opts.priceRange!));
   }
 
   const sort = opts.sort ?? "newest";

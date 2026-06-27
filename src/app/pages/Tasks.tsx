@@ -28,11 +28,16 @@ import { JobsMap } from "../components/JobsMap";
 import {
   filterAndSortJobs,
   JAKARTA_AREAS,
-  PRICE_FILTER_LABELS,
   SORT_LABELS,
   JOB_CATEGORY_FILTERS,
   areaFilterLabel,
-  type PriceFilter,
+  DEFAULT_PRICE_RANGE,
+  PRICE_SLIDER_MIN,
+  PRICE_SLIDER_MAX,
+  PRICE_SLIDER_STEP,
+  formatPriceRangeLabel,
+  isFullPriceRange,
+  type PriceRange,
   type SortOption,
   type JobCategoryFilter,
 } from "../../lib/jobFilters";
@@ -889,6 +894,66 @@ function FilterSortItem({
   );
 }
 
+const RANGE_THUMB =
+  "pointer-events-none absolute w-full appearance-none bg-transparent h-6 top-1/2 -translate-y-1/2 " +
+  "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none " +
+  "[&::-webkit-slider-thumb]:w-[18px] [&::-webkit-slider-thumb]:h-[18px] [&::-webkit-slider-thumb]:rounded-full " +
+  "[&::-webkit-slider-thumb]:bg-[#1D4196] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white " +
+  "[&::-webkit-slider-thumb]:shadow-[0_2px_6px_rgba(23,65,150,0.35)] [&::-webkit-slider-thumb]:cursor-grab " +
+  "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none " +
+  "[&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:rounded-full " +
+  "[&::-moz-range-thumb]:bg-[#1D4196] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white " +
+  "[&::-moz-range-thumb]:shadow-[0_2px_6px_rgba(23,65,150,0.35)] [&::-moz-range-thumb]:cursor-grab " +
+  "[&::-webkit-slider-runnable-track]:bg-transparent [&::-moz-range-track]:bg-transparent";
+
+function PriceRangeSlider({
+  value,
+  onChange,
+}: {
+  value: PriceRange;
+  onChange: (v: PriceRange) => void;
+}) {
+  const span = PRICE_SLIDER_MAX - PRICE_SLIDER_MIN;
+  const minPct = ((value.min - PRICE_SLIDER_MIN) / span) * 100;
+  const maxPct = ((value.max - PRICE_SLIDER_MIN) / span) * 100;
+
+  return (
+    <div className="relative h-8 mx-0.5 mt-1">
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-[#E3EBF5] rounded-full" />
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-1.5 bg-[#1D4196] rounded-full"
+        style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
+      />
+      <input
+        type="range"
+        min={PRICE_SLIDER_MIN}
+        max={PRICE_SLIDER_MAX}
+        step={PRICE_SLIDER_STEP}
+        value={value.min}
+        onChange={(e) => {
+          const next = Math.min(Number(e.target.value), value.max - PRICE_SLIDER_STEP);
+          onChange({ ...value, min: next });
+        }}
+        className={`${RANGE_THUMB} z-[3]`}
+        aria-label="Harga minimum"
+      />
+      <input
+        type="range"
+        min={PRICE_SLIDER_MIN}
+        max={PRICE_SLIDER_MAX}
+        step={PRICE_SLIDER_STEP}
+        value={value.max}
+        onChange={(e) => {
+          const next = Math.max(Number(e.target.value), value.min + PRICE_SLIDER_STEP);
+          onChange({ ...value, max: next });
+        }}
+        className={`${RANGE_THUMB} z-[4]`}
+        aria-label="Harga maksimum"
+      />
+    </div>
+  );
+}
+
 export default function Tasks() {
   const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -897,18 +962,18 @@ export default function Tasks() {
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [areaFilter, setAreaFilter] = useState("Semua area");
-  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
+  const [priceRange, setPriceRange] = useState<PriceRange>(DEFAULT_PRICE_RANGE);
   const [categoryFilter, setCategoryFilter] = useState<JobCategoryFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("newest");
   const [openMenu, setOpenMenu] = useState<FilterMenuId | null>(null);
   const [draftArea, setDraftArea] = useState("Semua area");
-  const [draftPrice, setDraftPrice] = useState<PriceFilter>("all");
+  const [draftPriceRange, setDraftPriceRange] = useState<PriceRange>(DEFAULT_PRICE_RANGE);
   const [draftCategory, setDraftCategory] = useState<JobCategoryFilter>("all");
   const [categorySearch, setCategorySearch] = useState("");
 
   const openFilter = (id: FilterMenuId) => {
     if (id === "area") setDraftArea(areaFilter);
-    if (id === "price") setDraftPrice(priceFilter);
+    if (id === "price") setDraftPriceRange(priceRange);
     if (id === "more") {
       setDraftCategory(categoryFilter);
       setCategorySearch("");
@@ -931,11 +996,11 @@ export default function Tasks() {
       filterAndSortJobs(tasks, {
         search: searchQuery,
         area: areaFilter,
-        price: priceFilter,
+        priceRange,
         sort: sortOption,
         category: categoryFilter,
       }),
-    [tasks, searchQuery, areaFilter, priceFilter, sortOption, categoryFilter],
+    [tasks, searchQuery, areaFilter, priceRange, sortOption, categoryFilter],
   );
 
   useEffect(() => {
@@ -1014,33 +1079,23 @@ export default function Tasks() {
           <FilterPopover
             open={openMenu === "price"}
             onOpenChange={(open) => (open ? openFilter("price") : closeFilter())}
-            width={288}
+            width={300}
             trigger={
               <FilterPillTrigger
-                active={priceFilter !== "all"}
+                active={!isFullPriceRange(priceRange)}
                 open={openMenu === "price"}
                 icon={<Banknote size={14} className="text-[#1D4196]" />}
-                label={PRICE_FILTER_LABELS[priceFilter]}
+                label={formatPriceRangeLabel(priceRange)}
               />
             }
           >
-            <FilterPanelSection label="Harga pekerjaan" value={PRICE_FILTER_LABELS[draftPrice]}>
-              <div className="flex flex-col gap-0.5 -mx-1">
-                {(Object.keys(PRICE_FILTER_LABELS) as PriceFilter[]).map((key) => (
-                  <FilterRadioOption
-                    key={key}
-                    active={draftPrice === key}
-                    onClick={() => setDraftPrice(key)}
-                  >
-                    {PRICE_FILTER_LABELS[key]}
-                  </FilterRadioOption>
-                ))}
-              </div>
+            <FilterPanelSection label="Harga pekerjaan" value={formatPriceRangeLabel(draftPriceRange)}>
+              <PriceRangeSlider value={draftPriceRange} onChange={setDraftPriceRange} />
             </FilterPanelSection>
             <FilterPanelFooter
               onCancel={closeFilter}
               onApply={() => {
-                setPriceFilter(draftPrice);
+                setPriceRange(draftPriceRange);
                 closeFilter();
               }}
             />
