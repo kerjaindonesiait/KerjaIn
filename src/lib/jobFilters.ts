@@ -101,6 +101,9 @@ const MAP_BOUNDS = { north: -6.08, south: -6.42, west: 106.62, east: 107.05 };
 
 export const JAKARTA_CENTER = { lat: -6.2088, lng: 106.8456 };
 
+/** Minimum separation between map pins (~400 m at Jakarta latitude). */
+const PIN_MIN_SEPARATION_DEG = 0.0036;
+
 /** Area centroid with jitter so pins don't stack. Uses stored coords when available. */
 export function getPublicMapCoordinates(job: Job): { lat: number; lng: number } | null {
   let base: { lat: number; lng: number } | undefined;
@@ -112,9 +115,50 @@ export function getPublicMapCoordinates(job: Job): { lat: number; lng: number } 
   if (!base) return null;
 
   const hash = job.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const latJitter = ((hash % 100) - 50) * 0.00008;
-  const lngJitter = (((hash * 7) % 100) - 50) * 0.00008;
+  const latJitter = ((hash % 100) - 50) * 0.00015;
+  const lngJitter = (((hash * 7) % 100) - 50) * 0.00015;
   return { lat: base.lat + latJitter, lng: base.lng + lngJitter };
+}
+
+/** Spread overlapping pins so markers stay readable on the map. */
+export function resolveMapPinPositions(jobs: Job[]): Map<string, { lat: number; lng: number }> {
+  const positions = new Map<string, { lat: number; lng: number }>();
+  const placed: { lat: number; lng: number }[] = [];
+  const ordered = [...jobs].sort((a, b) => a.id.localeCompare(b.id));
+
+  for (const job of ordered) {
+    let coord = getPublicMapCoordinates(job);
+    if (!coord) continue;
+
+    for (let pass = 0; pass < 10; pass++) {
+      for (const other of placed) {
+        const dLat = coord.lat - other.lat;
+        const dLng = coord.lng - other.lng;
+        const dist = Math.hypot(dLat, dLng);
+        if (dist >= PIN_MIN_SEPARATION_DEG) continue;
+
+        if (dist < 1e-9) {
+          const hash = job.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+          coord = {
+            lat: coord.lat + ((hash % 12) - 6) * 0.00035,
+            lng: coord.lng + (((hash * 5) % 12) - 6) * 0.00035,
+          };
+          continue;
+        }
+
+        const push = (PIN_MIN_SEPARATION_DEG - dist) * 0.55;
+        coord = {
+          lat: coord.lat + (dLat / dist) * push,
+          lng: coord.lng + (dLng / dist) * push,
+        };
+      }
+    }
+
+    placed.push(coord);
+    positions.set(job.id, coord);
+  }
+
+  return positions;
 }
 
 export function googleMapsAreaSearchUrl(area: string): string {
@@ -129,6 +173,10 @@ export function googleMapsSearchUrl(job: Job): string {
 export function jobMapPosition(job: Job): { left: string; top: string } | null {
   const coords = getPublicMapCoordinates(job);
   if (!coords) return null;
+  return coordsToMapPosition(coords);
+}
+
+export function coordsToMapPosition(coords: { lat: number; lng: number }): { left: string; top: string } {
   const { lat, lng } = coords;
   const left = ((lng - MAP_BOUNDS.west) / (MAP_BOUNDS.east - MAP_BOUNDS.west)) * 100;
   const top = ((lat - MAP_BOUNDS.north) / (MAP_BOUNDS.south - MAP_BOUNDS.north)) * 100;

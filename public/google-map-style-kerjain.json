@@ -1,10 +1,25 @@
 {
   "variant": "light",
+  "monochrome": true,
+  "backgroundColor": "#fafafa",
   "metadata": {
-    "name": "KerjaIn Standard",
-    "description": "Clean task map: Standard light theme, minimal POI/landmarks, fewer labels, roads visible."
+    "name": "KerjaIn Minimal",
+    "description": "Two-tone gray map so KerjaIn pins stand out. Re-import in Cloud Console, then set Map settings: Labels=minimum, Landmarks=minimum, Roads=medium."
   },
   "styles": [
+    {
+      "id": "natural.land",
+      "geometry": { "fillColor": "#f5f5f5" }
+    },
+    {
+      "id": "natural.water",
+      "geometry": { "fillColor": "#ececec" },
+      "label": { "visible": false }
+    },
+    {
+      "id": "natural.land.landCover.forest",
+      "geometry": { "fillColor": "#f0f0f0" }
+    },
     {
       "id": "pointOfInterest",
       "geometry": { "visible": false },
@@ -16,33 +31,46 @@
       "label": { "visible": false }
     },
     {
-      "id": "pointOfInterest.entertainment",
-      "geometry": { "visible": false },
-      "label": { "visible": false }
-    },
-    {
-      "id": "pointOfInterest.foodAndDrink",
-      "geometry": { "visible": false },
-      "label": { "visible": false }
-    },
-    {
-      "id": "pointOfInterest.retail",
-      "geometry": { "visible": false },
-      "label": { "visible": false }
-    },
-    {
-      "id": "pointOfInterest.service",
-      "geometry": { "visible": false },
-      "label": { "visible": false }
-    },
-    {
       "id": "pointOfInterest.recreation",
-      "geometry": { "visible": true },
+      "geometry": { "visible": false },
       "label": { "visible": false }
     },
     {
       "id": "pointOfInterest.recreation.park",
-      "geometry": { "visible": true },
+      "geometry": { "fillColor": "#f2f2f2", "visible": true },
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.countryOrRegion",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.stateOrProvince",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.city",
+      "label": {
+        "visible": { "z0": false, "z14": true },
+        "textFillColor": "#b0b0b0",
+        "textStrokeColor": "#f5f5f5"
+      }
+    },
+    {
+      "id": "political.neighborhood",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.sublocality",
+      "label": { "visible": { "z0": false, "z15": true }, "textFillColor": "#b8b8b8" }
+    },
+    {
+      "id": "political.landParcel",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.building",
+      "geometry": { "fillColor": "#eeeeee", "visible": true },
       "label": { "visible": false }
     },
     {
@@ -52,45 +80,34 @@
     },
     {
       "id": "infrastructure.railwayTrack",
+      "geometry": { "strokeColor": "#dddddd" },
       "label": { "visible": false }
     },
     {
-      "id": "infrastructure.building",
+      "id": "infrastructure.roadNetwork",
+      "geometry": { "strokeColor": "#e0e0e0" }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.local",
+      "geometry": { "strokeColor": "#e8e8e8", "visible": true },
+      "label": { "visible": { "z0": false, "z16": true }, "textFillColor": "#c4c4c4" }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.arterial",
+      "geometry": { "strokeColor": "#dcdcdc", "visible": true },
+      "label": { "visible": { "z0": false, "z15": true }, "textFillColor": "#bcbcbc" }
+    },
+    {
+      "id": "infrastructure.roadNetwork.road.highway",
+      "geometry": { "strokeColor": "#d4d4d4", "visible": true },
       "label": { "visible": false }
     },
     {
-      "id": "political.neighborhood",
-      "label": { "visible": false }
-    },
-    {
-      "id": "political.sublocality",
-      "label": { "visible": false }
-    },
-    {
-      "id": "political.landParcel",
+      "id": "infrastructure.roadNetwork.roadShield",
       "label": { "visible": false }
     },
     {
       "id": "infrastructure.roadNetwork.roadSign",
-      "label": { "visible": false }
-    },
-    {
-      "id": "infrastructure.roadNetwork.road.local",
-      "geometry": { "visible": true },
-      "label": { "visible": true }
-    },
-    {
-      "id": "infrastructure.roadNetwork.road.arterial",
-      "geometry": { "visible": true },
-      "label": { "visible": true }
-    },
-    {
-      "id": "infrastructure.roadNetwork.road.highway",
-      "geometry": { "visible": true },
-      "label": { "visible": true }
-    },
-    {
-      "id": "natural.water",
       "label": { "visible": false }
     }
   ]

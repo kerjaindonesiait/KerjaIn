@@ -4,9 +4,9 @@ import { Crosshair } from "lucide-react";
 import type { Job } from "../../types";
 import { JobMapPreviewCard } from "./JobMapPreviewCard";
 import {
-  getPublicMapCoordinates,
+  resolveMapPinPositions,
+  coordsToMapPosition,
   JAKARTA_CENTER,
-  jobMapPosition,
 } from "../../lib/jobFilters";
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
@@ -46,10 +46,12 @@ function MapResizer() {
   return null;
 }
 
-function fitJobsOnMap(map: google.maps.Map, jobs: Job[], padding = 48) {
-  const coords = jobs
-    .map(getPublicMapCoordinates)
-    .filter((c): c is { lat: number; lng: number } => c !== null);
+function fitJobsOnMap(
+  map: google.maps.Map,
+  pinPositions: Map<string, { lat: number; lng: number }>,
+  padding = 48,
+) {
+  const coords = [...pinPositions.values()];
   if (coords.length === 0) {
     map.panTo(JAKARTA_CENTER);
     map.setZoom(11);
@@ -67,10 +69,12 @@ function fitJobsOnMap(map: google.maps.Map, jobs: Job[], padding = 48) {
 
 function MapViewController({
   jobs,
+  pinPositions,
   previewId,
   recenterRequest,
 }: {
   jobs: Job[];
+  pinPositions: Map<string, { lat: number; lng: number }>;
   previewId: string | null;
   recenterRequest: number;
 }) {
@@ -80,8 +84,7 @@ function MapViewController({
     if (!map) return;
 
     if (previewId) {
-      const job = jobs.find((j) => j.id === previewId);
-      const coords = job ? getPublicMapCoordinates(job) : null;
+      const coords = pinPositions.get(previewId);
       if (coords) {
         map.panTo(coords);
         map.setZoom(14);
@@ -89,15 +92,14 @@ function MapViewController({
       return;
     }
 
-    fitJobsOnMap(map, jobs);
-  }, [map, jobs, previewId]);
+    fitJobsOnMap(map, pinPositions);
+  }, [map, jobs, pinPositions, previewId]);
 
   useEffect(() => {
     if (!map || recenterRequest === 0) return;
 
     if (previewId) {
-      const job = jobs.find((j) => j.id === previewId);
-      const coords = job ? getPublicMapCoordinates(job) : null;
+      const coords = pinPositions.get(previewId);
       if (coords) {
         map.panTo(coords);
         map.setZoom(14);
@@ -105,27 +107,32 @@ function MapViewController({
       return;
     }
 
-    fitJobsOnMap(map, jobs);
-  }, [map, jobs, previewId, recenterRequest]);
+    fitJobsOnMap(map, pinPositions);
+  }, [map, jobs, pinPositions, previewId, recenterRequest]);
 
   return null;
 }
 
 function JobMarkers({
   jobs,
+  pinPositions,
   previewId,
   onPinClick,
 }: {
   jobs: Job[];
+  pinPositions: Map<string, { lat: number; lng: number }>;
   previewId: string | null;
   onPinClick: (id: string) => void;
 }) {
   const pins = useMemo(
     () =>
       jobs
-        .map((job) => ({ job, coords: getPublicMapCoordinates(job) }))
-        .filter((p): p is { job: Job; coords: { lat: number; lng: number } } => p.coords !== null),
-    [jobs],
+        .map((job) => {
+          const coords = pinPositions.get(job.id);
+          return coords ? { job, coords } : null;
+        })
+        .filter((p): p is { job: Job; coords: { lat: number; lng: number } } => p !== null),
+    [jobs, pinPositions],
   );
 
   return (
@@ -149,17 +156,19 @@ function JobMarkers({
 
 function MapPreviewLayer({
   jobs,
+  pinPositions,
   previewId,
   onPreviewClose,
   onViewTask,
 }: {
   jobs: Job[];
+  pinPositions: Map<string, { lat: number; lng: number }>;
   previewId: string | null;
   onPreviewClose: () => void;
   onViewTask: (id: string) => void;
 }) {
   const previewJob = jobs.find((j) => j.id === previewId) ?? null;
-  const coords = previewJob ? getPublicMapCoordinates(previewJob) : null;
+  const coords = previewJob ? pinPositions.get(previewJob.id) ?? null : null;
 
   if (!previewJob || !coords) return null;
 
@@ -184,20 +193,25 @@ function MapClickCloser({ active, onClose }: { active: boolean; onClose: () => v
 
 function OsmJobsMapFallback({
   jobs,
+  pinPositions,
   previewId,
   onPinClick,
   onPreviewClose,
   onViewTask,
 }: {
   jobs: Job[];
+  pinPositions: Map<string, { lat: number; lng: number }>;
   previewId: string | null;
   onPinClick: (id: string) => void;
   onPreviewClose: () => void;
   onViewTask: (id: string) => void;
 }) {
   const pins = jobs
-    .map((job) => ({ job, pos: jobMapPosition(job) }))
-    .filter((p): p is { job: Job; pos: { left: string; top: string } } => p.pos !== null);
+    .map((job) => {
+      const coords = pinPositions.get(job.id);
+      return coords ? { job, pos: coordsToMapPosition(coords) } : null;
+    })
+    .filter((p): p is { job: Job; pos: { left: string; top: string } } => p !== null);
   const previewJob = jobs.find((j) => j.id === previewId) ?? null;
 
   return (
@@ -270,12 +284,14 @@ export function JobsMap({
   onViewTask: (id: string) => void;
 }) {
   const [recenterRequest, setRecenterRequest] = useState(0);
-  const pinCount = jobs.filter((j) => getPublicMapCoordinates(j) !== null).length;
+  const pinPositions = useMemo(() => resolveMapPinPositions(jobs), [jobs]);
+  const pinCount = pinPositions.size;
 
   if (!MAPS_KEY) {
     return (
       <OsmJobsMapFallback
         jobs={jobs}
+        pinPositions={pinPositions}
         previewId={previewId}
         onPinClick={onPinClick}
         onPreviewClose={onPreviewClose}
@@ -298,11 +314,22 @@ export function JobsMap({
           className="w-full h-full"
         >
           <MapResizer />
-          <MapViewController jobs={jobs} previewId={previewId} recenterRequest={recenterRequest} />
-          <JobMarkers jobs={jobs} previewId={previewId} onPinClick={onPinClick} />
+          <MapViewController
+            jobs={jobs}
+            pinPositions={pinPositions}
+            previewId={previewId}
+            recenterRequest={recenterRequest}
+          />
+          <JobMarkers
+            jobs={jobs}
+            pinPositions={pinPositions}
+            previewId={previewId}
+            onPinClick={onPinClick}
+          />
           <MapClickCloser active={!!previewId} onClose={onPreviewClose} />
           <MapPreviewLayer
             jobs={jobs}
+            pinPositions={pinPositions}
             previewId={previewId}
             onPreviewClose={onPreviewClose}
             onViewTask={onViewTask}
