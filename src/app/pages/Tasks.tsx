@@ -715,7 +715,7 @@ function FilterDropdown({
           <div
             ref={menuRef}
             style={menuStyle}
-            className="min-w-[220px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5"
+            className="w-max min-w-[168px] max-w-[240px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5"
           >
             {children}
           </div>,
@@ -738,7 +738,7 @@ function FilterOption({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left px-4 py-2.5 text-[13px] transition-colors ${
+      className={`block w-full text-left px-4 py-2.5 text-[13px] whitespace-nowrap transition-colors ${
         active
           ? "bg-[#EEF3FB] text-[#1D4196] font-bold"
           : "text-[#294566] hover:bg-[#F7F9FC] font-medium"
