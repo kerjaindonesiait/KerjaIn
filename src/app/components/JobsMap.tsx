@@ -10,6 +10,7 @@ import {
 } from "../../lib/jobFilters";
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+const MAPS_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined;
 
 function MapResizer() {
   const map = useMap();
@@ -269,6 +270,7 @@ export function JobsMap({
     <div className="relative w-full h-full">
       <APIProvider apiKey={MAPS_KEY}>
         <Map
+          mapId={MAPS_ID}
           defaultCenter={JAKARTA_CENTER}
           defaultZoom={11}
           gestureHandling="greedy"
