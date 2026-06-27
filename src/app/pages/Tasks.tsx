@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search,
@@ -628,31 +629,67 @@ function FilterDropdown({
   children: ReactNode;
   align?: "left" | "right";
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
+
+  const updatePosition = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (align === "right") {
+      setMenuStyle({
+        position: "fixed",
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+        zIndex: 9999,
+      });
+    } else {
+      setMenuStyle({
+        position: "fixed",
+        top: rect.bottom + 6,
+        left: rect.left,
+        zIndex: 9999,
+      });
+    }
+  }, [align]);
+
+  useEffect(() => {
+    if (!open) return;
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onOpenChange(false);
-      }
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      onOpenChange(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open, onOpenChange]);
 
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div ref={triggerRef} className="relative shrink-0">
       <div onClick={() => onOpenChange(!open)}>{trigger}</div>
-      {open && (
-        <div
-          className={`absolute top-[calc(100%+6px)] z-50 min-w-[220px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5 ${
-            align === "right" ? "right-0" : "left-0"
-          }`}
-        >
-          {children}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={menuStyle}
+            className="min-w-[220px] max-h-[280px] overflow-y-auto bg-white border border-[#D8E2F0] rounded-xl shadow-lg py-1.5"
+          >
+            {children}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
