@@ -607,6 +607,15 @@ function jobAreaFromOffer(o: MineOffer) {
   return j?.area ?? "";
 }
 
+function jobStatusFromOffer(o: MineOffer) {
+  const j = o.job as { status?: string } | null | undefined;
+  return j?.status ?? "";
+}
+
+function canMessageOnJob(status: string) {
+  return status === "in_progress" || status === "completed";
+}
+
 function formatPrice(n: number) {
   if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1)}jt`;
   if (n >= 1000) return `Rp ${Math.round(n / 1000)}rb`;
@@ -905,7 +914,7 @@ export default function TechDashboard() {
                       )}
                       <span className="font-bold text-[#172E4D]">{formatPrice(offer.price)}</span>
                     </div>
-                    {offer.status === "accepted" && (
+                    {offer.status === "accepted" && canMessageOnJob(jobStatusFromOffer(offer)) && (
                       <Link
                         to={`/pesan/${offer.job_id}`}
                         className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[13px] py-2.5 rounded-xl hover:border-[#1D4196] hover:text-[#1D4196] transition-colors"

@@ -47,7 +47,7 @@ function ConversationList({
           <div className="text-center py-16 text-[#7890AA]">
             <MessageCircle size={40} className="mx-auto mb-3 opacity-40" />
             <p className="font-bold text-[15px] text-[#58708D]">Belum ada percakapan</p>
-            <p className="text-[13px] mt-1">Pesan tersedia setelah penawaran diterima pelanggan.</p>
+            <p className="text-[13px] mt-1">Pesan tersedia setelah pelanggan menyelesaikan pembayaran.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
