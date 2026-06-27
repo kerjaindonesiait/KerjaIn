@@ -4,6 +4,7 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Arrow
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
+import { useScrollToTop } from "../../lib/useScrollToTop";
 import { BrandLogo } from "../components/BrandLogo";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 import type { User } from "../../types";
@@ -446,6 +447,8 @@ export default function Auth() {
   const [successEmail, setSuccessEmail] = useState("");
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  useScrollToTop(screen, mode);
 
   const oauthError = params.get("error");
   const oauthErrorMessage =

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { MIDTRANS_CLIENT_KEY, MIDTRANS_IS_PRODUCTION } from "../../constants";
+import { useScrollToTop } from "../../lib/useScrollToTop";
 
 declare global {
   interface Window {
@@ -534,6 +535,8 @@ export default function Payment() {
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [technicianId, setTechnicianId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+
+  useScrollToTop(screen);
 
   useEffect(() => {
     if (!jobId || !offerId) {

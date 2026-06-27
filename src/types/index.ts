@@ -43,12 +43,6 @@ export interface Job {
     initials: string;
     color: string;
     avatarUrl?: string | null;
-    rating: number | null;
-    reviews: number;
-    memberSince: string;
-    completionRate: number;
-    jobsPosted?: number;
-    jobsCompleted?: number;
   } | null;
   createdAt: string;
   technicianCompletedAt?: string | null;
@@ -147,7 +141,6 @@ export interface TechnicianPublic {
   id: string;
   name: string;
   avatarUrl: string | null;
-  memberSince: string;
   area: string | null;
   keahlian: string[];
   pengalaman: string | null;

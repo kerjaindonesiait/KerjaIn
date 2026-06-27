@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { PostJobFormData } from "../../types";
+import { useScrollToTop } from "../../lib/useScrollToTop";
 import { BrandLogo } from "../components/BrandLogo";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -704,6 +705,8 @@ export default function PostJob() {
   const [jobId, setJobId] = useState(generateJobId());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  useScrollToTop(step, submitted);
 
   const update = (patch: Partial<FormData>) => setData((d) => ({ ...d, ...patch }));
 

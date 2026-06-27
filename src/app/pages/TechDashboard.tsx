@@ -22,7 +22,6 @@ type ApiJob = {
   time: string;
   posterName: string;
   posterRating: number | null;
-  posterJobsPosted: number;
   offers: number;
   description: string;
 };
@@ -39,8 +38,7 @@ function mapJob(j: Job): ApiJob {
     date: j.date ?? "Fleksibel",
     time: j.time ?? "Kapan saja",
     posterName: j.poster?.name ?? "Pelanggan",
-    posterRating: j.poster?.rating ?? null,
-    posterJobsPosted: j.poster?.jobsPosted ?? 0,
+    posterRating: null,
     offers: j.offers,
     description: j.description,
   };
@@ -541,7 +539,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote }: {
                 </div>
                 <div>
                   <p className="font-bold text-[13px] text-[#172E4D]">{job.posterName}</p>
-                  <p className="text-[11px] text-[#58708D]">{job.posterJobsPosted} pekerjaan diposting</p>
+                  <p className="text-[11px] text-[#58708D]">Pemilik pekerjaan</p>
                 </div>
                 <div className="ml-auto">
                   <span className="text-[11px] font-bold text-[#20bf6f] bg-[#f0fdf4] border border-[#bbf7d0] px-2.5 py-0.5 rounded-full">
@@ -965,9 +963,7 @@ export default function TechDashboard() {
                     </div>
                     <div>
                       <p className="font-bold text-[14px] text-[#172E4D]">{job.poster?.name ?? "Pelanggan"}</p>
-                      {job.poster && (job.poster.jobsPosted ?? 0) > 0 && (
-                        <p className="text-[11px] text-[#58708D]">{job.poster.jobsPosted} pekerjaan diposting</p>
-                      )}
+                      <p className="text-[11px] text-[#58708D]">Pemilik pekerjaan</p>
                     </div>
                     <div className="ml-auto text-right">
                       <p className="font-black text-[18px] text-[#1D4196]">{job.price}</p>
