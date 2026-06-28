@@ -178,7 +178,9 @@ export default function Root() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-white border-t border-[#D8E2F0] px-6 py-4 flex flex-col gap-3">
-            {NAV_LINKS.map((item) => (
+            {NAV_LINKS.filter(
+              (item) => !(item.label === "Cari Pekerjaan" && navActive(item)),
+            ).map((item) => (
               <Link key={item.label} to={navHref(item)} className="text-[14px] font-semibold text-[#294566] py-2 border-b border-[#EEF3FB]" onClick={() => setMobileOpen(false)}>
                 {item.label}
               </Link>
