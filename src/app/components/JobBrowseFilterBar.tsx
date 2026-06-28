@@ -1,13 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useCallback,
-  type ReactNode,
-  type CSSProperties,
-} from "react";
-import { createPortal } from "react-dom";
+import { useState, type ReactNode } from "react";
 import {
   Search,
   MapPin,
@@ -37,6 +28,7 @@ import {
 import type { FilterMenuId } from "../../lib/useJobBrowseFilters";
 import { appShellClass } from "../../lib/layout";
 import { HorizontalScrollRow } from "./HorizontalScrollRow";
+import { FilterPopover } from "./FilterPopover";
 
 const SORT_ICONS: Record<SortOption, ReactNode> = {
   newest: <Clock size={18} strokeWidth={2} />,
@@ -45,120 +37,6 @@ const SORT_ICONS: Record<SortOption, ReactNode> = {
   price_desc: <TrendingUp size={18} strokeWidth={2} />,
   offers: <Star size={18} strokeWidth={2} />,
 };
-
-function getMenuPosition(el: HTMLElement, align: "left" | "right"): CSSProperties {
-  const rect = el.getBoundingClientRect();
-  if (align === "right") {
-    return {
-      position: "fixed",
-      top: rect.bottom + 8,
-      right: window.innerWidth - rect.right,
-      zIndex: 9999,
-    };
-  }
-  return {
-    position: "fixed",
-    top: rect.bottom + 8,
-    left: rect.left,
-    zIndex: 9999,
-  };
-}
-
-function FilterPopover({
-  open,
-  onOpenChange,
-  trigger,
-  children,
-  align = "left",
-  width,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  trigger: ReactNode;
-  children: ReactNode;
-  align?: "left" | "right";
-  width?: number | "auto";
-}) {
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  const updatePosition = useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    setMenuStyle(getMenuPosition(el, align));
-  }, [align]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setMenuStyle(null);
-      return;
-    }
-    updatePosition();
-  }, [open, updatePosition]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onScrollOrResize = () => {
-      if (rafRef.current != null) return;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        updatePosition();
-      });
-    };
-    window.addEventListener("scroll", onScrollOrResize, { passive: true });
-    window.addEventListener("resize", onScrollOrResize);
-    return () => {
-      window.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [open, updatePosition]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-      onOpenChange(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open, onOpenChange]);
-
-  const handleToggle = () => {
-    if (!open && triggerRef.current) {
-      setMenuStyle(getMenuPosition(triggerRef.current, align));
-    }
-    onOpenChange(!open);
-  };
-
-  const panelWidth =
-    width === "auto" || width == null
-      ? { width: "max-content", maxWidth: "min(calc(100vw - 32px), 280px)" }
-      : { width: `${width}px` };
-
-  return (
-    <div ref={triggerRef} className="relative shrink-0">
-      <div onMouseDown={(e) => e.preventDefault()} onClick={handleToggle}>
-        {trigger}
-      </div>
-      {open &&
-        menuStyle &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={{ ...menuStyle, ...panelWidth }}
-            className="bg-white border border-[#E8EDF5] rounded-2xl shadow-[0_8px_32px_rgba(23,46,77,0.14)] overflow-hidden"
-          >
-            {children}
-          </div>,
-          document.body,
-        )}
-    </div>
-  );
-}
 
 function FilterPillTrigger({
   active,
@@ -566,7 +444,7 @@ export function JobBrowseFilterBar(props: JobBrowseFilterBarProps) {
                 />
               }
             >
-              <div className="p-2 min-w-[220px]">
+              <div className="p-2 w-full min-w-0">
                 {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
                   <FilterSortItem
                     key={key}
