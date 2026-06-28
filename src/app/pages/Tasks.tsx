@@ -841,6 +841,10 @@ export default function Tasks() {
   const closeFilter = () => setOpenMenu(null);
 
   useEffect(() => {
+    if (selectedId) closeFilter();
+  }, [selectedId]);
+
+  useEffect(() => {
     api
       .getJobs()
       .then(({ jobs }) => setTasks(jobs))
@@ -899,8 +903,12 @@ export default function Tasks() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Filter bar — horizontal scroll on mobile */}
-      <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
+      {/* Filter bar — hidden on portrait phone when viewing job detail */}
+      <div
+        className={`bg-white border-b border-[#f5eded] shrink-0 shadow-sm${
+          selectedTask ? " max-md:hidden" : ""
+        }`}
+      >
         <div className={`${appShellClass} py-3`}>
           <FilterScrollContainerContext.Provider value={filterScrollRef}>
           <HorizontalScrollRow

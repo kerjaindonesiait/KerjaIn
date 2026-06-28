@@ -859,7 +859,9 @@ export default function TechDashboard() {
       {/* ── LOWONGAN tab ── */}
       {navTab === "lowongan" && (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <JobBrowseFilterBar {...browseFilters} />
+          <div className={selectedJob ? "max-md:hidden shrink-0" : "shrink-0"}>
+            <JobBrowseFilterBar {...browseFilters} />
+          </div>
 
           <div
             className={`${appShellClassMobileFlush} flex flex-1 min-h-0 ${
