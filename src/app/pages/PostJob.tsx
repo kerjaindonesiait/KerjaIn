@@ -755,6 +755,8 @@ function generateJobId() {
   return `#KJ-${yr}-${rand}`;
 }
 
+const REVIEW_STEP = STEPS.length - 1;
+
 function canProceed(step: number, data: FormData): boolean {
   if (step === 0) return data.deskripsi.length >= 30;
   if (step === 1) return !!data.area;
@@ -765,6 +767,7 @@ function canProceed(step: number, data: FormData): boolean {
 
 export default function PostJob() {
   const [step, setStep] = useState(0);
+  const [editingFromReview, setEditingFromReview] = useState(false);
   const [data, setData] = useState<FormData>(INITIAL_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [jobId, setJobId] = useState(generateJobId());
@@ -775,8 +778,22 @@ export default function PostJob() {
 
   const update = (patch: Partial<FormData>) => setData((d) => ({ ...d, ...patch }));
 
+  const returnToReview = () => {
+    setEditingFromReview(false);
+    setStep(REVIEW_STEP);
+  };
+
+  const handleEditFromReview = (targetStep: number) => {
+    setEditingFromReview(true);
+    setStep(targetStep);
+  };
+
   const handleNext = async () => {
-    if (step < STEPS.length - 1) {
+    if (editingFromReview && step < REVIEW_STEP) {
+      returnToReview();
+      return;
+    }
+    if (step < REVIEW_STEP) {
       setStep((s) => s + 1);
       return;
     }
@@ -793,7 +810,13 @@ export default function PostJob() {
     }
   };
 
-  const handleBack = () => setStep((s) => s - 1);
+  const handleBack = () => {
+    if (editingFromReview) {
+      returnToReview();
+      return;
+    }
+    setStep((s) => s - 1);
+  };
 
   if (submitted) {
     return (
@@ -826,12 +849,12 @@ export default function PostJob() {
           {step === 1 && <StepLokasi data={data} onChange={update} />}
           {step === 2 && <StepWaktu data={data} onChange={update} />}
           {step === 3 && <StepAnggaran data={data} onChange={update} />}
-          {step === 4 && <StepReview data={data} onEdit={setStep} />}
+          {step === 4 && <StepReview data={data} onEdit={handleEditFromReview} />}
         </div>
 
         {/* Nav buttons */}
         <div className="flex gap-3">
-          {step > 0 && (
+          {(step > 0 || editingFromReview) && step < REVIEW_STEP && (
             <button
               onClick={handleBack}
               className="flex items-center gap-2 border-2 border-[#D8E2F0] text-[#294566] font-bold text-[14px] px-6 py-3.5 rounded-2xl hover:border-[#1D4196] hover:text-[#1D4196] transition-all"
@@ -850,8 +873,10 @@ export default function PostJob() {
           >
             {submitting ? (
               "Memposting…"
-            ) : step === STEPS.length - 1 ? (
+            ) : step === REVIEW_STEP ? (
               <>Post Kerjaan <Star size={16} /></>
+            ) : editingFromReview ? (
+              <>Ke ringkasan <ChevronRight size={16} /></>
             ) : (
               <>Lanjut <ChevronRight size={16} /></>
             )}
