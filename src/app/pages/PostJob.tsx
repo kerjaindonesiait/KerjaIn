@@ -1,4 +1,4 @@
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ChevronRight, ChevronLeft, CheckCircle, MapPin, Calendar,
@@ -8,6 +8,7 @@ import {
 import { api } from "../../lib/api";
 import type { PostJobFormData } from "../../types";
 import { useScrollToTop } from "../../lib/useScrollToTop";
+import { compressImageForUpload, blobToBase64 } from "../../lib/compressImage";
 import { BrandLogo } from "../components/BrandLogo";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -44,47 +45,118 @@ interface FormData extends PostJobFormData {}
 
 // ─── Step components ─────────────────────────────────────────────────────────
 
+type PhotoSlot = {
+  id: string;
+  preview: string;
+  url?: string;
+  path?: string;
+  uploading: boolean;
+};
+
 function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [photoPaths, setPhotoPaths] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(() =>
+    data.photos.map((url, i) => ({
+      id: `saved-${i}-${url.slice(-8)}`,
+      preview: url,
+      url,
+      uploading: false,
+    })),
+  );
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      blobUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      blobUrlsRef.current.clear();
+    };
+  }, []);
+
+  const syncPhotos = (slots: PhotoSlot[]) => {
+    onChange({ photos: slots.filter((s) => s.url).map((s) => s.url!) });
+  };
 
   const handleFile = async (file: File) => {
-    if (data.photos.length >= 3) return;
+    if (photoSlots.length >= 3) return;
     setUploadError(null);
-    setUploading(true);
+
+    const slotId = crypto.randomUUID();
+    const instantPreview = URL.createObjectURL(file);
+    blobUrlsRef.current.add(instantPreview);
+
+    setPhotoSlots((prev) => [
+      ...prev,
+      { id: slotId, preview: instantPreview, uploading: true },
+    ]);
+
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("Gagal membaca file"));
-        reader.readAsDataURL(file);
+      const { blob, contentType } = await compressImageForUpload(file);
+      const compressedPreview = URL.createObjectURL(blob);
+      blobUrlsRef.current.add(compressedPreview);
+      URL.revokeObjectURL(instantPreview);
+      blobUrlsRef.current.delete(instantPreview);
+      setPhotoSlots((prev) =>
+        prev.map((slot) =>
+          slot.id === slotId ? { ...slot, preview: compressedPreview } : slot,
+        ),
+      );
+
+      const base64 = await blobToBase64(blob);
+      const { url, path } = await api.uploadJobPhoto(base64, contentType);
+
+      setPhotoSlots((prev) => {
+        const next = prev.map((slot) => {
+          if (slot.id !== slotId) return slot;
+          if (slot.preview.startsWith("blob:")) {
+            URL.revokeObjectURL(slot.preview);
+            blobUrlsRef.current.delete(slot.preview);
+          }
+          return { ...slot, preview: url, url, path, uploading: false };
+        });
+        syncPhotos(next);
+        return next;
       });
-      const base64 = dataUrl.split(",")[1];
-      const { url, path } = await api.uploadJobPhoto(base64, file.type || "image/jpeg");
-      onChange({ photos: [...data.photos, url] });
-      setPhotoPaths((prev) => [...prev, path]);
     } catch (e) {
+      setPhotoSlots((prev) => {
+        const slot = prev.find((s) => s.id === slotId);
+        if (slot?.preview.startsWith("blob:")) {
+          URL.revokeObjectURL(slot.preview);
+          blobUrlsRef.current.delete(slot.preview);
+        }
+        return prev.filter((s) => s.id !== slotId);
+      });
       setUploadError(e instanceof Error ? e.message : "Gagal mengunggah foto");
     } finally {
-      setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
   };
 
   const removePhoto = async (index: number) => {
-    const path = photoPaths[index];
-    if (path) {
+    const slot = photoSlots[index];
+    if (!slot) return;
+
+    if (slot.path) {
       try {
-        await api.deleteJobPhoto(path);
+        await api.deleteJobPhoto(slot.path);
       } catch {
         /* best-effort delete */
       }
     }
-    onChange({ photos: data.photos.filter((_, j) => j !== index) });
-    setPhotoPaths((prev) => prev.filter((_, j) => j !== index));
+
+    if (slot.preview.startsWith("blob:")) {
+      URL.revokeObjectURL(slot.preview);
+      blobUrlsRef.current.delete(slot.preview);
+    }
+
+    setPhotoSlots((prev) => {
+      const next = prev.filter((_, j) => j !== index);
+      syncPhotos(next);
+      return next;
+    });
   };
+
+  const uploading = photoSlots.some((slot) => slot.uploading);
 
   return (
     <div>
@@ -108,24 +180,33 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
       {/* Photo upload */}
       <div>
         <p className="font-bold text-[14px] text-[#172E4D] mb-3">Tambahkan foto (opsional)</p>
-        <div className="flex gap-3 flex-wrap">
-          {data.photos.map((photo, i) => (
-            <div key={i} className="relative w-[90px] h-[90px] rounded-xl bg-[#EEF3FB] border-2 border-[#FD6665] overflow-hidden flex items-center justify-center">
-              {photo.startsWith("http") ? (
-                <img src={photo} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[22px]">{photo}</span>
-              )}
+        <div className="flex gap-3 flex-wrap pt-1.5 pr-1.5">
+          {photoSlots.map((slot, i) => (
+            <div key={slot.id} className="relative shrink-0 w-[90px] h-[90px]">
+              <div className="relative w-full h-full rounded-xl bg-[#EEF3FB] border-2 border-[#FD6665] overflow-hidden">
+                <img
+                  src={slot.preview}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  decoding="async"
+                />
+                {slot.uploading && (
+                  <div className="absolute inset-0 bg-[#172E4D]/25 flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={() => removePhoto(i)}
-                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#1D4196] text-white flex items-center justify-center"
+                onClick={() => void removePhoto(i)}
+                className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 rounded-full bg-[#1D4196] text-white flex items-center justify-center shadow-md ring-2 ring-white hover:bg-[#173577] transition-colors"
+                aria-label="Hapus foto"
               >
-                <X size={11} />
+                <X size={12} strokeWidth={2.5} />
               </button>
             </div>
           ))}
-          {data.photos.length < 3 && (
+          {photoSlots.length < 3 && (
             <button
               type="button"
               disabled={uploading}
@@ -133,7 +214,7 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
               className="w-[90px] h-[90px] rounded-xl border-2 border-dashed border-[#D8E2F0] flex flex-col items-center justify-center gap-1 hover:border-[#1D4196] hover:bg-[#F7F9FC] transition-all text-[#7890AA] disabled:opacity-50"
             >
               <Camera size={22} />
-              <span className="text-[10px] font-semibold">{uploading ? "..." : "Tambah foto"}</span>
+              <span className="text-[10px] font-semibold">{uploading ? "Mengunggah…" : "Tambah foto"}</span>
             </button>
           )}
         </div>
