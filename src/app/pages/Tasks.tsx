@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Link, useNavigate, Navigate } from "react-router";
 import {
   Search,
@@ -43,7 +43,8 @@ import {
 import type { Job, Offer } from "../../types";
 import { appShellClass, appShellClassMobileFlush } from "../../lib/layout";
 import { useShowTasksMap } from "../../lib/useShowTasksMap";
-import { FilterPopover } from "../components/FilterPopover";
+import { FilterPopover, FilterScrollContainerContext } from "../components/FilterPopover";
+import { HorizontalScrollRow } from "../components/HorizontalScrollRow";
 
 type Task = Job & { status: string };
 
@@ -825,6 +826,7 @@ export default function Tasks() {
   const [draftPriceRange, setDraftPriceRange] = useState<PriceRange>(DEFAULT_PRICE_RANGE);
   const [draftCategory, setDraftCategory] = useState<JobCategoryFilter>("all");
   const [categorySearch, setCategorySearch] = useState("");
+  const filterScrollRef = useRef<HTMLDivElement>(null);
 
   const openFilter = (id: FilterMenuId) => {
     if (id === "area") setDraftArea(areaFilter);
@@ -900,9 +902,12 @@ export default function Tasks() {
       {/* Filter bar — horizontal scroll on mobile */}
       <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
         <div className={`${appShellClass} py-3`}>
-          <div
-            className="overflow-x-auto overscroll-x-contain -mx-1 px-1"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+          <FilterScrollContainerContext.Provider value={filterScrollRef}>
+          <HorizontalScrollRow
+            ref={filterScrollRef}
+            fadeEdge="light"
+            innerClassName="-mx-1 px-1 pb-1"
+            scrollLocked={openMenu !== null}
           >
             <div className="flex items-center gap-2 flex-nowrap min-w-max pr-2">
               <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[220px] max-w-[280px] shrink-0 border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
@@ -1061,7 +1066,8 @@ export default function Tasks() {
             </div>
           </FilterPopover>
             </div>
-          </div>
+          </HorizontalScrollRow>
+          </FilterScrollContainerContext.Provider>
         </div>
       </div>
 

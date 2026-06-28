@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Search,
   MapPin,
@@ -28,7 +28,7 @@ import {
 import type { FilterMenuId } from "../../lib/useJobBrowseFilters";
 import { appShellClass } from "../../lib/layout";
 import { HorizontalScrollRow } from "./HorizontalScrollRow";
-import { FilterPopover } from "./FilterPopover";
+import { FilterPopover, FilterScrollContainerContext } from "./FilterPopover";
 
 const SORT_ICONS: Record<SortOption, ReactNode> = {
   newest: <Clock size={18} strokeWidth={2} />,
@@ -299,10 +299,18 @@ export function JobBrowseFilterBar(props: JobBrowseFilterBarProps) {
     filteredCategories,
   } = props;
 
+  const filterScrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="bg-white border-b border-[#f5eded] shrink-0 shadow-sm">
       <div className={`${appShellClass} py-3`}>
-        <HorizontalScrollRow fadeEdge="light" innerClassName="-mx-1 px-1 pb-1">
+        <FilterScrollContainerContext.Provider value={filterScrollRef}>
+        <HorizontalScrollRow
+          ref={filterScrollRef}
+          fadeEdge="light"
+          innerClassName="-mx-1 px-1 pb-1"
+          scrollLocked={openMenu !== null}
+        >
           <div className="flex items-center gap-2 flex-nowrap min-w-max pr-2">
             <div className="flex items-center gap-2 bg-[#F7F9FC] rounded-lg px-3 py-[9px] min-w-[220px] max-w-[280px] shrink-0 border border-transparent focus-within:border-[#1D4196] focus-within:bg-white transition-all">
               <Search size={15} className="text-[#7890AA] shrink-0" />
@@ -461,6 +469,7 @@ export function JobBrowseFilterBar(props: JobBrowseFilterBarProps) {
             </FilterPopover>
           </div>
         </HorizontalScrollRow>
+        </FilterScrollContainerContext.Provider>
       </div>
     </div>
   );

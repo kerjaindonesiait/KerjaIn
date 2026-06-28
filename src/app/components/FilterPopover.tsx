@@ -4,13 +4,19 @@ import {
   useLayoutEffect,
   useRef,
   useCallback,
+  createContext,
+  useContext,
   type ReactNode,
   type CSSProperties,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 
 const MOBILE_BREAKPOINT = 768;
 const VIEWPORT_PADDING = 16;
+
+export const FilterScrollContainerContext =
+  createContext<RefObject<HTMLDivElement | null> | null>(null);
 
 function getViewportSize() {
   const vv = window.visualViewport;
@@ -20,6 +26,31 @@ function getViewportSize() {
     offsetTop: vv?.offsetTop ?? 0,
     offsetLeft: vv?.offsetLeft ?? 0,
   };
+}
+
+function scrollElementToCenter(container: HTMLElement, element: HTMLElement) {
+  const containerRect = container.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+  const elementCenter = elementRect.left + elementRect.width / 2;
+  const containerCenter = containerRect.left + containerRect.width / 2;
+  container.scrollBy({ left: elementCenter - containerCenter, behavior: "smooth" });
+}
+
+function waitForScrollEnd(container: HTMLElement, maxMs = 380): Promise<void> {
+  return new Promise((resolve) => {
+    let timeout = window.setTimeout(finish, maxMs);
+    function finish() {
+      window.clearTimeout(timeout);
+      container.removeEventListener("scrollend", finish);
+      resolve();
+    }
+    if ("onscrollend" in container) {
+      container.addEventListener("scrollend", finish, { once: true });
+    } else {
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(finish, 280);
+    }
+  });
 }
 
 function getMenuPosition(
@@ -115,6 +146,7 @@ export function FilterPopover({
   children,
   align = "left",
   width,
+  scrollContainerRef,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -122,11 +154,16 @@ export function FilterPopover({
   children: ReactNode;
   align?: "left" | "right";
   width?: number | "auto";
+  scrollContainerRef?: RefObject<HTMLDivElement | null>;
 }) {
+  const contextScrollRef = useContext(FilterScrollContainerContext);
+  const resolvedScrollRef = scrollContainerRef ?? contextScrollRef;
+
   const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null);
   const rafRef = useRef<number | null>(null);
+  const openingRef = useRef(false);
 
   const updatePosition = useCallback(() => {
     const el = triggerRef.current;
@@ -180,16 +217,33 @@ export function FilterPopover({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open, onOpenChange]);
 
-  const handleToggle = () => {
-    if (!open && triggerRef.current) {
+  const handleToggle = async () => {
+    if (openingRef.current) return;
+
+    if (open) {
+      onOpenChange(false);
+      return;
+    }
+
+    const container = resolvedScrollRef?.current;
+    const triggerEl = triggerRef.current;
+
+    if (container && triggerEl && container.scrollWidth > container.clientWidth + 2) {
+      openingRef.current = true;
+      scrollElementToCenter(container, triggerEl);
+      await waitForScrollEnd(container);
+      openingRef.current = false;
+    }
+
+    if (triggerRef.current) {
       setMenuStyle(getMenuPosition(triggerRef.current, align, width));
     }
-    onOpenChange(!open);
+    onOpenChange(true);
   };
 
   return (
     <div ref={triggerRef} className="relative shrink-0">
-      <div onMouseDown={(e) => e.preventDefault()} onClick={handleToggle}>
+      <div onMouseDown={(e) => e.preventDefault()} onClick={() => void handleToggle()}>
         {trigger}
       </div>
       {open &&
