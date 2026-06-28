@@ -78,6 +78,8 @@ function ConversationList({
   );
 }
 
+const COMPOSER_MAX_HEIGHT = 120;
+
 function ChatRoom({
   jobId,
   technicianId,
@@ -96,6 +98,20 @@ function ChatRoom({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustComposerHeight = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT);
+    el.style.height = `${next}px`;
+    el.style.overflowY = el.scrollHeight > COMPOSER_MAX_HEIGHT ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    adjustComposerHeight();
+  }, [draft, adjustComposerHeight]);
 
   const load = useCallback(async () => {
     try {
@@ -127,6 +143,7 @@ function ChatRoom({
     if (!text || sending) return;
     setSending(true);
     setDraft("");
+    adjustComposerHeight();
     try {
       const { message } = await api.sendJobMessage(
         jobId,
@@ -143,8 +160,8 @@ function ChatRoom({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] flex flex-col" style={{ fontFamily: "Manrope, sans-serif" }}>
-      <div className="bg-white border-b border-[#D8E2F0] shrink-0">
+    <div className="h-full min-h-0 bg-[#F7F9FC] flex flex-col overflow-hidden" style={{ fontFamily: "Manrope, sans-serif" }}>
+      <div className="bg-white border-b border-[#D8E2F0] shrink-0 z-10">
         <div className="max-w-[640px] mx-auto flex items-center gap-3 px-4 py-4">
           <Link to={backTo} className="text-[#58708D] hover:text-[#1D4196]">
             <ChevronLeft size={20} />
@@ -156,7 +173,7 @@ function ChatRoom({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto max-w-[640px] mx-auto w-full px-4 py-4">
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-[640px] mx-auto w-full px-4 py-4">
         {loading ? (
           <div className="flex justify-center py-16 text-[#58708D]">
             <Loader2 size={22} className="animate-spin" />
@@ -193,9 +210,10 @@ function ChatRoom({
         )}
       </div>
 
-      <div className="shrink-0 bg-white border-t border-[#D8E2F0] p-4">
-        <div className="max-w-[640px] mx-auto flex gap-2">
+      <div className="shrink-0 bg-white border-t border-[#D8E2F0] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-[640px] mx-auto flex gap-2 items-end">
           <textarea
+            ref={textareaRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -206,13 +224,14 @@ function ChatRoom({
             }}
             placeholder="Tulis pesan…"
             rows={1}
-            className="flex-1 border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] text-[#172E4D] resize-none outline-none focus:border-[#1D4196] max-h-32"
+            className="flex-1 border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] leading-relaxed text-[#172E4D] resize-none outline-none focus:border-[#1D4196] overflow-y-auto"
+            style={{ maxHeight: COMPOSER_MAX_HEIGHT, minHeight: 44 }}
           />
           <button
             type="button"
             onClick={send}
             disabled={!draft.trim() || sending}
-            className="shrink-0 w-12 h-12 rounded-xl bg-[#1D4196] hover:bg-[#173577] disabled:bg-[#D8E2F0] text-white flex items-center justify-center transition-colors"
+            className="shrink-0 w-11 h-11 mb-0.5 rounded-xl bg-[#1D4196] hover:bg-[#173577] disabled:bg-[#D8E2F0] text-white flex items-center justify-center transition-colors"
             aria-label="Kirim"
           >
             {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
