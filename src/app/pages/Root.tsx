@@ -84,10 +84,10 @@ export default function Root() {
             <BrandLogo imgClassName="h-12" />
           </Link>
 
-          {/* Post a job CTA */}
+          {/* Post a job CTA — visible on all screen sizes */}
           <Link
             to="/post-job"
-            className="hidden md:flex items-center bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap mr-1"
+            className="flex items-center bg-[#1D4196] text-white text-[12px] md:text-[13px] font-semibold px-3.5 md:px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap ml-2 md:ml-0 md:mr-1 shrink-0"
           >
             Post Kerjaan
           </Link>
@@ -170,9 +170,6 @@ export default function Root() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-white border-t border-[#D8E2F0] px-6 py-4 flex flex-col gap-3">
-            <Link to="/post-job" className="bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[9px] rounded-full text-center">
-              Post Kerjaan
-            </Link>
             {NAV_LINKS.map((item) => (
               <Link key={item.label} to={navHref(item)} className="text-[14px] font-semibold text-[#294566] py-2 border-b border-[#EEF3FB]" onClick={() => setMobileOpen(false)}>
                 {item.label}
