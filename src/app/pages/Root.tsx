@@ -84,10 +84,10 @@ export default function Root() {
             <BrandLogo imgClassName="h-12" />
           </Link>
 
-          {/* Post a job CTA — visible on all screen sizes */}
+          {/* Post a job CTA — desktop */}
           <Link
             to="/post-job"
-            className="flex items-center bg-[#1D4196] text-white text-[12px] md:text-[13px] font-semibold px-3.5 md:px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap ml-2 md:ml-0 md:mr-1 shrink-0"
+            className="hidden md:flex items-center bg-[#1D4196] text-white text-[13px] font-semibold px-5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap mr-1 shrink-0"
           >
             Post Kerjaan
           </Link>
@@ -161,10 +161,18 @@ export default function Root() {
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button className="md:hidden ml-auto p-2" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X size={22} className="text-[#294566]" /> : <Menu size={22} className="text-[#294566]" />}
-          </button>
+          {/* Mobile: Post Kerjaan + menu */}
+          <div className="md:hidden ml-auto flex items-center gap-2 shrink-0">
+            <Link
+              to="/post-job"
+              className="flex items-center bg-[#1D4196] text-white text-[12px] font-semibold px-3.5 py-[7px] rounded-full hover:bg-[#173577] transition-colors whitespace-nowrap shrink-0"
+            >
+              Post Kerjaan
+            </Link>
+            <button className="p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X size={22} className="text-[#294566]" /> : <Menu size={22} className="text-[#294566]" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
