@@ -23,14 +23,6 @@ function GoogleLogo() {
   );
 }
 
-function FacebookLogo() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
-
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const KEAHLIAN = [
@@ -78,7 +70,7 @@ const TARIF_OPTIONS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type OAuthProvider = "google" | "facebook";
+type OAuthProvider = "google";
 
 interface TechData {
   authMethod: OAuthProvider | "email" | null;
@@ -180,24 +172,18 @@ function StepAuth({
       </div>
 
       <div className="flex flex-col gap-3 mb-5">
-        {([
-          { id: "google" as OAuthProvider,   label: "Lanjutkan dengan Google",   logo: <GoogleLogo />,   bg: "bg-white border border-[#D8E2F0] text-[#172E4D]" },
-          { id: "facebook" as OAuthProvider, label: "Lanjutkan dengan Facebook", logo: <FacebookLogo />, bg: "bg-[#1877F2] text-white" },
-        ]).map(({ id, label, logo, bg }) => (
-          <button
-            key={id}
-            onClick={() => onOAuth(id)}
-            disabled={oauthLoading !== null || !data.acceptedTerms}
-            className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all shadow-sm hover:shadow-md active:scale-[0.98] ${bg} ${oauthLoading || !data.acceptedTerms ? "opacity-60 cursor-not-allowed" : ""}`}
-          >
-            {oauthLoading === id ? (
-              <div className="w-5 h-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-            ) : (
-              <span className="w-5 h-5 flex items-center justify-center">{logo}</span>
-            )}
-            {label}
-          </button>
-        ))}
+        <button
+          onClick={() => onOAuth("google")}
+          disabled={oauthLoading !== null || !data.acceptedTerms}
+          className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all shadow-sm hover:shadow-md active:scale-[0.98] bg-white border border-[#D8E2F0] text-[#172E4D] ${oauthLoading || !data.acceptedTerms ? "opacity-60 cursor-not-allowed" : ""}`}
+        >
+          {oauthLoading === "google" ? (
+            <div className="w-5 h-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          ) : (
+            <span className="w-5 h-5 flex items-center justify-center"><GoogleLogo /></span>
+          )}
+          Lanjutkan dengan Google
+        </button>
       </div>
 
       <div className="flex items-center gap-3 mb-4">
@@ -773,7 +759,7 @@ export default function TechAuth() {
 
     const providerParam = searchParams.get("provider");
     const oauthMethod: OAuthProvider | null =
-      providerParam === "google" ? "google" : providerParam === "facebook" ? "facebook" : null;
+      providerParam === "google" ? "google" : null;
 
     try {
       localStorage.removeItem("kerjain_tech_draft");

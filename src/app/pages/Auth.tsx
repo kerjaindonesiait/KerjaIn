@@ -12,7 +12,7 @@ import type { User } from "../../types";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AuthMode = "masuk" | "daftar";
-type OAuthProvider = "google" | "facebook";
+type OAuthProvider = "google";
 type Screen = "role" | "main" | "loading" | "success" | "email-form";
 
 // ─── Brand SVG logos ──────────────────────────────────────────────────────────
@@ -28,75 +28,43 @@ function GoogleLogo() {
   );
 }
 
-function FacebookLogo() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
-
 // ─── Social Button ────────────────────────────────────────────────────────────
 
 function SocialButton({
-  provider,
   onClick,
   loading,
   disabled,
 }: {
-  provider: OAuthProvider;
   onClick: () => void;
   loading: boolean;
   disabled?: boolean;
 }) {
-  const config = {
-    google: {
-      label: "Lanjutkan dengan Google",
-      bg: "bg-white hover:bg-gray-50",
-      border: "border border-[#D8E2F0]",
-      text: "text-[#172E4D]",
-      logo: <GoogleLogo />,
-    },
-    facebook: {
-      label: "Lanjutkan dengan Facebook",
-      bg: "bg-[#1877F2] hover:bg-[#1565d8]",
-      border: "",
-      text: "text-white",
-      logo: <FacebookLogo />,
-    },
-  }[provider];
-
   return (
     <button
       onClick={onClick}
       disabled={loading || disabled}
-      className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all ${config.bg} ${config.border} ${config.text} ${loading || disabled ? "opacity-60 cursor-not-allowed" : "shadow-sm hover:shadow-md active:scale-[0.98]"}`}
+      className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-[14px] transition-all bg-white hover:bg-gray-50 border border-[#D8E2F0] text-[#172E4D] ${loading || disabled ? "opacity-60 cursor-not-allowed" : "shadow-sm hover:shadow-md active:scale-[0.98]"}`}
     >
-      <span className="shrink-0 w-5 h-5 flex items-center justify-center">{config.logo}</span>
-      {config.label}
+      <span className="shrink-0 w-5 h-5 flex items-center justify-center"><GoogleLogo /></span>
+      Lanjutkan dengan Google
     </button>
   );
 }
 
 // ─── Loading overlay ──────────────────────────────────────────────────────────
 
-function LoadingScreen({ provider }: { provider: OAuthProvider }) {
-  const labels = {
-    google: "Google",
-    facebook: "Facebook",
-  };
+function LoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-6">
       <div className="relative w-16 h-16">
         <div className="absolute inset-0 rounded-full border-4 border-[#EEF3FB]" />
         <div className="absolute inset-0 rounded-full border-4 border-[#1D4196] border-t-transparent animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
-          {provider === "google" && <GoogleLogo />}
-          {provider === "facebook" && <FacebookLogo />}
+          <GoogleLogo />
         </div>
       </div>
       <div className="text-center">
-        <p className="font-bold text-[16px] text-[#172E4D]">Menghubungkan ke {labels[provider]}…</p>
+        <p className="font-bold text-[16px] text-[#172E4D]">Menghubungkan ke Google…</p>
         <p className="text-[13px] text-[#58708D] mt-1">Mohon tunggu sebentar</p>
       </div>
     </div>
@@ -452,15 +420,11 @@ export default function Auth() {
 
   const oauthError = params.get("error");
   const oauthErrorMessage =
-    oauthError === "facebook_no_email"
-      ? "Facebook tidak mengembalikan email. Pastikan akun Facebook Anda memiliki email terverifikasi."
-      : oauthError === "oauth_denied"
-        ? "Login dibatalkan. Silakan coba lagi."
-        : oauthError === "oauth_unavailable"
-          ? "Login Facebook belum tersedia. Silakan gunakan Google atau email."
-        : oauthError === "oauth_failed"
-          ? "Login gagal. Silakan coba lagi atau gunakan email."
-          : null;
+    oauthError === "oauth_denied"
+      ? "Login dibatalkan. Silakan coba lagi."
+      : oauthError === "oauth_failed"
+        ? "Login gagal. Silakan coba lagi atau gunakan email."
+        : null;
 
   const handleOAuth = (provider: OAuthProvider) => {
     if (mode === "daftar" && !acceptedTerms) return;
@@ -577,7 +541,7 @@ export default function Auth() {
             </div>
           ) : screen === "loading" && activeProvider ? (
             <div className="p-8">
-              <LoadingScreen provider={activeProvider} />
+              <LoadingScreen />
             </div>
           ) : screen === "email-form" ? (
             <div className="p-8">
@@ -641,14 +605,7 @@ export default function Auth() {
                 {/* Social buttons */}
                 <div className="flex flex-col gap-3 mb-5">
                   <SocialButton
-                    provider="google"
                     onClick={() => handleOAuth("google")}
-                    loading={activeProvider !== null}
-                    disabled={mode === "daftar" && !acceptedTerms}
-                  />
-                  <SocialButton
-                    provider="facebook"
-                    onClick={() => handleOAuth("facebook")}
                     loading={activeProvider !== null}
                     disabled={mode === "daftar" && !acceptedTerms}
                   />
