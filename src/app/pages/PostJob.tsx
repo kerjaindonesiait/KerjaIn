@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ChevronRight, ChevronLeft, CheckCircle, MapPin, Calendar,
   Clock, Banknote, Camera, X, AlertCircle, Share2, Copy, ExternalLink,
-  FileText, Star,
+  FileText, Star, Pencil,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { PostJobFormData } from "../../types";
@@ -44,40 +44,11 @@ interface FormData extends PostJobFormData {}
 
 // ─── Step components ─────────────────────────────────────────────────────────
 
-function StepPilihLayanan({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
-  return (
-    <div>
-      <h2 className="font-black text-[26px] text-[#172E4D] mb-2">Apa yang perlu diperbaiki?</h2>
-      <p className="text-[#58708D] text-[15px] mb-6">Pilih kategori yang paling dekat dengan masalahmu.</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {LAYANAN.map((l) => (
-          <button
-            key={l.id}
-            onClick={() => onChange({ layanan: l.id })}
-            className={`text-left p-4 rounded-2xl border-2 transition-all ${
-              data.layanan === l.id
-                ? "border-[#1D4196] bg-[#EEF3FB] shadow-sm"
-                : "border-[#D8E2F0] bg-white hover:border-[#FD6665] hover:bg-[#F7F9FC]"
-            }`}
-          >
-            <span className="text-[32px] block mb-2">{l.emoji}</span>
-            <p className={`font-bold text-[13px] leading-snug ${data.layanan === l.id ? "text-[#1D4196]" : "text-[#172E4D]"}`}>
-              {l.label}
-            </p>
-            <p className="text-[11px] text-[#58708D] mt-1 leading-snug">{l.desc}</p>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [photoPaths, setPhotoPaths] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const layanan = LAYANAN.find((l) => l.id === data.layanan);
 
   const handleFile = async (file: File) => {
     if (data.photos.length >= 3) return;
@@ -117,12 +88,6 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
 
   return (
     <div>
-      {layanan && (
-        <div className="flex items-center gap-2 mb-5 bg-[#EEF3FB] border border-[#FD6665] rounded-xl px-4 py-2.5">
-          <span className="text-[22px]">{layanan.emoji}</span>
-          <span className="font-bold text-[14px] text-[#1D4196]">{layanan.label}</span>
-        </div>
-      )}
       <h2 className="font-black text-[26px] text-[#172E4D] mb-2">Ceritakan masalahnya</h2>
       <p className="text-[#58708D] text-[15px] mb-5">Semakin jelas detailnya, semakin mudah tukang memberi penawaran yang pas.</p>
 
@@ -367,53 +332,57 @@ function StepAnggaran({ data, onChange }: { data: FormData; onChange: (d: Partia
   );
 }
 
-function StepReview({ data }: { data: FormData }) {
-  const layanan = LAYANAN.find((l) => l.id === data.layanan);
-  const waktu = WAKTU_OPTIONS.find((w) => w.id === data.waktuType);
-
+function StepReview({ data, onEdit }: { data: FormData; onEdit: (step: number) => void }) {
   const formatBudget = (b: string) =>
     b ? `Rp ${parseInt(b).toLocaleString("id-ID")}` : "-";
+
+  const rows: {
+    step: number;
+    icon: ReactNode;
+    label: string;
+    value: string;
+    multiline?: boolean;
+  }[] = [
+    {
+      step: 0,
+      icon: <FileText size={20} className="text-[#1D4196]" />,
+      label: "Deskripsi",
+      value: data.deskripsi || "-",
+      multiline: true,
+    },
+    {
+      step: 1,
+      icon: <MapPin size={20} className="text-[#1D4196]" />,
+      label: "Lokasi",
+      value: [data.area, data.alamat].filter(Boolean).join(", ") || "Jakarta",
+    },
+    {
+      step: 2,
+      icon: <Calendar size={20} className="text-[#1D4196]" />,
+      label: "Waktu",
+      value: data.waktuType === "asap"
+        ? "Segera / Hari ini"
+        : data.waktuType === "sebelum"
+        ? `Sebelum ${data.tanggal || "tanggal dipilih"}`
+        : "Fleksibel",
+    },
+    {
+      step: 3,
+      icon: <Banknote size={20} className="text-[#1D4196]" />,
+      label: "Anggaran",
+      value: data.budgetType === "minta"
+        ? "Minta tukang mengajukan harga"
+        : formatBudget(data.budget),
+    },
+  ];
 
   return (
     <div>
       <h2 className="font-black text-[26px] text-[#172E4D] mb-2">Cek dulu sebelum dipasang</h2>
-      <p className="text-[#58708D] text-[15px] mb-6">Pastikan semua detail sudah benar.</p>
+      <p className="text-[#58708D] text-[15px] mb-6">Pastikan semua detail sudah benar. Ketuk Ubah untuk mengedit.</p>
 
       <div className="space-y-3">
-        {[
-          {
-            icon: <span className="text-[24px]">{layanan?.emoji}</span>,
-            label: "Layanan",
-            value: layanan?.label ?? "-",
-          },
-          {
-            icon: <FileText size={20} className="text-[#1D4196]" />,
-            label: "Deskripsi",
-            value: data.deskripsi || "-",
-            multiline: true,
-          },
-          {
-            icon: <MapPin size={20} className="text-[#1D4196]" />,
-            label: "Lokasi",
-            value: [data.area, data.alamat].filter(Boolean).join(", ") || "Jakarta",
-          },
-          {
-            icon: <Calendar size={20} className="text-[#1D4196]" />,
-            label: "Waktu",
-            value: data.waktuType === "asap"
-              ? "Segera / Hari ini"
-              : data.waktuType === "sebelum"
-              ? `Sebelum ${data.tanggal || "tanggal dipilih"}`
-              : "Fleksibel",
-          },
-          {
-            icon: <Banknote size={20} className="text-[#1D4196]" />,
-            label: "Anggaran",
-            value: data.budgetType === "minta"
-              ? "Minta tukang mengajukan harga"
-              : formatBudget(data.budget),
-          },
-        ].map((row) => (
+        {rows.map((row) => (
           <div key={row.label} className="flex items-start gap-4 bg-white border border-[#D8E2F0] rounded-2xl p-4">
             <div className="w-8 h-8 rounded-lg bg-[#EEF3FB] flex items-center justify-center shrink-0 mt-0.5">
               {row.icon}
@@ -424,16 +393,23 @@ function StepReview({ data }: { data: FormData }) {
                 {row.value}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => onEdit(row.step)}
+              className="flex items-center gap-1 shrink-0 text-[12px] font-bold text-[#1D4196] hover:text-[#173577] px-2 py-1 rounded-lg hover:bg-[#EEF3FB] transition-colors"
+            >
+              <Pencil size={13} /> Ubah
+            </button>
           </div>
         ))}
 
-        {data.photos.length > 0 && (
-          <div className="flex items-start gap-4 bg-white border border-[#D8E2F0] rounded-2xl p-4">
-            <div className="w-8 h-8 rounded-lg bg-[#EEF3FB] flex items-center justify-center shrink-0">
-              <Camera size={16} className="text-[#1D4196]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">Foto</p>
+        <div className="flex items-start gap-4 bg-white border border-[#D8E2F0] rounded-2xl p-4">
+          <div className="w-8 h-8 rounded-lg bg-[#EEF3FB] flex items-center justify-center shrink-0">
+            <Camera size={16} className="text-[#1D4196]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">Foto</p>
+            {data.photos.length > 0 ? (
               <div className="flex gap-2 flex-wrap">
                 {data.photos.map((p, i) => (
                   <div key={i} className="w-12 h-12 rounded-lg bg-[#EEF3FB] border border-[#FD6665] overflow-hidden shrink-0">
@@ -445,9 +421,18 @@ function StepReview({ data }: { data: FormData }) {
                   </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-[14px] font-semibold text-[#7890AA]">Tidak ada foto</p>
+            )}
           </div>
-        )}
+          <button
+            type="button"
+            onClick={() => onEdit(0)}
+            className="flex items-center gap-1 shrink-0 text-[12px] font-bold text-[#1D4196] hover:text-[#173577] px-2 py-1 rounded-lg hover:bg-[#EEF3FB] transition-colors"
+          >
+            <Pencil size={13} /> Ubah
+          </button>
+        </div>
       </div>
 
       <div className="mt-5 bg-[#EEF3FB] border border-[#FD6665] rounded-xl p-4 flex items-start gap-3">
@@ -638,7 +623,7 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
-const STEPS = ["Layanan", "Deskripsi", "Lokasi", "Waktu", "Anggaran", "Tinjau"];
+const STEPS = ["Deskripsi", "Lokasi", "Waktu", "Anggaran", "Tinjau"];
 
 function ProgressBar({ step }: { step: number }) {
   return (
@@ -671,7 +656,7 @@ function ProgressBar({ step }: { step: number }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const INITIAL_DATA: FormData = {
-  layanan: "",
+  layanan: "handyman",
   deskripsi: "",
   photos: [],
   lokasiType: "lokasi",
@@ -690,11 +675,10 @@ function generateJobId() {
 }
 
 function canProceed(step: number, data: FormData): boolean {
-  if (step === 0) return !!data.layanan;
-  if (step === 1) return data.deskripsi.length >= 30;
-  if (step === 2) return !!data.area;
-  if (step === 3) return !!data.waktuType;
-  if (step === 4) return data.budgetType === "minta" || !!data.budget;
+  if (step === 0) return data.deskripsi.length >= 30;
+  if (step === 1) return !!data.area;
+  if (step === 2) return !!data.waktuType;
+  if (step === 3) return data.budgetType === "minta" || !!data.budget;
   return true;
 }
 
@@ -757,12 +741,11 @@ export default function PostJob() {
 
         {/* Step content */}
         <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 sm:p-8 mb-6 min-h-[400px]">
-          {step === 0 && <StepPilihLayanan data={data} onChange={update} />}
-          {step === 1 && <StepDeskripsi data={data} onChange={update} />}
-          {step === 2 && <StepLokasi data={data} onChange={update} />}
-          {step === 3 && <StepWaktu data={data} onChange={update} />}
-          {step === 4 && <StepAnggaran data={data} onChange={update} />}
-          {step === 5 && <StepReview data={data} />}
+          {step === 0 && <StepDeskripsi data={data} onChange={update} />}
+          {step === 1 && <StepLokasi data={data} onChange={update} />}
+          {step === 2 && <StepWaktu data={data} onChange={update} />}
+          {step === 3 && <StepAnggaran data={data} onChange={update} />}
+          {step === 4 && <StepReview data={data} onEdit={setStep} />}
         </div>
 
         {/* Nav buttons */}
