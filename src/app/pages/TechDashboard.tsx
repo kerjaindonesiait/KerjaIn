@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   MapPin, Calendar, Clock, Shield, CheckCircle,
-  ChevronLeft, Bell, Send,
-  Briefcase, LogOut, Loader2, MessageCircle,
+  ChevronLeft, Send,
+  Briefcase, Loader2, MessageCircle,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
@@ -666,7 +666,7 @@ const STATUS_STYLE: Record<string, string> = {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function TechDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const jobOpenedViaPush = useRef(false);
@@ -683,12 +683,6 @@ export default function TechDashboard() {
   const [loadingTab, setLoadingTab] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [techStats, setTechStats] = useState<TechnicianStats | null>(null);
-  const [conversationCount, setConversationCount] = useState(0);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
-  };
 
   useEffect(() => {
     api.getTechnicianStats().then(({ stats }) => setTechStats(stats)).catch(() => setTechStats(null));
@@ -704,10 +698,6 @@ export default function TechDashboard() {
         setQuotedJobs(q);
       })
       .catch(() => {});
-    api
-      .getConversations()
-      .then(({ conversations }) => setConversationCount(conversations.length))
-      .catch(() => setConversationCount(0));
   }, []);
 
   useEffect(() => {
@@ -869,25 +859,10 @@ export default function TechDashboard() {
             <Link to="/dasbor-tukang" className="hover:opacity-90 transition-opacity">
               <BrandLogo variant="dark" imgClassName="h-9" />
             </Link>
-            <span className="text-[10px] font-bold bg-[#1D4196] text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
-              Dasbor Tukang
-            </span>
           </div>
 
           {/* Profile */}
-          <div className="flex items-center gap-4">
-            <Link
-              to="/pesan"
-              className="relative text-white/70 hover:text-white transition-colors"
-              aria-label="Pesan"
-            >
-              <Bell size={20} />
-              {conversationCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#1D4196] text-white text-[9px] font-black rounded-full flex items-center justify-center">
-                  {conversationCount > 9 ? "9+" : conversationCount}
-                </span>
-              )}
-            </Link>
+          <div className="flex items-center">
             <Link to="/akun" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-white/20" />
@@ -901,14 +876,6 @@ export default function TechDashboard() {
                 <HeaderRating rating={TUKANG.rating} reviewCount={TUKANG.reviews} />
               </div>
             </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-white/50 hover:text-white transition-colors"
-              aria-label="Keluar"
-            >
-              <LogOut size={18} />
-            </button>
           </div>
         </div>
       </header>
