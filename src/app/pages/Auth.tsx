@@ -462,7 +462,7 @@ export default function Auth() {
         return;
       }
       if (loggedInUser?.role === "technician") {
-        navigate("/dasbor-tukang", { replace: true });
+        navigate(defaultRouteForUser(loggedInUser), { replace: true });
         return;
       }
       navigate("/tasks", { replace: true });

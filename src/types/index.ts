@@ -8,6 +8,7 @@ export interface User {
   avatarUrl: string | null;
   emailVerified: boolean;
   phone?: string | null;
+  technicianOnboardingComplete?: boolean;
   createdAt: string;
 }
 

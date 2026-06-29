@@ -209,15 +209,18 @@ export const api = {
   getTechnicianProfile() {
     return request<{
       profile: {
+        phone: string | null;
         area: string | null;
         keahlian: string[];
         pengalaman: string | null;
         tarif: string | null;
         bio: string | null;
         verified: boolean;
+        nik: string | null;
+        ktpPhotoPath: string | null;
+        selfiePhotoPath: string | null;
         ktpPhotoUrl: string | null;
         selfiePhotoUrl: string | null;
-        nik: string | null;
       } | null;
     }>("/api/technicians/profile");
   },

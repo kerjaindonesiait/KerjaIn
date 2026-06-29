@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 
 export default function VerifyEmail() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const token = params.get("token") ?? "";
   const { refreshUser } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -20,17 +21,22 @@ export default function VerifyEmail() {
     }
     api.verifyEmail(token)
       .then(async ({ user }) => {
-        setStatus("success");
-        if (user?.role === "technician" || user?.role === "user") {
-          setVerifiedRole(user.role);
+        const me = await refreshUser();
+        const role = user?.role ?? me?.role ?? null;
+        if (role === "technician" || role === "user") {
+          setVerifiedRole(role);
         }
-        await refreshUser();
+        if (role === "technician") {
+          navigate("/daftar-tukang?resume=1", { replace: true });
+          return;
+        }
+        setStatus("success");
       })
       .catch((err) => {
         setStatus("error");
         setMessage(err instanceof Error ? err.message : "Verifikasi gagal");
       });
-  }, [token, refreshUser]);
+  }, [token, refreshUser, navigate]);
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] flex items-center justify-center p-6" style={{ fontFamily: "Manrope, sans-serif" }}>
@@ -46,21 +52,10 @@ export default function VerifyEmail() {
             <CheckCircle size={48} className="text-[#1D4196] mx-auto mb-4" />
             <h1 className="font-black text-[22px] text-[#172E4D] mb-2">Email terverifikasi!</h1>
             <p className="text-[14px] text-[#58708D] mb-6">
-              {verifiedRole === "technician"
-                ? "Email Anda sudah diverifikasi. Masuk untuk melanjutkan pendaftaran profil tukang."
-                : "Email Anda sudah diverifikasi. Silakan masuk untuk melanjutkan."}
+              Email Anda sudah diverifikasi. Silakan masuk untuk melanjutkan.
             </p>
             <Link
-              to={
-                verifiedRole === "technician"
-                  ? "/masuk?next=" + encodeURIComponent("/daftar-tukang?resume=1")
-                  : "/masuk"
-              }
-              state={
-                verifiedRole === "technician"
-                  ? { from: "/daftar-tukang?resume=1" }
-                  : undefined
-              }
+              to="/masuk"
               className="inline-block bg-[#1D4196] text-white font-bold text-[14px] px-6 py-3 rounded-2xl hover:bg-[#173577]"
             >
               Masuk sekarang

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import {
   MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronLeft, Send,
@@ -256,15 +256,24 @@ function JobCard({ job, selected, quoted, onClick }: {
 
 // ─── Quote Form ───────────────────────────────────────────────────────────────
 
-function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number) => void }) {
+function QuoteForm({
+  job,
+  canQuote,
+  onSuccess,
+}: {
+  job: ApiJob;
+  canQuote: boolean;
+  onSuccess: (price: number) => void;
+}) {
   const [price, setPrice] = useState("");
   const [note, setNote] = useState("");
   const [waktu, setWaktu] = useState("segera");
   const [jam, setJam] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const priceNum = parseInt(price.replace(/\D/g, "")) || 0;
-  const valid = priceNum >= 50000 && note.trim().length >= 20;
+  const valid = canQuote && priceNum >= 50000 && note.trim().length >= 20;
 
   const formatRp = (v: string) => {
     const n = v.replace(/\D/g, "");
@@ -282,8 +291,8 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
         scheduledTime: jam || undefined,
       });
       onSuccess(priceNum);
-    } catch {
-      // show error silently for now
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengirim penawaran");
     } finally {
       setLoading(false);
     }
@@ -291,6 +300,19 @@ function QuoteForm({ job, onSuccess }: { job: ApiJob; onSuccess: (price: number)
 
   return (
     <div className="space-y-5">
+      {!canQuote && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+          <p className="font-bold text-[13px] text-amber-900 mb-1">Verifikasi KTP diperlukan</p>
+          <p className="text-[12px] text-amber-800">
+            Kamu belum bisa mengajukan penawaran sampai identitas diverifikasi oleh tim KerjaIn (biasanya 1×24 jam).
+          </p>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-[13px] text-red-700">
+          {error}
+        </div>
+      )}
       <div>
         <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Harga penawaranmu</label>
         <div className="relative">
@@ -464,10 +486,11 @@ function QuoteSuccess({ job, price, onBack }: { job: ApiJob; price: number; onBa
 
 // ─── Job Detail Panel ─────────────────────────────────────────────────────────
 
-function JobDetail({ job, quoted, quotedPrice, onQuote, onClose, tab, onTabChange }: {
+function JobDetail({ job, quoted, quotedPrice, canQuote, onQuote, onClose, tab, onTabChange }: {
   job: ApiJob;
   quoted: boolean;
   quotedPrice: number;
+  canQuote: boolean;
   onQuote: (price: number) => void;
   onClose?: () => void;
   tab: "detail" | "ajukan";
@@ -593,9 +616,10 @@ function JobDetail({ job, quoted, quotedPrice, onQuote, onClose, tab, onTabChang
 
               <button
                 onClick={() => onTabChange("ajukan")}
-                className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] py-3.5 rounded-2xl transition-colors"
+                disabled={!quoted && !canQuote}
+                className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] py-3.5 rounded-2xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {quoted ? "✓ Penawaran sudah terkirim" : "Ajukan Penawaran →"}
+                {quoted ? "✓ Penawaran sudah terkirim" : canQuote ? "Ajukan Penawaran →" : "Verifikasi KTP diperlukan"}
               </button>
             </div>
           )}
@@ -611,7 +635,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote, onClose, tab, onTabChang
                 <p className="text-[12px] text-[#7890AA] mt-2">Tunggu konfirmasi dari pelanggan</p>
               </div>
             ) : (
-              <QuoteForm job={job} onSuccess={handleSuccess} />
+              <QuoteForm job={job} canQuote={canQuote} onSuccess={handleSuccess} />
             )
           )}
         </div>
@@ -666,7 +690,7 @@ const STATUS_STYLE: Record<string, string> = {
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function TechDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const jobOpenedViaPush = useRef(false);
@@ -683,6 +707,7 @@ export default function TechDashboard() {
   const [loadingTab, setLoadingTab] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [techStats, setTechStats] = useState<TechnicianStats | null>(null);
+  const canQuote = techStats?.verified ?? false;
 
   useEffect(() => {
     api.getTechnicianStats().then(({ stats }) => setTechStats(stats)).catch(() => setTechStats(null));
@@ -848,6 +873,10 @@ export default function TechDashboard() {
     reviews: techStats?.reviewCount ?? 0,
   };
 
+  if (!authLoading && user?.role === "technician" && !user.technicianOnboardingComplete) {
+    return <Navigate to="/daftar-tukang?resume=1" replace />;
+  }
+
   return (
     <div className="h-full bg-[#F7F9FC] flex flex-col overflow-hidden" style={{ fontFamily: "Manrope, sans-serif" }}>
 
@@ -943,6 +972,7 @@ export default function TechDashboard() {
                       job={selectedJob}
                       quoted={selectedJob.id in quotedJobs}
                       quotedPrice={quotedJobs[selectedJob.id] ?? 0}
+                      canQuote={canQuote}
                       onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
                       onClose={handleJobBack}
                       tab={jobDetailTab}
@@ -959,6 +989,7 @@ export default function TechDashboard() {
                   job={selectedJob}
                   quoted={selectedJob.id in quotedJobs}
                   quotedPrice={quotedJobs[selectedJob.id] ?? 0}
+                  canQuote={canQuote}
                   onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
                   onClose={handleJobBack}
                   tab={jobDetailTab}

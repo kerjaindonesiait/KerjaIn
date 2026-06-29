@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../../lib/auth";
+import { defaultRouteForUser } from "../../lib/defaultRoute";
 
 export function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: "user" | "technician" }) {
   const { user, loading } = useAuth();
@@ -27,7 +28,7 @@ export function ProtectedRoute({ children, role }: { children: React.ReactNode; 
   if (role && user.role !== role) {
     const redirect =
       user.role === "technician" && role === "user"
-        ? "/dasbor-tukang"
+        ? defaultRouteForUser(user)
         : user.role === "user" && role === "technician"
           ? "/"
           : "/";

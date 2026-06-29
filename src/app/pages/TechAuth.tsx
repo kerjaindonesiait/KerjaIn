@@ -677,6 +677,23 @@ function SuccessScreen({ data }: { data: TechData }) {
 
 // ─── can proceed logic ────────────────────────────────────────────────────────
 
+function getProfileResumeStep(profile: {
+  phone?: string | null;
+  area?: string | null;
+  nik?: string | null;
+  ktpPhotoPath?: string | null;
+  selfiePhotoPath?: string | null;
+  keahlian?: string[];
+  pengalaman?: string | null;
+} | null): number {
+  if (!profile?.phone || !profile?.area) return 1;
+  const nikOk = (profile.nik ?? "").replace(/\D/g, "").length === 16;
+  if (!nikOk || !profile.ktpPhotoPath || !profile.selfiePhotoPath) return 2;
+  if (!profile.keahlian?.length) return 3;
+  if (!profile.pengalaman) return 4;
+  return 4;
+}
+
 function canProceed(step: number, data: TechData, isLoggedInTechnician: boolean): boolean {
   if (step === 0) {
     if (isLoggedInTechnician) return true;
@@ -723,7 +740,7 @@ const INITIAL: TechData = {
 export default function TechAuth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, loading, register } = useAuth();
+  const { user, loading, register, refreshUser } = useAuth();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<TechData>(INITIAL);
   const [submitted, setSubmitted] = useState(false);
@@ -784,6 +801,13 @@ export default function TechAuth() {
 
   useEffect(() => {
     if (loading) return;
+    if (user?.role === "technician" && !user.technicianOnboardingComplete && searchParams.get("resume") !== "1") {
+      navigate("/daftar-tukang?resume=1", { replace: true });
+    }
+  }, [loading, user, searchParams, navigate]);
+
+  useEffect(() => {
+    if (loading) return;
     const resume = searchParams.get("resume");
     if (resume !== "1" || user?.role !== "technician" || resumeHandled.current) return;
     resumeHandled.current = true;
@@ -802,16 +826,26 @@ export default function TechAuth() {
     (async () => {
       try {
         const { profile } = await api.getTechnicianProfile();
-        if (profile?.ktpPhotoUrl && profile?.selfiePhotoUrl && profile.nik) {
+        if (user!.technicianOnboardingComplete) {
           navigate("/dasbor-tukang", { replace: true });
           return;
         }
 
-        setStep(1);
+        const resumeStep = getProfileResumeStep(profile);
+        setStep(resumeStep);
         setData((d) => ({
           ...d,
           nama: d.nama || user!.fullName || "",
           email: d.email || user!.email,
+          phone: d.phone || profile?.phone || "",
+          area: d.area || profile?.area || "",
+          nik: d.nik || profile?.nik || "",
+          ktpPhoto: d.ktpPhoto ?? profile?.ktpPhotoPath ?? null,
+          selfiePhoto: d.selfiePhoto ?? profile?.selfiePhotoPath ?? null,
+          keahlian: d.keahlian.length ? d.keahlian : profile?.keahlian ?? [],
+          pengalaman: d.pengalaman || profile?.pengalaman || "",
+          tarif: d.tarif || profile?.tarif || "",
+          bio: d.bio || profile?.bio || "",
           authMethod: oauthMethod ?? d.authMethod ?? "email",
         }));
       } catch {
@@ -868,6 +902,7 @@ export default function TechAuth() {
     setSubmitError("");
     try {
       await saveTechnicianProfile(data);
+      await refreshUser();
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Gagal menyimpan profil");
@@ -889,7 +924,7 @@ export default function TechAuth() {
                 <h2 className="font-black text-[26px] text-[#172E4D] mb-1">Cek email kamu</h2>
                 <p className="text-[#58708D] text-[14px] max-w-xs mx-auto">
                   Kami mengirim tautan verifikasi ke <span className="font-bold text-[#172E4D]">{data.email}</span>.
-                  Setelah verifikasi, masuk lalu lengkapi profil dan unggah KTP langsung ke sistem kami.
+                  Setelah verifikasi, kamu akan melanjutkan pendaftaran profil tukang.
                 </p>
               </div>
 
