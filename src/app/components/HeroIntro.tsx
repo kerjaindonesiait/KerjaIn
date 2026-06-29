@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const INTRO_SEEN_KEY = "kerjain_intro_seen";
 const INTRO_MP4 = "/intro/kerjain-intro-video.mp4";
-const INTRO_POSTER = "/intro/kerjain-intro-first_frame.jpg";
+const INTRO_POSTER = "/intro/kerjain-intro-first%20frame.png";
 const HARD_FALLBACK_MS = 4500;
 
 type HeroIntroProps = {
@@ -140,7 +140,6 @@ export function HeroIntro({ children }: HeroIntroProps) {
             playsInline
             preload="auto"
           >
-            <source src="/intro/kerjain-intro-video.webm" type="video/webm" />
             <source src={INTRO_MP4} type="video/mp4" />
           </video>
           <div className={`intro__flash ${flash ? "intro__flash--on" : ""}`} />
