@@ -5,6 +5,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
 import { useScrollToTop } from "../../lib/useScrollToTop";
+import { useGoBack } from "../../lib/useGoBack";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 import type { User } from "../../types";
 
@@ -414,6 +415,7 @@ export default function Auth() {
   const [successEmail, setSuccessEmail] = useState("");
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const goBack = useGoBack("/");
 
   useScrollToTop(screen, mode);
 
@@ -474,12 +476,13 @@ export default function Auth() {
     >
       {/* Back link — site header already shows logo */}
       <div className="flex items-center justify-end px-6 py-3 max-w-[520px] mx-auto w-full">
-        <Link
-          to="/"
+        <button
+          type="button"
+          onClick={goBack}
           className="text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors flex items-center gap-1"
         >
           <ChevronLeft size={15} /> Kembali
-        </Link>
+        </button>
       </div>
 
       {/* Card */}

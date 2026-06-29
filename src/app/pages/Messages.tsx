@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ChevronLeft, Loader2, MessageCircle, Send } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
+import { useGoBack } from "../../lib/useGoBack";
 import type { ChatMessage, ConversationPreview } from "../../types";
 
 function formatTime(iso: string) {
@@ -21,19 +22,19 @@ function chatUrl(jobId: string, technicianId: string) {
 function ConversationList({
   conversations,
   loading,
-  backTo,
+  onBack,
 }: {
   conversations: ConversationPreview[];
   loading: boolean;
-  backTo: string;
+  onBack: () => void;
 }) {
   return (
     <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="bg-white border-b border-[#D8E2F0] sticky top-0 z-10">
         <div className="max-w-[640px] mx-auto flex items-center gap-3 px-4 py-4">
-          <Link to={backTo} className="text-[#58708D] hover:text-[#1D4196]">
+          <button type="button" onClick={onBack} className="text-[#58708D] hover:text-[#1D4196]">
             <ChevronLeft size={20} />
-          </Link>
+          </button>
           <h1 className="font-black text-[18px] text-[#172E4D]">Pesan</h1>
         </div>
       </div>
@@ -83,11 +84,11 @@ const COMPOSER_MAX_HEIGHT = 120;
 function ChatRoom({
   jobId,
   technicianId,
-  backTo,
+  onBack,
 }: {
   jobId: string;
   technicianId: string;
-  backTo: string;
+  onBack: () => void;
 }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -163,9 +164,9 @@ function ChatRoom({
     <div className="h-full min-h-0 bg-[#F7F9FC] flex flex-col overflow-hidden" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="bg-white border-b border-[#D8E2F0] shrink-0 z-10">
         <div className="max-w-[640px] mx-auto flex items-center gap-3 px-4 py-4">
-          <Link to={backTo} className="text-[#58708D] hover:text-[#1D4196]">
+          <button type="button" onClick={onBack} className="text-[#58708D] hover:text-[#1D4196]">
             <ChevronLeft size={20} />
-          </Link>
+          </button>
           <div className="min-w-0 flex-1">
             <p className="font-black text-[15px] text-[#172E4D] truncate">{otherName || "…"}</p>
             <p className="text-[11px] text-[#7890AA] truncate">{jobTitle}</p>
@@ -255,7 +256,9 @@ export default function Messages() {
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loadingList, setLoadingList] = useState(!jobId);
 
-  const backTo = user?.role === "technician" ? "/dasbor-tukang" : "/pekerjaan-saya";
+  const listFallback = user?.role === "technician" ? "/dasbor-tukang" : "/pekerjaan-saya";
+  const goBackToList = useGoBack(listFallback);
+  const goBackToInbox = useGoBack("/pesan");
 
   useEffect(() => {
     if (jobId) return;
@@ -275,7 +278,7 @@ export default function Messages() {
   }, [jobId, technicianId, user?.role, navigate]);
 
   if (!jobId) {
-    return <ConversationList conversations={conversations} loading={loadingList} backTo={backTo} />;
+    return <ConversationList conversations={conversations} loading={loadingList} onBack={goBackToList} />;
   }
 
   if (user?.role === "user" && !technicianId) {
@@ -286,7 +289,7 @@ export default function Messages() {
     <ChatRoom
       jobId={jobId}
       technicianId={user?.role === "technician" ? user.id : technicianId}
-      backTo="/pesan"
+      onBack={goBackToInbox}
     />
   );
 }

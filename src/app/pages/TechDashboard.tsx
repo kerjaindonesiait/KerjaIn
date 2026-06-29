@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronLeft, Bell, Send,
@@ -151,6 +151,18 @@ const NAV_TABS = [
   { id: "aktif",     label: "Pekerjaan Aktif", icon: <Briefcase size={16} /> },
   { id: "selesai",   label: "Selesai",         icon: <CheckCircle size={16} /> },
 ];
+
+type NavTab = "lowongan" | "penawaran" | "aktif" | "selesai";
+type JobDetailTab = "detail" | "ajukan";
+
+function parseNavTab(raw: string | null): NavTab {
+  if (raw === "penawaran" || raw === "aktif" || raw === "selesai") return raw;
+  return "lowongan";
+}
+
+function parseJobDetailTab(raw: string | null): JobDetailTab {
+  return raw === "ajukan" ? "ajukan" : "detail";
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -452,14 +464,15 @@ function QuoteSuccess({ job, price, onBack }: { job: ApiJob; price: number; onBa
 
 // ─── Job Detail Panel ─────────────────────────────────────────────────────────
 
-function JobDetail({ job, quoted, quotedPrice, onQuote, onClose }: {
+function JobDetail({ job, quoted, quotedPrice, onQuote, onClose, tab, onTabChange }: {
   job: ApiJob;
   quoted: boolean;
   quotedPrice: number;
   onQuote: (price: number) => void;
   onClose?: () => void;
+  tab: "detail" | "ajukan";
+  onTabChange: (tab: "detail" | "ajukan") => void;
 }) {
-  const [tab, setTab] = useState<"detail" | "ajukan">("detail");
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSuccess = (price: number) => {
@@ -531,7 +544,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote, onClose }: {
           {DETAIL_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => onTabChange(t.id)}
               className={`flex-1 py-3 text-[13px] font-bold transition-all relative ${
                 tab === t.id ? "text-[#1D4196]" : "text-[#7890AA] hover:text-[#58708D]"
               }`}
@@ -579,7 +592,7 @@ function JobDetail({ job, quoted, quotedPrice, onQuote, onClose }: {
               </div>
 
               <button
-                onClick={() => setTab("ajukan")}
+                onClick={() => onTabChange("ajukan")}
                 className="w-full bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] py-3.5 rounded-2xl transition-colors"
               >
                 {quoted ? "✓ Penawaran sudah terkirim" : "Ajukan Penawaran →"}
@@ -655,10 +668,13 @@ const STATUS_STYLE: Record<string, string> = {
 export default function TechDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const jobOpenedViaPush = useRef(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
-  const [navTab, setNavTab] = useState<"lowongan" | "penawaran" | "aktif" | "selesai">("lowongan");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navTab = parseNavTab(searchParams.get("nav"));
+  const selectedId = navTab === "lowongan" ? searchParams.get("job") : null;
+  const jobDetailTab = parseJobDetailTab(searchParams.get("dtab"));
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [quotedJobs, setQuotedJobs] = useState<Record<string, number>>({});
   const [myOffers, setMyOffers] = useState<MineOffer[]>([]);
@@ -752,12 +768,81 @@ export default function TechDashboard() {
 
   useEffect(() => {
     if (selectedId && !filtered.some((j) => j.id === selectedId)) {
-      setSelectedId(null);
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("job");
+        p.delete("dtab");
+        return p;
+      }, { replace: true });
     }
-  }, [filtered, selectedId]);
+  }, [filtered, selectedId, setSearchParams]);
 
   const selectedJobRaw = filtered.find((j) => j.id === selectedId) ?? null;
   const selectedJob = selectedJobRaw ? mapJob(selectedJobRaw) : null;
+
+  const setNavTab = (tab: NavTab) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (tab === "lowongan") p.delete("nav");
+      else {
+        p.set("nav", tab);
+        p.delete("job");
+        p.delete("dtab");
+      }
+      return p;
+    });
+  };
+
+  const openJob = (id: string | null) => {
+    if (!id) {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("job");
+        p.delete("dtab");
+        return p;
+      }, { replace: true });
+      return;
+    }
+    jobOpenedViaPush.current = true;
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.delete("nav");
+      p.set("job", id);
+      p.delete("dtab");
+      return p;
+    });
+  };
+
+  const setJobDetailTab = (tab: JobDetailTab) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (tab === "detail") p.delete("dtab");
+      else p.set("dtab", tab);
+      return p;
+    });
+  };
+
+  const handleJobBack = () => {
+    const dtab = searchParams.get("dtab");
+    const job = searchParams.get("job");
+    if (job && dtab && dtab !== "detail") {
+      navigate(-1);
+      return;
+    }
+    if (job) {
+      if (jobOpenedViaPush.current) {
+        jobOpenedViaPush.current = false;
+        navigate(-1);
+      } else {
+        setSearchParams((prev) => {
+          const p = new URLSearchParams(prev);
+          p.delete("job");
+          p.delete("dtab");
+          return p;
+        }, { replace: true });
+      }
+    }
+  };
 
   const mapPanelClassName =
     "order-1 md:order-2 flex-1 min-w-0 relative min-h-0 h-full md:rounded-xl md:overflow-hidden md:border md:border-[#D8E2F0]";
@@ -765,11 +850,6 @@ export default function TechDashboard() {
     "order-2 md:order-1 w-full md:w-[380px] lg:w-[400px] shrink-0 flex flex-col bg-[#F7F9FC] md:border md:border-[#D8E2F0] md:rounded-xl flex-1 md:flex-none min-h-0 overflow-hidden";
   const portraitListClassName =
     "flex-1 flex flex-col w-full min-h-0 overflow-hidden bg-[#F7F9FC]";
-
-  const closeSelectedJob = () => {
-    setSelectedId(null);
-    setMapPreviewId(null);
-  };
 
   const TUKANG = {
     name: user?.fullName ?? "Tukang",
@@ -841,7 +921,7 @@ export default function TechDashboard() {
           {NAV_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => setNavTab(t.id as typeof navTab)}
+              onClick={() => setNavTab(t.id as NavTab)}
               className={`flex shrink-0 items-center gap-1.5 px-4 py-3.5 text-[13px] font-bold transition-all relative border-b-2 whitespace-nowrap ${
                 navTab === t.id
                   ? "text-[#1D4196] border-[#1D4196]"
@@ -880,7 +960,7 @@ export default function TechDashboard() {
                     onPreviewClose={() => setMapPreviewId(null)}
                     onViewTask={(id) => {
                       setMapPreviewId(null);
-                      setSelectedId(id);
+                      openJob(id);
                     }}
                   />
                 </div>
@@ -897,7 +977,9 @@ export default function TechDashboard() {
                       quoted={selectedJob.id in quotedJobs}
                       quotedPrice={quotedJobs[selectedJob.id] ?? 0}
                       onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
-                      onClose={closeSelectedJob}
+                      onClose={handleJobBack}
+                      tab={jobDetailTab}
+                      onTabChange={setJobDetailTab}
                     />
                   )}
                 </div>
@@ -911,7 +993,9 @@ export default function TechDashboard() {
                   quoted={selectedJob.id in quotedJobs}
                   quotedPrice={quotedJobs[selectedJob.id] ?? 0}
                   onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
-                  onClose={closeSelectedJob}
+                  onClose={handleJobBack}
+                  tab={jobDetailTab}
+                  onTabChange={setJobDetailTab}
                 />
               </div>
             ) : (
@@ -945,7 +1029,7 @@ export default function TechDashboard() {
                           quoted={job.id in quotedJobs}
                           onClick={() => {
                             setMapPreviewId(null);
-                            setSelectedId(selectedId === job.id ? null : job.id);
+                            openJob(selectedId === job.id ? null : job.id);
                           }}
                         />
                       );

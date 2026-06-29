@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { Link, useNavigate, Navigate } from "react-router";
+import { Link, useNavigate, Navigate, useSearchParams } from "react-router";
 import {
   Search,
   MapPin,
@@ -205,7 +205,25 @@ function TaskCard({
   );
 }
 
-function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
+type TaskDetailTab = "detail" | "penawaran" | "pemilik";
+
+function parseTaskDetailTab(raw: string | null, isOwner: boolean): TaskDetailTab {
+  if (raw === "penawaran" && isOwner) return "penawaran";
+  if (raw === "pemilik") return "pemilik";
+  return "detail";
+}
+
+function TaskDetail({
+  task,
+  tab,
+  onTabChange,
+  onBack,
+}: {
+  task: Task;
+  tab: TaskDetailTab;
+  onTabChange: (tab: TaskDetailTab) => void;
+  onBack: () => void;
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [acceptedOfferId, setAcceptedOfferId] = useState<string | null>(null);
@@ -214,7 +232,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [tab, setTab] = useState<"detail" | "penawaran" | "pemilik">("detail");
 
   const TABS = [
     { id: "detail" as const, label: "Detail", count: null },
@@ -224,12 +241,6 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
   const canAcceptOffers = !!task.isOwner && task.status === "open";
   const visibleTabs = TABS.filter((t) => t.id !== "penawaran" || task.isOwner);
-
-  useEffect(() => {
-    if (tab === "penawaran" && !task.isOwner) {
-      setTab("detail");
-    }
-  }, [tab, task.isOwner]);
 
   useEffect(() => {
     if (tab === "penawaran" && task.isOwner) {
@@ -272,7 +283,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
       <div className="shrink-0 border-b border-[#f5eded]">
         <div className="flex items-center justify-between px-6 py-3">
           <button
-            onClick={onClose}
+            onClick={onBack}
             className="flex items-center gap-1.5 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors"
           >
             <ChevronLeft size={16} /> Kembali
@@ -329,7 +340,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
           {visibleTabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => onTabChange(t.id)}
               className={`flex-1 py-2.5 text-[13px] font-bold transition-all relative ${
                 tab === t.id
                   ? "text-[#1D4196]"
@@ -812,9 +823,12 @@ function PriceRangeSlider({
 
 export default function Tasks() {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const jobOpenedViaPush = useRef(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedId = searchParams.get("job");
   const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [areaFilter, setAreaFilter] = useState("Semua area");
@@ -866,11 +880,83 @@ export default function Tasks() {
 
   useEffect(() => {
     if (selectedId && !filtered.some((t) => t.id === selectedId)) {
-      setSelectedId(null);
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("job");
+        p.delete("tab");
+        return p;
+      }, { replace: true });
     }
-  }, [filtered, selectedId]);
+  }, [filtered, selectedId, setSearchParams]);
 
   const selectedTask = filtered.find((t) => t.id === selectedId) ?? null;
+  const detailTab = selectedTask
+    ? parseTaskDetailTab(searchParams.get("tab"), !!selectedTask.isOwner)
+    : "detail";
+
+  useEffect(() => {
+    if (
+      selectedTask &&
+      searchParams.get("tab") === "penawaran" &&
+      !selectedTask.isOwner
+    ) {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("tab");
+        return p;
+      }, { replace: true });
+    }
+  }, [selectedTask, searchParams, setSearchParams]);
+
+  const openJob = (id: string | null) => {
+    if (!id) {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("job");
+        p.delete("tab");
+        return p;
+      }, { replace: true });
+      return;
+    }
+    jobOpenedViaPush.current = true;
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("job", id);
+      p.delete("tab");
+      return p;
+    });
+  };
+
+  const setDetailTab = (tab: TaskDetailTab) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (tab === "detail") p.delete("tab");
+      else p.set("tab", tab);
+      return p;
+    });
+  };
+
+  const handleDetailBack = () => {
+    const tab = searchParams.get("tab");
+    const job = searchParams.get("job");
+    if (job && tab && tab !== "detail") {
+      navigate(-1);
+      return;
+    }
+    if (job) {
+      if (jobOpenedViaPush.current) {
+        jobOpenedViaPush.current = false;
+        navigate(-1);
+      } else {
+        setSearchParams((prev) => {
+          const p = new URLSearchParams(prev);
+          p.delete("job");
+          p.delete("tab");
+          return p;
+        }, { replace: true });
+      }
+    }
+  };
 
   const categoryLabel =
     JOB_CATEGORY_FILTERS.find((c) => c.id === categoryFilter)?.label ?? "Filter Lainnya";
@@ -1099,7 +1185,7 @@ export default function Tasks() {
               onPreviewClose={() => setMapPreviewId(null)}
               onViewTask={(id) => {
                 setMapPreviewId(null);
-                setSelectedId(id);
+                openJob(id);
               }}
             />
           </div>
@@ -1113,10 +1199,9 @@ export default function Tasks() {
             {selectedTask && (
               <TaskDetail
                 task={selectedTask}
-                onClose={() => {
-                  setSelectedId(null);
-                  setMapPreviewId(null);
-                }}
+                tab={detailTab}
+                onTabChange={setDetailTab}
+                onBack={handleDetailBack}
               />
             )}
           </div>
@@ -1127,10 +1212,9 @@ export default function Tasks() {
           <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
             <TaskDetail
               task={selectedTask}
-              onClose={() => {
-                setSelectedId(null);
-                setMapPreviewId(null);
-              }}
+              tab={detailTab}
+              onTabChange={setDetailTab}
+              onBack={handleDetailBack}
             />
           </div>
         ) : (
@@ -1161,7 +1245,7 @@ export default function Tasks() {
                   selected={selectedId === task.id || mapPreviewId === task.id}
                   onClick={() => {
                     setMapPreviewId(null);
-                    setSelectedId(selectedId === task.id ? null : task.id);
+                    openJob(selectedId === task.id ? null : task.id);
                   }}
                 />
               ))
