@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { ChevronLeft, AlertCircle, CheckCircle, Eye, EyeOff, User as UserIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, User as UserIcon } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
@@ -12,13 +12,6 @@ export default function AccountSettings() {
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
-
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [pwLoading, setPwLoading] = useState(false);
-  const [pwError, setPwError] = useState("");
-  const [pwSuccess, setPwSuccess] = useState(false);
 
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
@@ -48,23 +41,6 @@ export default function AccountSettings() {
       setProfileMsg(err instanceof Error ? err.message : "Gagal menyimpan");
     } finally {
       setProfileLoading(false);
-    }
-  };
-
-  const changePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwLoading(true);
-    setPwError("");
-    setPwSuccess(false);
-    try {
-      await api.changePassword(currentPassword, newPassword);
-      setPwSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-    } catch (err) {
-      setPwError(err instanceof Error ? err.message : "Gagal mengubah sandi");
-    } finally {
-      setPwLoading(false);
     }
   };
 
@@ -158,48 +134,16 @@ export default function AccountSettings() {
             </button>
           </form>
 
-          <form onSubmit={changePassword} className="p-6">
-            <h2 className="font-black text-[16px] text-[#172E4D] mb-4">Ubah kata sandi</h2>
-            <p className="text-[12px] text-[#7890AA] mb-4">Hanya untuk akun yang mendaftar dengan email.</p>
-            <div className="space-y-3 mb-4">
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Kata sandi saat ini"
-                className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
-              />
-              <div className="relative">
-                <input
-                  type={showPw ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Kata sandi baru (min. 6 karakter)"
-                  className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 pr-11 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196]"
-                />
-                <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7890AA]">
-                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+          <Link
+            to="/akun/ubah-sandi"
+            className="flex items-center justify-between px-6 py-4 border-t border-[#D8E2F0] hover:bg-[#F7F9FC] transition-colors"
+          >
+            <div>
+              <p className="font-bold text-[14px] text-[#172E4D]">Ubah kata sandi</p>
+              <p className="text-[12px] text-[#7890AA] mt-0.5">Hanya untuk akun email</p>
             </div>
-            {pwError && (
-              <div className="flex items-center gap-2 text-red-600 text-[13px] mb-3">
-                <AlertCircle size={14} /> {pwError}
-              </div>
-            )}
-            {pwSuccess && (
-              <div className="flex items-center gap-2 text-[#20bf6f] text-[13px] mb-3">
-                <CheckCircle size={14} /> Kata sandi diperbarui.
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={pwLoading || !currentPassword || newPassword.length < 6}
-              className="border-2 border-[#1D4196] text-[#1D4196] font-bold text-[14px] px-5 py-2.5 rounded-xl hover:bg-[#EEF3FB] disabled:opacity-50"
-            >
-              {pwLoading ? "Menyimpan…" : "Ubah kata sandi"}
-            </button>
-          </form>
+            <ChevronRight size={18} className="text-[#7890AA] shrink-0" />
+          </Link>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">

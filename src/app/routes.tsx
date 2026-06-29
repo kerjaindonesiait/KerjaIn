@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import AccountSettings from "./pages/AccountSettings";
+import ChangePassword from "./pages/ChangePassword";
 import MyJobs from "./pages/MyJobs";
 import MyReviews from "./pages/MyReviews";
 import TechProfile from "./pages/TechProfile";
@@ -79,6 +80,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <AccountSettings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "akun/ubah-sandi",
+        element: (
+          <ProtectedRoute>
+            <ChangePassword />
           </ProtectedRoute>
         ),
       },
