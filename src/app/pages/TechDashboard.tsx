@@ -344,7 +344,11 @@ function QuoteForm({
           {WAKTU_OPTIONS.map((opt) => (
             <button
               key={opt.id}
-              onClick={() => setWaktu(opt.id)}
+              type="button"
+              onClick={() => {
+                setWaktu(opt.id);
+                setJam("");
+              }}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-left transition-all ${
                 waktu === opt.id
                   ? "border-[#1D4196] bg-[#EEF3FB] text-[#1D4196]"
@@ -357,18 +361,38 @@ function QuoteForm({
           ))}
         </div>
         {waktu === "hari-ini" && (
-          <input
-            value={jam}
-            onChange={(e) => setJam(e.target.value)}
-            type="time"
-            className="mt-2 w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-2.5 text-[14px] text-[#172E4D] bg-[#F7F9FC] outline-none focus:border-[#1D4196] transition-all"
-          />
+          <div className="relative mt-2">
+            <input
+              value={jam}
+              onChange={(e) => setJam(e.target.value)}
+              type="time"
+              className={`mt-0 w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[16px] text-[#172E4D] bg-[#F7F9FC] outline-none focus:border-[#1D4196] transition-all ${
+                !jam ? "text-transparent" : ""
+              }`}
+            />
+            {!jam && (
+              <span className="pointer-events-none absolute inset-0 flex items-center px-4 text-[16px] text-[#7890AA]">
+                Ketuk untuk pilih jam
+              </span>
+            )}
+          </div>
         )}
         {waktu === "pilih" && (
-          <input
-            type="datetime-local"
-            className="mt-2 w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-2.5 text-[14px] text-[#172E4D] bg-[#F7F9FC] outline-none focus:border-[#1D4196] transition-all"
-          />
+          <div className="relative mt-2">
+            <input
+              type="datetime-local"
+              value={jam}
+              onChange={(e) => setJam(e.target.value)}
+              className={`mt-0 w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[16px] text-[#172E4D] bg-[#F7F9FC] outline-none focus:border-[#1D4196] transition-all ${
+                !jam ? "text-transparent" : ""
+              }`}
+            />
+            {!jam && (
+              <span className="pointer-events-none absolute inset-0 flex items-center px-4 text-[16px] text-[#7890AA]">
+                Ketuk untuk pilih tanggal & waktu
+              </span>
+            )}
+          </div>
         )}
       </div>
 
