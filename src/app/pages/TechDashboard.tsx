@@ -818,7 +818,8 @@ export default function TechDashboard() {
 
   const selectedJobRaw = filtered.find((j) => j.id === selectedId) ?? null;
   const selectedJob = selectedJobRaw ? mapJob(selectedJobRaw) : null;
-  const inQuoteTab = navTab === "lowongan" && !!selectedJob && jobDetailTab === "ajukan";
+  const inJobDetailView = navTab === "lowongan" && !!selectedJob;
+  const inQuoteTab = inJobDetailView && jobDetailTab === "ajukan";
 
   const setNavTab = (tab: NavTab) => {
     releaseMobileZoom();
