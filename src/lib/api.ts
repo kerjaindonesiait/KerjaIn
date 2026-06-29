@@ -206,6 +206,20 @@ export const api = {
     });
   },
 
+  patchTechnicianProfile(body: {
+    phone?: string;
+    keahlian?: string[];
+    bio?: string;
+    pengalaman?: string;
+    tarif?: string;
+    area?: string;
+  }) {
+    return request("/api/technicians/profile", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
   getTechnicianProfile() {
     return request<{
       profile: {

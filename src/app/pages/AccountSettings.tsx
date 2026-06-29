@@ -1,24 +1,49 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { ChevronLeft, ChevronRight, User as UserIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, User as UserIcon, CheckCircle, Eye } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
+import { KEAHLIAN } from "../../lib/keahlian";
 
 export default function AccountSettings() {
   const { user, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState(user?.fullName ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [keahlian, setKeahlian] = useState<string[]>([]);
+  const [bio, setBio] = useState("");
+  const [techProfileLoading, setTechProfileLoading] = useState(false);
+
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
 
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [devVerifyLink, setDevVerifyLink] = useState<string | null>(null);
 
+  const isTechnician = user?.role === "technician";
+
   useEffect(() => {
     if (user?.fullName) setFullName(user.fullName);
-  }, [user?.fullName]);
+    if (user?.role === "user") setPhone(user.phone ?? "");
+  }, [user?.fullName, user?.phone, user?.role]);
+
+  useEffect(() => {
+    if (!isTechnician) return;
+    setTechProfileLoading(true);
+    api
+      .getTechnicianProfile()
+      .then(({ profile }) => {
+        if (profile) {
+          setPhone(profile.phone ?? "");
+          setKeahlian(profile.keahlian ?? []);
+          setBio(profile.bio ?? "");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setTechProfileLoading(false));
+  }, [isTechnician]);
 
   if (!user) return null;
 
@@ -29,12 +54,34 @@ export default function AccountSettings() {
     .slice(0, 2)
     .toUpperCase();
 
+  const toggleKeahlian = (id: string) => {
+    setKeahlian((prev) =>
+      prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id],
+    );
+  };
+
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileLoading(true);
     setProfileMsg("");
     try {
-      await api.updateProfile({ fullName: fullName.trim() });
+      const trimmedName = fullName.trim();
+      const trimmedPhone = phone.replace(/\D/g, "");
+
+      if (isTechnician) {
+        await api.updateProfile({ fullName: trimmedName });
+        await api.patchTechnicianProfile({
+          phone: trimmedPhone,
+          keahlian,
+          bio: bio.trim(),
+        });
+      } else {
+        await api.updateProfile({
+          fullName: trimmedName,
+          phone: trimmedPhone || undefined,
+        });
+      }
+
       await refreshUser();
       setProfileMsg("Profil diperbarui.");
     } catch (err) {
@@ -70,21 +117,29 @@ export default function AccountSettings() {
         </Link>
 
         <div className="bg-white rounded-3xl border border-[#D8E2F0] shadow-lg overflow-hidden mb-6">
-          <div className="bg-[#172E4D] px-6 py-8 flex items-center gap-4">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" className="w-16 h-16 rounded-full border-2 border-white object-cover" />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[20px]">
-                {initials}
+          <div className="bg-[#172E4D] px-6 py-8">
+            <div className="flex items-center gap-4">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="w-16 h-16 rounded-full border-2 border-white object-cover" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[20px]">
+                  {initials}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="font-black text-[22px] text-white">{user.fullName ?? "Pengguna"}</h1>
+                <p className="text-[13px] text-white/70">{user.email}</p>
+                <span className="inline-block mt-1 text-[11px] font-bold uppercase tracking-wide bg-white/10 text-white/90 px-2 py-0.5 rounded-full">
+                  {user.role === "technician" ? "Tukang" : "Pengguna"}
+                </span>
               </div>
-            )}
-            <div>
-              <h1 className="font-black text-[22px] text-white">{user.fullName ?? "Pengguna"}</h1>
-              <p className="text-[13px] text-white/70">{user.email}</p>
-              <span className="inline-block mt-1 text-[11px] font-bold uppercase tracking-wide bg-white/10 text-white/90 px-2 py-0.5 rounded-full">
-                {user.role === "technician" ? "Tukang" : "Pengguna"}
-              </span>
             </div>
+            <Link
+              to="/akun/profil"
+              className="mt-5 flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-[13px] py-2.5 rounded-xl transition-colors"
+            >
+              <Eye size={16} /> Lihat profil
+            </Link>
           </div>
 
           {!user.emailVerified && (
@@ -122,12 +177,71 @@ export default function AccountSettings() {
               <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Email</label>
               <input value={user.email} disabled className="w-full border-2 border-[#e8e8e8] rounded-xl px-4 py-3 text-[14px] bg-[#f5f5f5] text-[#7890AA]" />
             </div>
+            <div className="mb-4">
+              <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">Nomor telepon</label>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="08xxxxxxxxxx"
+                disabled={isTechnician && techProfileLoading}
+                className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196] disabled:opacity-50"
+              />
+            </div>
+
+            {isTechnician && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-[13px] font-bold text-[#172E4D] mb-2">Keahlian</label>
+                  <p className="text-[12px] text-[#7890AA] mb-3">Pilih layanan yang bisa Anda kerjakan.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {KEAHLIAN.map((k) => {
+                      const selected = keahlian.includes(k.id);
+                      return (
+                        <button
+                          key={k.id}
+                          type="button"
+                          onClick={() => toggleKeahlian(k.id)}
+                          disabled={techProfileLoading}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-left transition-all disabled:opacity-50 ${
+                            selected
+                              ? "border-[#172E4D] bg-[#172E4D] text-white"
+                              : "border-[#D8E2F0] bg-white hover:border-[#172E4D]/40"
+                          }`}
+                        >
+                          <span className="text-[18px] shrink-0">{k.emoji}</span>
+                          <span className={`font-bold text-[11px] leading-snug flex-1 ${selected ? "text-white" : "text-[#172E4D]"}`}>
+                            {k.label}
+                          </span>
+                          {selected && <CheckCircle size={12} className="text-[#FD6665] shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-[13px] font-bold text-[#172E4D] mb-1.5">
+                    Tentang <span className="font-normal text-[#7890AA]">(opsional)</span>
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    disabled={techProfileLoading}
+                    placeholder="Ceritakan pengalaman dan layanan Anda..."
+                    className="w-full border-2 border-[#D8E2F0] rounded-xl px-4 py-3 text-[14px] bg-[#F7F9FC] outline-none focus:border-[#1D4196] resize-none disabled:opacity-50"
+                  />
+                </div>
+              </>
+            )}
+
             {profileMsg && (
               <p className={`text-[13px] mb-3 ${profileMsg.includes("Gagal") ? "text-red-600" : "text-[#20bf6f]"}`}>{profileMsg}</p>
             )}
             <button
               type="submit"
-              disabled={profileLoading}
+              disabled={profileLoading || (isTechnician && techProfileLoading)}
               className="bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[14px] px-5 py-2.5 rounded-xl disabled:opacity-50"
             >
               {profileLoading ? "Menyimpan…" : "Simpan profil"}
@@ -153,7 +267,7 @@ export default function AccountSettings() {
             </Link>
           )}
           {user.role === "technician" && (
-            <Link to={`/tukang/${user.id}`} className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
+            <Link to="/akun/ulasan" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
               Ulasan saya
             </Link>
           )}
