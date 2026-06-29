@@ -408,8 +408,11 @@ export default function Auth() {
   const nextParam = params.get("next");
   const initialMode: AuthMode =
     location.pathname === "/daftar" ? "daftar" : ((params.get("mode") as AuthMode) ?? "masuk");
+  const oauthError = params.get("error");
+  const initialScreen: Screen =
+    initialMode === "daftar" && !oauthError ? "role" : "main";
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
+  const [screen, setScreen] = useState<Screen>(initialScreen);
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
   const [authProvider, setAuthProvider] = useState<OAuthProvider | "email" | null>(null);
   const [successName, setSuccessName] = useState("");
@@ -420,7 +423,6 @@ export default function Auth() {
 
   useScrollToTop(screen, mode);
 
-  const oauthError = params.get("error");
   const oauthErrorMessage =
     oauthError === "account_exists"
       ? "Anda sudah memiliki akun. Silakan masuk."
