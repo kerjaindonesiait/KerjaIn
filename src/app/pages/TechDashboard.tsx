@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
+import { releaseMobileZoom } from "../../lib/scrollToTop";
 import type { Job, MineOffer, TechnicianStats } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
 import { JobsMap } from "../components/JobsMap";
@@ -291,6 +292,7 @@ function QuoteForm({
         scheduledTime: jam || undefined,
       });
       onSuccess(priceNum);
+      releaseMobileZoom();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengirim penawaran");
     } finally {
@@ -796,6 +798,7 @@ export default function TechDashboard() {
   const selectedJob = selectedJobRaw ? mapJob(selectedJobRaw) : null;
 
   const setNavTab = (tab: NavTab) => {
+    releaseMobileZoom();
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
       if (tab === "lowongan") p.delete("nav");
@@ -809,6 +812,7 @@ export default function TechDashboard() {
   };
 
   const openJob = (id: string | null) => {
+    releaseMobileZoom();
     if (!id) {
       setSearchParams((prev) => {
         const p = new URLSearchParams(prev);
@@ -829,6 +833,7 @@ export default function TechDashboard() {
   };
 
   const setJobDetailTab = (tab: JobDetailTab) => {
+    releaseMobileZoom();
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
       if (tab === "detail") p.delete("dtab");

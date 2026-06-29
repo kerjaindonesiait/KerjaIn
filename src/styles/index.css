@@ -36,3 +36,12 @@
 .kj-hscroll-dark::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.55);
 }
+
+/* iOS Safari auto-zooms focused fields below 16px — keep forms at readable size on phones. */
+@media screen and (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

@@ -1039,7 +1039,7 @@ export default function TechAuth() {
         )}
 
         {/* Step content */}
-        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px] [&_input]:!text-[16px] [&_select]:!text-[16px] [&_textarea]:!text-[16px]">
+        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px]">
           {step === 0 && (
             <StepAuth
               data={data}

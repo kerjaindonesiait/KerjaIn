@@ -4,6 +4,7 @@ import { ChevronLeft, Loader2, MessageCircle, Send } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { useGoBack } from "../../lib/useGoBack";
+import { releaseMobileZoom } from "../../lib/scrollToTop";
 import type { ChatMessage, ConversationPreview } from "../../types";
 
 function formatTime(iso: string) {
@@ -144,6 +145,7 @@ function ChatRoom({
     if (!text || sending) return;
     setSending(true);
     setDraft("");
+    releaseMobileZoom();
     adjustComposerHeight();
     try {
       const { message } = await api.sendJobMessage(
