@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams, useLocation, Navigate } from "react-router";
 import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, ArrowRight, HardHat, User } from "lucide-react";
 import { api } from "../../lib/api";
@@ -422,6 +422,12 @@ export default function Auth() {
   const goBack = useGoBack("/");
 
   useScrollToTop(screen, mode);
+
+  useEffect(() => {
+    if (oauthError === "account_exists" && location.pathname === "/daftar") {
+      navigate("/masuk?error=account_exists", { replace: true });
+    }
+  }, [oauthError, location.pathname, navigate]);
 
   const oauthErrorMessage =
     oauthError === "account_exists"

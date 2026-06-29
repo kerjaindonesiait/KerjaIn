@@ -750,6 +750,12 @@ export default function TechAuth() {
   useScrollToTop(step, submitted, pendingEmailVerify);
 
   useEffect(() => {
+    if (oauthError === "account_exists") {
+      navigate("/masuk?error=account_exists", { replace: true });
+    }
+  }, [oauthError, navigate]);
+
+  useEffect(() => {
     setOauthLoading(null);
   }, []);
 
@@ -958,7 +964,7 @@ export default function TechAuth() {
         ) : (
           <button
             type="button"
-            onClick={() => navigate("/daftar", { replace: true })}
+            onClick={() => navigate(oauthError === "account_exists" ? "/masuk" : "/daftar", { replace: true })}
             className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors"
           >
             <ChevronLeft size={15} /> Kembali
