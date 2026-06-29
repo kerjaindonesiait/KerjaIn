@@ -1,11 +1,12 @@
 import logoSrc from "../../../logo/KerjaIn.png";
 import logoDarkSrc from "../../../logo/Kerjain White Pink.png";
+import logoTukangSrc from "../../../logo/KerjaIn-tukang-outlined.png";
 import { cn } from "./ui/utils";
 
 type BrandLogoProps = {
   className?: string;
   imgClassName?: string;
-  variant?: "default" | "dark";
+  variant?: "default" | "dark" | "tukang";
   withPlate?: boolean;
 };
 
@@ -15,7 +16,8 @@ export function BrandLogo({
   variant = "default",
   withPlate = false,
 }: BrandLogoProps) {
-  const src = variant === "dark" ? logoDarkSrc : logoSrc;
+  const src =
+    variant === "dark" ? logoDarkSrc : variant === "tukang" ? logoTukangSrc : logoSrc;
 
   return (
     <span
