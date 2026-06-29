@@ -5,7 +5,6 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
 import { useScrollToTop } from "../../lib/useScrollToTop";
-import { BrandLogo } from "../components/BrandLogo";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 import type { User } from "../../types";
 
@@ -473,11 +472,8 @@ export default function Auth() {
       className="min-h-screen bg-[#F7F9FC] flex flex-col"
       style={{ fontFamily: "Manrope, sans-serif" }}
     >
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 max-w-[520px] mx-auto w-full">
-        <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-          <BrandLogo imgClassName="h-10" />
-        </Link>
+      {/* Back link — site header already shows logo */}
+      <div className="flex items-center justify-end px-6 py-3 max-w-[520px] mx-auto w-full">
         <Link
           to="/"
           className="text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors flex items-center gap-1"
