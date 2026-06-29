@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
 import { AutoScrollReel } from "../components/AutoScrollReel";
+import { HeroIntro } from "../components/HeroIntro";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
 
@@ -178,6 +179,7 @@ export default function Home() {
       <style>{REEL_CSS}</style>
 
       {/* ── HERO ── */}
+      <HeroIntro>
       <section className="bg-[#172E4D] relative overflow-hidden">
         {/* Glows */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -276,6 +278,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </HeroIntro>
 
       {/* ── SEE WHAT OTHERS HAVE DONE ── */}
       <section className="py-16 overflow-hidden">
