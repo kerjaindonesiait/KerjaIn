@@ -7,7 +7,6 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { useScrollToTop } from "../../lib/useScrollToTop";
-import { BrandLogo } from "../components/BrandLogo";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
@@ -738,7 +737,31 @@ export default function TechAuth() {
   const [resendSent, setResendSent] = useState(false);
   const resumeHandled = useRef(false);
 
+  const oauthError = searchParams.get("error");
+  const oauthErrorMessage =
+    oauthError === "oauth_denied"
+      ? "Login dibatalkan. Silakan coba lagi."
+      : oauthError === "oauth_failed"
+        ? "Login gagal. Silakan coba lagi atau gunakan email."
+        : null;
+
   useScrollToTop(step, submitted, pendingEmailVerify);
+
+  useEffect(() => {
+    setOauthLoading(null);
+  }, []);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setOauthLoading(null);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  useEffect(() => {
+    if (oauthError) setOauthLoading(null);
+  }, [oauthError]);
 
   const update = (patch: Partial<TechData>) => setData((d) => ({ ...d, ...patch }));
 
@@ -849,11 +872,6 @@ export default function TechAuth() {
     return (
       <div className="min-h-screen bg-[#F7F9FC] py-10 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
         <div className="max-w-[520px] mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <BrandLogo imgClassName="h-10" />
-            </div>
-          </div>
           {pendingEmailVerify ? (
             <div className="flex flex-col items-center text-center gap-5 py-4">
               <div className="w-24 h-24 rounded-full bg-[#EEF3FB] border-4 border-[#D8E2F0] flex items-center justify-center">
@@ -928,12 +946,9 @@ export default function TechAuth() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FC]" style={{ fontFamily: "Manrope, sans-serif" }}>
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 max-w-[520px] mx-auto">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <BrandLogo imgClassName="h-10" />
-          <span className="text-[12px] font-bold text-[#7890AA] bg-[#EEF3FB] px-2 py-0.5 rounded-full">Tukang</span>
-        </Link>
+      {/* Back link — site header already shows logo */}
+      <div className="flex items-center justify-between px-6 py-3 max-w-[520px] mx-auto">
+        <span className="text-[12px] font-bold text-[#7890AA] bg-[#EEF3FB] px-2 py-0.5 rounded-full">Tukang</span>
         {step > 0 ? (
           <button onClick={() => setStep((s) => s - 1)} className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#172E4D] transition-colors">
             <ChevronLeft size={15} /> Kembali
@@ -966,6 +981,13 @@ export default function TechAuth() {
 
         {/* Progress */}
         <ProgressBar step={step} />
+
+        {oauthErrorMessage && step === 0 && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-[13px] rounded-xl px-4 py-3 mb-4">
+            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+            {oauthErrorMessage}
+          </div>
+        )}
 
         {/* Step content */}
         <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px]">
