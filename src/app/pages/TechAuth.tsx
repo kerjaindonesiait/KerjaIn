@@ -7,7 +7,6 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { useScrollToTop } from "../../lib/useScrollToTop";
-import { useGoBack } from "../../lib/useGoBack";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
@@ -737,7 +736,6 @@ export default function TechAuth() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
   const resumeHandled = useRef(false);
-  const goBack = useGoBack("/daftar");
 
   const oauthError = searchParams.get("error");
   const oauthErrorMessage =
@@ -960,7 +958,7 @@ export default function TechAuth() {
         ) : (
           <button
             type="button"
-            onClick={goBack}
+            onClick={() => navigate("/daftar", { replace: true })}
             className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] transition-colors"
           >
             <ChevronLeft size={15} /> Kembali
