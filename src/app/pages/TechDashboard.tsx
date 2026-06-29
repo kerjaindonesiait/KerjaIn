@@ -934,7 +934,7 @@ export default function TechDashboard() {
       </header>
 
       {/* ── Nav tabs ── */}
-      {!inQuoteTab && (
+      {!inJobDetailView && (
       <div className="bg-white border-b border-[#f5eded] shrink-0">
         <div className="max-w-[1400px] mx-auto px-6">
           <HorizontalScrollRow fadeEdge="light" innerClassName="pb-0.5">
