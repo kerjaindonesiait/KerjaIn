@@ -884,7 +884,7 @@ export default function TechDashboard() {
           {/* Logo + badge */}
           <div className="flex items-center gap-3">
             <Link to="/dasbor-tukang" className="hover:opacity-90 transition-opacity">
-              <BrandLogo variant="tukang" imgClassName="h-10" />
+              <BrandLogo variant="dark" imgClassName="h-9" />
             </Link>
           </div>
 
