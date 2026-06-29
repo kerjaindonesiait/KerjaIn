@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, Navigate, useSearchParams } from "react-router";
 import {
   MapPin, Calendar, Clock, Shield, CheckCircle,
   ChevronLeft, Send,
@@ -693,9 +693,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function TechDashboard() {
   const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const jobOpenedViaPush = useRef(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const navTab = parseNavTab(searchParams.get("nav"));
@@ -822,7 +820,6 @@ export default function TechDashboard() {
       }, { replace: true });
       return;
     }
-    jobOpenedViaPush.current = true;
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
       p.delete("nav");
@@ -845,22 +842,18 @@ export default function TechDashboard() {
   const handleJobBack = () => {
     const dtab = searchParams.get("dtab");
     const job = searchParams.get("job");
-    if (job && dtab && dtab !== "detail") {
-      navigate(-1);
+
+    if (job && dtab === "ajukan") {
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("dtab");
+        return p;
+      }, { replace: true });
       return;
     }
+
     if (job) {
-      if (jobOpenedViaPush.current) {
-        jobOpenedViaPush.current = false;
-        navigate(-1);
-      } else {
-        setSearchParams((prev) => {
-          const p = new URLSearchParams(prev);
-          p.delete("job");
-          p.delete("dtab");
-          return p;
-        }, { replace: true });
-      }
+      openJob(null);
     }
   };
 
