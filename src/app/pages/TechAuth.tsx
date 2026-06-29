@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
 import { useScrollToTop } from "../../lib/useScrollToTop";
+import { releaseMobileZoom } from "../../lib/scrollToTop";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
@@ -867,6 +868,7 @@ export default function TechAuth() {
   };
 
   const handleNext = async () => {
+    releaseMobileZoom();
     if (step === 0 && !isLoggedInTechnician) {
       const isEmailSignup = data.email.includes("@") && data.password.length >= 6;
       if (!isEmailSignup) return;
@@ -993,7 +995,7 @@ export default function TechAuth() {
       <div className="flex items-center justify-between px-6 py-3 max-w-[520px] mx-auto">
         <span className="text-[12px] font-bold text-[#7890AA] bg-[#EEF3FB] px-2 py-0.5 rounded-full">Tukang</span>
         {step > 0 ? (
-          <button onClick={() => setStep((s) => s - 1)} className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#172E4D] transition-colors">
+          <button onClick={() => { releaseMobileZoom(); setStep((s) => s - 1); }} className="flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#172E4D] transition-colors">
             <ChevronLeft size={15} /> Kembali
           </button>
         ) : (
@@ -1037,7 +1039,7 @@ export default function TechAuth() {
         )}
 
         {/* Step content */}
-        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px]">
+        <div className="bg-white rounded-3xl border border-[#D8E2F0] p-6 mb-5 min-h-[380px] [&_input]:!text-[16px] [&_select]:!text-[16px] [&_textarea]:!text-[16px]">
           {step === 0 && (
             <StepAuth
               data={data}
