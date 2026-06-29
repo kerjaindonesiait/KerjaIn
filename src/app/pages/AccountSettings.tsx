@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { ChevronLeft, AlertCircle, CheckCircle, Eye, EyeOff, User as UserIcon } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { api } from "../../lib/api";
+import { defaultRouteForUser } from "../../lib/defaultRoute";
 
 export default function AccountSettings() {
   const { user, refreshUser, logout } = useAuth();
@@ -88,7 +89,7 @@ export default function AccountSettings() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] py-8 px-4" style={{ fontFamily: "Manrope, sans-serif" }}>
       <div className="max-w-[560px] mx-auto">
-        <Link to={user.role === "technician" ? "/dasbor-tukang" : "/"} className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] mb-6">
+        <Link to={defaultRouteForUser(user)} className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#58708D] hover:text-[#1D4196] mb-6">
           <ChevronLeft size={15} /> {user.role === "technician" ? "Dasbor Tukang" : "Beranda"}
         </Link>
 
