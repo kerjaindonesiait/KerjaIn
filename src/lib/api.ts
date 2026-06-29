@@ -97,9 +97,10 @@ export const api = {
     return request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }, false);
   },
 
-  oauthAuthUrl(provider: "google", opts?: { role?: "user" | "technician"; next?: string }) {
+  oauthAuthUrl(provider: "google", opts?: { role?: "user" | "technician"; mode?: "signup" | "login"; next?: string }) {
     const params = new URLSearchParams();
     if (opts?.role === "technician") params.set("role", "technician");
+    if (opts?.mode) params.set("mode", opts.mode);
     if (opts?.next) params.set("next", opts.next);
     const qs = params.toString();
     return `${API_URL}/auth/${provider}${qs ? `?${qs}` : ""}`;

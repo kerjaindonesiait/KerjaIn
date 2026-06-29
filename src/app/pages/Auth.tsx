@@ -406,7 +406,8 @@ export default function Auth() {
   const { user, loading: authLoading } = useAuth();
   const redirectFrom = (location.state as { from?: string } | null)?.from;
   const nextParam = params.get("next");
-  const initialMode = (params.get("mode") as AuthMode) ?? "masuk";
+  const initialMode: AuthMode =
+    location.pathname === "/daftar" ? "daftar" : ((params.get("mode") as AuthMode) ?? "masuk");
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [screen, setScreen] = useState<Screen>(initialMode === "daftar" ? "role" : "main");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
@@ -421,7 +422,9 @@ export default function Auth() {
 
   const oauthError = params.get("error");
   const oauthErrorMessage =
-    oauthError === "oauth_denied"
+    oauthError === "account_exists"
+      ? "Anda sudah memiliki akun. Silakan masuk."
+      : oauthError === "oauth_denied"
       ? "Login dibatalkan. Silakan coba lagi."
       : oauthError === "oauth_failed"
         ? "Login gagal. Silakan coba lagi atau gunakan email."
@@ -429,7 +432,9 @@ export default function Auth() {
 
   const handleOAuth = (provider: OAuthProvider) => {
     if (mode === "daftar" && !acceptedTerms) return;
-    window.location.href = api.oauthAuthUrl(provider);
+    window.location.href = api.oauthAuthUrl(provider, {
+      mode: mode === "daftar" ? "signup" : "login",
+    });
   };
 
   if (!authLoading && user) {

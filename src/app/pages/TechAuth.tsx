@@ -741,7 +741,9 @@ export default function TechAuth() {
 
   const oauthError = searchParams.get("error");
   const oauthErrorMessage =
-    oauthError === "oauth_denied"
+    oauthError === "account_exists"
+      ? "Anda sudah memiliki akun. Silakan masuk."
+      : oauthError === "oauth_denied"
       ? "Login dibatalkan. Silakan coba lagi."
       : oauthError === "oauth_failed"
         ? "Login gagal. Silakan coba lagi atau gunakan email."
@@ -823,7 +825,7 @@ export default function TechAuth() {
   const handleOAuth = (provider: OAuthProvider) => {
     if (!data.acceptedTerms) return;
     setOauthLoading(provider);
-    window.location.href = api.oauthAuthUrl(provider, { role: "technician" });
+    window.location.href = api.oauthAuthUrl(provider, { role: "technician", mode: "signup" });
   };
 
   const handleNext = async () => {
