@@ -794,6 +794,7 @@ export default function TechDashboard() {
 
   const selectedJobRaw = filtered.find((j) => j.id === selectedId) ?? null;
   const selectedJob = selectedJobRaw ? mapJob(selectedJobRaw) : null;
+  const inQuoteTab = navTab === "lowongan" && !!selectedJob && jobDetailTab === "ajukan";
 
   const setNavTab = (tab: NavTab) => {
     releaseMobileZoom();
@@ -908,6 +909,7 @@ export default function TechDashboard() {
       </header>
 
       {/* ── Nav tabs ── */}
+      {!inQuoteTab && (
       <div className="bg-white border-b border-[#f5eded] shrink-0">
         <div className="max-w-[1400px] mx-auto px-6">
           <HorizontalScrollRow fadeEdge="light" innerClassName="pb-0.5">
@@ -929,13 +931,16 @@ export default function TechDashboard() {
           </HorizontalScrollRow>
         </div>
       </div>
+      )}
 
       {/* ── LOWONGAN tab ── */}
       {navTab === "lowongan" && (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          {!inQuoteTab && (
           <div className={selectedJob ? "max-md:hidden shrink-0" : "shrink-0"}>
             <JobBrowseFilterBar {...browseFilters} />
           </div>
+          )}
 
           <div
             className={`${appShellClassMobileFlush} flex flex-1 min-h-0 ${
