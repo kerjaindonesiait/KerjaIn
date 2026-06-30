@@ -1,0 +1,378 @@
+import { useState } from "react";
+import { Link } from "react-router";
+import { Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "lucide-react";
+import { AutoScrollReel } from "../components/AutoScrollReel";
+import { TEXT_MUTED, TEXT_MUTED_ON_TINT, TEXT_ON_DARK } from "../../lib/accessibleText";
+
+const SERVICES_ROW1 = [
+  { label: "Pipa Bocor Darurat",   desc: "Pipa pecah & banjir 24/7" },
+  { label: "Deteksi Kebocoran",    desc: "Cari & perbaiki kebocoran" },
+  { label: "Saluran Mampet",       desc: "Saluran buntu hari ini" },
+  { label: "Pemanas Air",          desc: "Pasang, perbaiki & ganti" },
+  { label: "Ganti Pipa",           desc: "Pipa lama diganti tuntas" },
+  { label: "Pasang Kamar Mandi",   desc: "Kran, WC, shower & wastafel" },
+  { label: "Tukang Serba Bisa",    desc: "Pekerjaan kecil & pasang" },
+  { label: "Bersih Talang",        desc: "Talang mampet dibersihkan" },
+];
+
+const SERVICES_ROW2 = [
+  { label: "Perbaikan Keramik",    desc: "Keramik retak ditambal" },
+  { label: "Perawatan Atap",       desc: "Perbaikan atap kecil" },
+  { label: "Perawatan Umum",       desc: "Perawatan & perbaikan rumah" },
+  { label: "Perbaikan Pintu",      desc: "Pintu macet, kunci rusak" },
+  { label: "Instalasi Gas",        desc: "Pemasangan & pengecekan gas" },
+  { label: "Waterproofing",        desc: "Anti bocor dinding & atap" },
+  { label: "Inspeksi Properti",    desc: "Cek kondisi rumah menyeluruh" },
+  { label: "Cat & Dempul",         desc: "Perbaikan cat & tembok" },
+];
+
+const TASK_TABS = [
+  { id: "plumbing",     label: "Plumbing" },
+  { id: "maintenance",  label: "Perawatan" },
+  { id: "darurat",      label: "Darurat" },
+  { id: "kamar-mandi",  label: "Kamar Mandi" },
+  { id: "lainnya",      label: "Lainnya" },
+];
+
+const COMPLETED_TASKS: Record<string, {
+  avatar: string; color: string; category: string;
+  title: string; price: string; rating: number; area: string;
+}[]> = {
+  plumbing: [
+    { avatar: "RK", color: "#1D4196", category: "Pipa Bocor",       title: "Pipa utama bocor – banjir dapur",         price: "Rp 480rb", rating: 5, area: "Jaksel" },
+    { avatar: "DM", color: "#6c47d9", category: "Deteksi Kebocoran", title: "Temukan kebocoran tersembunyi di dinding", price: "Rp 220rb", rating: 5, area: "Jakpus" },
+    { avatar: "BW", color: "#e85d26", category: "Ganti Pipa",        title: "Ganti pipa PVC kamar mandi belakang",     price: "Rp 310rb", rating: 4, area: "Depok" },
+    { avatar: "HS", color: "#20bf6f", category: "Kran Bocor",        title: "Kran dapur menetes – ganti washer",       price: "Rp 140rb", rating: 5, area: "Jakbar" },
+    { avatar: "YS", color: "#f59e0b", category: "Saluran",           title: "Pasang kran outdoor taman belakang",      price: "Rp 280rb", rating: 5, area: "Tansel" },
+    { avatar: "CN", color: "#14b8a6", category: "Kloset",            title: "Kloset terus mengalir ganti katup",       price: "Rp 160rb", rating: 4, area: "Jaktim" },
+  ],
+  maintenance: [
+    { avatar: "LF", color: "#8b5cf6", category: "Perbaikan Pintu",   title: "Pintu depan tidak bisa menutup rapat",    price: "Rp 130rb", rating: 5, area: "Depok" },
+    { avatar: "MR", color: "#1D4196", category: "Bersih Talang",     title: "Bersih talang 2 lantai depan & belakang", price: "Rp 290rb", rating: 5, area: "Jakut" },
+    { avatar: "WP", color: "#6c47d9", category: "Tukang",            title: "Beberapa pekerjaan kecil sekaligus",      price: "Rp 270rb", rating: 5, area: "Bekasi" },
+    { avatar: "FD", color: "#20bf6f", category: "Silikon",           title: "Pasang ulang silikon shower & bak mandi", price: "Rp 150rb", rating: 4, area: "Jaksel" },
+    { avatar: "PH", color: "#e85d26", category: "Keramik",           title: "Tambal 3 keramik kamar mandi retak",      price: "Rp 200rb", rating: 5, area: "Jakpus" },
+    { avatar: "AN", color: "#f59e0b", category: "Atap",              title: "Atap bocor – area kecil kamar tidur",     price: "Rp 380rb", rating: 5, area: "Bogor" },
+  ],
+  darurat: [
+    { avatar: "RK", color: "#1D4196", category: "Darurat",           title: "Pipa pecah tengah malam – banjir",        price: "Rp 550rb", rating: 5, area: "Jaksel" },
+    { avatar: "TW", color: "#e85d26", category: "Darurat",           title: "Air tidak mengalir sama sekali",          price: "Rp 350rb", rating: 5, area: "Tansel" },
+    { avatar: "AP", color: "#6c47d9", category: "Darurat",           title: "Water heater meledak – ganti unit",       price: "Rp 900rb", rating: 5, area: "Jakbar" },
+    { avatar: "BS", color: "#20bf6f", category: "Darurat",           title: "Saluran pembuangan meluap",               price: "Rp 400rb", rating: 4, area: "Bekasi" },
+    { avatar: "DM", color: "#14b8a6", category: "Darurat",           title: "Kran patah air terus keluar",             price: "Rp 320rb", rating: 5, area: "Jakpus" },
+    { avatar: "HS", color: "#8b5cf6", category: "Darurat",           title: "Gas bocor – cek & perbaiki segera",       price: "Rp 480rb", rating: 5, area: "Jaktim" },
+  ],
+  "kamar-mandi": [
+    { avatar: "BS", color: "#8b5cf6", category: "Kamar Mandi",       title: "Pasang wastafel & kran mixer baru",       price: "Rp 620rb", rating: 5, area: "Jakbar" },
+    { avatar: "YS", color: "#1D4196", category: "Kamar Mandi",       title: "Ganti shower head & sealant shower",      price: "Rp 240rb", rating: 5, area: "Tansel" },
+    { avatar: "PH", color: "#e85d26", category: "Kamar Mandi",       title: "Pasang WC duduk baru lengkap",            price: "Rp 750rb", rating: 4, area: "Depok" },
+    { avatar: "CN", color: "#20bf6f", category: "Kamar Mandi",       title: "Perbaiki shower mampet & tekanan lemah",  price: "Rp 200rb", rating: 5, area: "Jaksel" },
+    { avatar: "LF", color: "#6c47d9", category: "Kamar Mandi",       title: "Pasang kaca cermin & lemari kamar mandi", price: "Rp 430rb", rating: 5, area: "Jakpus" },
+    { avatar: "FD", color: "#f59e0b", category: "Kamar Mandi",       title: "Nat keramik kamar mandi difilling ulang",  price: "Rp 180rb", rating: 4, area: "Bekasi" },
+  ],
+  lainnya: [
+    { avatar: "WP", color: "#14b8a6", category: "Inspeksi",          title: "Inspeksi plumbing rumah baru beli",       price: "Rp 450rb", rating: 5, area: "Jakut" },
+    { avatar: "MR", color: "#1D4196", category: "Gas",               title: "Pasang instalasi gas untuk kompor baru",  price: "Rp 380rb", rating: 5, area: "Jaksel" },
+    { avatar: "AN", color: "#8b5cf6", category: "Waterproofing",     title: "Anti bocor dinding kamar mandi",          price: "Rp 560rb", rating: 5, area: "Tansel" },
+    { avatar: "TW", color: "#e85d26", category: "Cat",               title: "Tambal & cat ulang tembok lembab",        price: "Rp 340rb", rating: 4, area: "Bekasi" },
+    { avatar: "AP", color: "#6c47d9", category: "Pompa Air",         title: "Ganti pompa air otomatis rumah",          price: "Rp 580rb", rating: 5, area: "Depok" },
+    { avatar: "BW", color: "#20bf6f", category: "Filter",            title: "Pasang filter air di dapur",              price: "Rp 290rb", rating: 5, area: "Jakbar" },
+  ],
+};
+
+const SERVICE_LINKS: Record<string, string[]> = {
+  "Plumbing": ["Perbaikan Pipa Pecah","Saluran Mampet","Tukang Ledeng Darurat","Pemasangan Gas","Perbaikan Pemanas Air","Pasang Pemanas Air","Deteksi Kebocoran","Relining Pipa","Ganti Pipa","Perbaikan Kran","Pasang Kran","Perbaikan WC","Pasang WC","Perbaikan Shower","Pasang Wastafel","Plumbing Kamar Mandi","Plumbing Dapur","Perbaikan Saluran Pembuangan","Masalah Tekanan Air"],
+  "Perawatan Umum": ["Tukang Serba Bisa","Perbaikan Pintu","Perbaikan Kunci","Ganti Engsel","Bersih Talang","Inspeksi Atap","Perbaikan Keramik & Nat","Pengapuran","Aplikasi Sealant","Perbaikan Pagar","Perbaikan Kasa Nyamuk","Perbaikan Jendela","Kedap Air","Perawatan Properti"],
+  "Panduan Biaya": ["Biaya Tukang Ledeng Darurat","Biaya Buka Saluran Mampet","Biaya Pemanas Air","Biaya Ganti Pipa","Biaya Pasang Kran","Biaya Pasang WC","Biaya Deteksi Kebocoran","Biaya Plumbing Kamar Mandi","Biaya Tukang Serba Bisa","Biaya Bersih Talang","Biaya Perbaikan Keramik"],
+  "Panduan Cara": ["Cara Perbaiki Kran Bocor","Cara Buka Saluran Mampet","Cara Kuras Pemanas Air","Cara Temukan Kebocoran Air","Cara Perbaiki Nat Keramik","Cara Bersih Talang dengan Aman","Cara Rawat Atap","Cara Perbaiki WC Terus Mengalir","Cara Pasang Silikon Shower"],
+  "Checklist": ["Checklist Plumbing Tahunan","Checklist Perawatan Pra-Hujan","Checklist Plumbing Rumah Baru","Checklist Perawatan Kamar Mandi","Checklist Perawatan Dapur","Checklist Perawatan Rumah Musiman","Checklist Pra-Jual Properti"],
+};
+const SERVICE_DIRECTORY_ITEMS = Object.values(SERVICE_LINKS).flat();
+
+const REEL_CSS = `
+  .kj-reel::-webkit-scrollbar { display: none; }
+`;
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ServiceCard({ label, desc }: { label: string; desc: string }) {
+  return (
+    <div className="flex-shrink-0 bg-white rounded-2xl border border-[#D8E2F0] px-5 py-4 min-w-[200px] hover:border-[#1D4196] hover:shadow-sm transition-all cursor-pointer group">
+      <div className="w-6 h-1 rounded-full bg-[#1D4196] mb-3 group-hover:w-10 transition-all duration-300" />
+      <p className="font-bold text-[14px] text-[#172E4D] mb-1 group-hover:text-[#1D4196] transition-colors">{label}</p>
+      <p className="text-[12px] text-[#58708D] leading-snug">{desc}</p>
+    </div>
+  );
+}
+
+function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
+  return (
+    <div className="flex-shrink-0 w-[220px] bg-white rounded-2xl border border-[#D8E2F0] p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-[13px] shrink-0" style={{ background: t.color }}>
+          {t.avatar}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>{t.category}</p>
+          <div className="flex">
+            {[1,2,3,4,5].map((i) => (
+              <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= t.rating ? "#f59e0b" : "#e5e7eb"}>
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            ))}
+          </div>
+        </div>
+      </div>
+      <p className="font-semibold text-[13px] text-[#172E4D] leading-snug mb-2 line-clamp-2">{t.title}</p>
+      <div className="flex items-center justify-between">
+        <span className="font-black text-[15px] text-[#1D4196]">{t.price}</span>
+        <span className="text-[11px] bg-[#F7F9FC] px-2 py-0.5 rounded-full" style={{ color: TEXT_MUTED }}>{t.area}</span>
+      </div>
+    </div>
+  );
+}
+
+function ServiceDirectoryMarquee() {
+  return (
+    <AutoScrollReel speed={0.35} className="py-1">
+      <div className="grid w-max grid-flow-col grid-rows-2 gap-3">
+        {SERVICE_DIRECTORY_ITEMS.map((item, index) => (
+          <div
+            key={`${item}-${index}`}
+            className="flex h-[70px] w-[280px] shrink-0 items-center gap-3 rounded-xl border border-[#D8E2F0] bg-white px-4 py-3.5 text-[14px] font-semibold text-[#294566] sm:w-[340px]"
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#1D4196]" />
+            <span className="truncate">{item}</span>
+          </div>
+        ))}
+      </div>
+    </AutoScrollReel>
+  );
+}
+
+
+export default function HomeBelowFold() {
+  const [taskTab, setTaskTab] = useState("plumbing");
+  const tasks = COMPLETED_TASKS[taskTab] ?? [];
+
+  return (
+    <>
+      <style>{REEL_CSS}</style>
+      {/* ── SEE WHAT OTHERS HAVE DONE ── */}
+      <section className="kj-lazy-section py-16 overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 mb-8">
+          <h2 className="font-black text-[32px] text-[#172E4D] mb-1">Contoh pekerjaan yang sudah beres</h2>
+          <p className="text-[#58708D] text-[15px]">Lihat pekerjaan nyata yang diselesaikan tukang terpercaya di Jakarta.</p>
+        </div>
+
+        {/* Tab selector */}
+        <div className="max-w-[1400px] mx-auto px-6 mb-6 flex gap-2 flex-wrap">
+          {TASK_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTaskTab(tab.id)}
+              aria-pressed={taskTab === tab.id}
+              aria-label={`Filter kategori ${tab.label}`}
+              className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all ${
+                taskTab === tab.id
+                  ? "bg-[#172E4D] text-white"
+                  : "bg-[#EEF3FB] hover:bg-[#EEF3FB] hover:text-[#1D4196]"
+              }`}
+              style={taskTab !== tab.id ? { color: TEXT_MUTED_ON_TINT } : undefined}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Scrolling task cards */}
+        <AutoScrollReel key={taskTab} speed={0.55} className="px-6" segmentClassName="gap-4">
+          {tasks.map((t, i) => (
+            <TaskCard key={i} t={t} />
+          ))}
+        </AutoScrollReel>
+
+        <div className="max-w-[1400px] mx-auto px-6 mt-7">
+          <Link to="/tasks" className="inline-flex items-center gap-2 text-[#1D4196] font-bold text-[14px] hover:underline">
+            Lihat pekerjaan lainnya <ChevronRight size={16} />
+          </Link>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="py-16 px-6 bg-[#F7F9FC]">
+        <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-12 items-center">
+          <div className="flex-1">
+            <h2 className="font-black text-[38px] leading-tight text-[#172E4D] mb-4">
+              Post Kerjaan<br />dalam beberapa menit
+            </h2>
+            <p className="text-[#58708D] text-[16px] mb-10">
+              Tidak perlu menelepon satu per satu. Post Kerjaan, lalu tukang yang sesuai bisa mengirim penawaran.
+            </p>
+
+            <div className="flex flex-col gap-7 mb-10">
+              {[
+                { n: "1", title: "Ceritakan Masalahnya", desc: "Jelaskan apa yang perlu dibereskan di rumahmu." },
+                { n: "2", title: "Atur Budget", desc: "Tentukan kisaran biaya atau biarkan tukang memberi penawaran." },
+                { n: "3", title: "Pilih Penawaran", desc: "Bandingkan harga, profil, rating, dan ulasan tukang." },
+                { n: "4", title: "Dikerjain", desc: "Tukang datang sesuai jadwal dan pekerjaan mulai dibereskan." },
+              ].map((step) => (
+                <div key={step.n} className="flex gap-5 items-start">
+                  <div className="w-10 h-10 rounded-full bg-[#1D4196] flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-[#1D4196]/30">
+                    <span className="text-white font-black text-[15px]">{step.n}</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-[16px] text-[#172E4D] mb-1">{step.title}</p>
+                    <p className="text-[#58708D] text-[14px] leading-relaxed">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Link to="/post-job" className="inline-flex items-center gap-2 bg-[#1D4196] text-white font-bold text-[15px] px-8 py-4 rounded-full hover:bg-[#173577] transition-colors shadow-lg shadow-[#1D4196]/30">
+              Post Kerjaan <ArrowRight size={16} />
+            </Link>
+          </div>
+
+          {/* Visual mock UI */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="w-full max-w-[420px] bg-white rounded-3xl shadow-2xl border border-[#D8E2F0] overflow-hidden">
+              {/* Header */}
+              <div className="bg-[#172E4D] px-5 py-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px]">RK</div>
+                <div>
+                  <p className="font-bold text-[13px] text-white">Kran bocor – dapur</p>
+                  <p className="text-[11px]" style={{ color: TEXT_ON_DARK }}>Dipasang 5 menit lalu · Jakarta Selatan</p>
+                </div>
+                <div className="ml-auto">
+                  <span className="text-[11px] font-black text-[#20bf6f] bg-[#20bf6f]/20 px-2.5 py-1 rounded-full">Terbuka</span>
+                </div>
+              </div>
+
+              {/* Offers */}
+              <div className="px-5 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider mb-3" style={{ color: TEXT_MUTED }}>3 penawaran masuk</p>
+                {[
+                  { name: "Andi S.", color: "#1D4196", price: "Rp 130rb", time: "Bisa dalam 30 menit", stars: 5 },
+                  { name: "Reza M.", color: "#e85d26", price: "Rp 150rb", time: "Bisa hari ini",       stars: 5 },
+                  { name: "Budi H.", color: "#6c47d9", price: "Rp 175rb", time: "Bisa besok pagi",     stars: 5 },
+                ].map((offer) => (
+                  <div key={offer.name} className="flex items-center gap-3 py-3 border-b border-[#f5eded] last:border-0">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-[12px] shrink-0" style={{ background: offer.color }}>
+                      {offer.name[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-bold text-[13px] text-[#172E4D]">{offer.name}</p>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map((i) => (
+                            <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#58708D]">{offer.time}</p>
+                    </div>
+                    <p className="font-black text-[14px] text-[#1D4196] shrink-0">{offer.price}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="px-5 pb-5">
+                <div className="bg-[#1D4196] text-white text-[13px] font-bold text-center py-3 rounded-xl cursor-pointer hover:bg-[#173577] transition-colors">
+                  Terima penawaran Andi S.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRUST ── */}
+      <section className="py-16 px-6 max-w-[1400px] mx-auto">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          <div className="lg:w-[380px] shrink-0">
+            <h2 className="font-black text-[36px] leading-tight text-[#172E4D] mb-4">
+              Cari tukang dengan lebih tenang
+            </h2>
+            <p className="text-[#58708D] text-[15px] mb-6">KerjaIn membantu kamu melihat profil, rating, dan ulasan sebelum memilih tukang untuk pekerjaan rumah.</p>
+            <Link to="/tasks" className="inline-flex items-center gap-2 bg-[#1D4196] text-white font-bold text-[14px] px-7 py-3.5 rounded-full hover:bg-[#173577] transition-colors">
+              Lihat tukang tersedia <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {[
+              { icon: <Shield size={24} className="text-[#1D4196]" />, title: "Bayar dengan aman",       desc: "Dana disimpan dulu dan baru diteruskan setelah pekerjaan selesai dikonfirmasi." },
+              { icon: <Star size={24} className="text-[#1D4196]" />,   title: "Ulasan asli", desc: "Baca pengalaman pelanggan lain dari pekerjaan yang benar-benar sudah selesai." },
+              { icon: <CheckCircle size={24} className="text-[#1D4196]" />, title: "Tukang terverifikasi", desc: "Profil tukang dicek agar kamu bisa memilih dengan lebih percaya diri." },
+            ].map((item) => (
+              <div key={item.title} className="bg-[#F7F9FC] rounded-2xl p-6 border border-[#D8E2F0]">
+                <div className="w-12 h-12 rounded-xl bg-[#EEF3FB] flex items-center justify-center mb-4">{item.icon}</div>
+                <h3 className="font-bold text-[16px] text-[#172E4D] mb-2">{item.title}</h3>
+                <p className="text-[13px] text-[#58708D] leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SERVICE DIRECTORY ── */}
+      <section className="py-20 px-6 bg-[#F7F9FC]">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
+            <div>
+              <p className="text-[12px] font-bold text-[#1D4196] uppercase tracking-widest mb-3">Butuh bantuan apa?</p>
+              <h2 className="font-black text-[38px] sm:text-[48px] leading-tight text-[#172E4D] mb-3">
+                Pilih layanan yang kamu butuhkan
+              </h2>
+              <p className="text-[#58708D] text-[17px] leading-relaxed max-w-2xl">
+                Dari pipa bocor sampai perawatan rumah rutin, temukan tukang yang pas untuk pekerjaanmu di Jakarta.
+              </p>
+            </div>
+            <div className="bg-white border border-[#D8E2F0] rounded-2xl px-5 py-4 max-w-[280px]">
+              <p className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: TEXT_MUTED }}>Layanan populer</p>
+              <p className="font-black text-[28px] text-[#172E4D] leading-none">50+</p>
+              <p className="text-[13px] text-[#58708D] mt-1">kategori pekerjaan yang bisa kamu pilih</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 mb-8 -mx-6 px-6">
+            <AutoScrollReel speed={0.45} segmentClassName="gap-3">
+              {SERVICES_ROW1.map((s) => (
+                <ServiceCard key={s.label} label={s.label} desc={s.desc} />
+              ))}
+            </AutoScrollReel>
+            <AutoScrollReel speed={0.4} direction="right" segmentClassName="gap-3">
+              {SERVICES_ROW2.map((s) => (
+                <ServiceCard key={s.label} label={s.label} desc={s.desc} />
+              ))}
+            </AutoScrollReel>
+          </div>
+          <div className="-mx-6 overflow-hidden px-6">
+            <ServiceDirectoryMarquee />
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ── */}
+      <section className="bg-white px-6 py-20">
+        <div className="max-w-[1400px] mx-auto rounded-[32px] bg-[#F7F9FC] border border-[#D8E2F0] px-8 sm:px-12 py-14 sm:py-16 flex flex-col md:flex-row md:items-center justify-between gap-10 shadow-sm">
+          <div className="max-w-3xl">
+            <p className="text-[13px] font-bold text-[#FD6665] uppercase tracking-widest mb-4">Siap mulai?</p>
+            <h2 className="font-black text-[46px] sm:text-[64px] leading-[0.95] text-[#172E4D] mb-5">
+              Post Kerjaan sekarang!
+            </h2>
+            <p className="text-[#58708D] text-[17px] leading-relaxed max-w-2xl">
+              Ceritakan masalah plumbing atau perawatan rumahmu, lalu dapatkan penawaran dari tukang terpercaya di Jakarta.
+            </p>
+          </div>
+          <Link
+            to="/post-job"
+            className="inline-flex items-center justify-center gap-2 bg-[#1D4196] hover:bg-[#173577] text-white font-bold text-[16px] px-9 py-4 rounded-full transition-colors shrink-0 shadow-lg shadow-[#1D4196]/20"
+          >
+            Post Kerjaan <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+    </>
+  );
+}

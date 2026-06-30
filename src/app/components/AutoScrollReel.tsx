@@ -2,6 +2,7 @@ import {
   useRef,
   useEffect,
   useCallback,
+  useState,
   type ReactNode,
   type CSSProperties,
 } from "react";
@@ -30,6 +31,7 @@ export function AutoScrollReel({
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
   const rafRef = useRef<number | null>(null);
+  const [animating, setAnimating] = useState(false);
 
   const pause = useCallback(() => {
     pausedRef.current = true;
@@ -74,11 +76,39 @@ export function AutoScrollReel({
   }, [direction, speed]);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const start = () => setAnimating(true);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        observer.disconnect();
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(start, { timeout: 2000 });
+        } else {
+          window.setTimeout(start, 400);
+        }
+      },
+      { rootMargin: "120px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!animating) return;
+
     rafRef.current = requestAnimationFrame(tick);
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [tick]);
+  }, [animating, tick]);
 
   useEffect(() => {
     const el = containerRef.current;
