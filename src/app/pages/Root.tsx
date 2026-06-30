@@ -7,6 +7,7 @@ import { BrandLogo } from "../components/BrandLogo";
 import { PageSEO } from "../components/PageSEO";
 import { ScrollToTop } from "../components/ScrollToTop";
 import { appShellClass } from "../../lib/layout";
+import { TEXT_MUTED, TEXT_ON_DARK_MUTED, TEXT_ON_DARK } from "../../lib/accessibleText";
 
 const NAV_LINKS = [
   { label: "Cari Pekerjaan", href: "/tasks" },
@@ -196,7 +197,7 @@ export default function Root() {
                   )}
                   <div>
                     <p className="text-[14px] font-bold text-[#172E4D]">{displayName}</p>
-                    <p className="text-[12px] text-[#7890AA]">{user.email}</p>
+                    <p className="text-[12px]" style={{ color: TEXT_MUTED }}>{user.email}</p>
                   </div>
                 </Link>
               ) : (
@@ -223,10 +224,10 @@ export default function Root() {
         <footer className="bg-[#172E4D] text-white">
           {/* Popular locations */}
           <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
-            <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">Lokasi Populer di Jakarta</p>
+            <p className="text-[12px] font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_ON_DARK_MUTED }}>Lokasi Populer di Jakarta</p>
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {POPULAR_LOCATIONS.map((loc) => (
-                <a key={loc} href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{loc}</a>
+                <a key={loc} href="#" className="text-[13px] hover:text-white transition-colors" style={{ color: TEXT_ON_DARK }}>{loc}</a>
               ))}
             </div>
           </div>
@@ -235,11 +236,11 @@ export default function Root() {
           <div className="px-6 py-12 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
             {FOOTER_COLS.map((col) => (
               <div key={col.heading}>
-                <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">{col.heading}</p>
+                <p className="text-[12px] font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_ON_DARK_MUTED }}>{col.heading}</p>
                 <ul className={col.heading === "Layanan Kami" ? "grid grid-cols-2 gap-x-6 gap-y-2" : "flex flex-col gap-2"}>
                   {col.links.map((link) => (
                     <li key={link}>
-                      <a href="#" className="text-[13px] text-white/70 hover:text-white transition-colors">{link}</a>
+                      <a href="#" className="text-[13px] hover:text-white transition-colors" style={{ color: TEXT_ON_DARK }}>{link}</a>
                     </li>
                   ))}
                 </ul>
@@ -250,7 +251,7 @@ export default function Root() {
           {/* Bottom bar */}
           <div className="border-t border-white/10 px-6 py-6 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <BrandLogo variant="dark" imgClassName="h-9" />
-            <p className="text-[12px] text-white/60">KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
+            <p className="text-[12px]" style={{ color: TEXT_ON_DARK_MUTED }}>KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
             <div className="flex gap-4">
               {SOCIAL_LINKS.map((social, index) => (
                 <a

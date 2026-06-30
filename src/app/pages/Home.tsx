@@ -4,6 +4,7 @@ import { Search, Shield, CheckCircle, ChevronRight, Star, ArrowRight } from "luc
 import { AutoScrollReel } from "../components/AutoScrollReel";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
+import { TEXT_MUTED, TEXT_MUTED_ON_TINT, TEXT_ON_DARK } from "../../lib/accessibleText";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
           {t.avatar}
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] font-bold text-[#7890AA] uppercase tracking-wider">{t.category}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>{t.category}</p>
           <div className="flex">
             {[1,2,3,4,5].map((i) => (
               <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= t.rating ? "#f59e0b" : "#e5e7eb"}>
@@ -136,7 +137,7 @@ function TaskCard({ t }: { t: typeof COMPLETED_TASKS["plumbing"][0] }) {
       <p className="font-semibold text-[13px] text-[#172E4D] leading-snug mb-2 line-clamp-2">{t.title}</p>
       <div className="flex items-center justify-between">
         <span className="font-black text-[15px] text-[#1D4196]">{t.price}</span>
-        <span className="text-[11px] text-[#7890AA] bg-[#F7F9FC] px-2 py-0.5 rounded-full">{t.area}</span>
+        <span className="text-[11px] bg-[#F7F9FC] px-2 py-0.5 rounded-full" style={{ color: TEXT_MUTED }}>{t.area}</span>
       </div>
     </div>
   );
@@ -203,12 +204,14 @@ export default function Home() {
             {/* Search */}
             <div className="flex items-center bg-white rounded-2xl overflow-hidden shadow-2xl max-w-[520px] mb-10 border border-white/20">
               <div className="flex items-center gap-3 flex-1 px-5 py-4">
-                <Search size={19} className="text-[#7890AA] shrink-0" />
+                <Search size={19} className="shrink-0" style={{ color: TEXT_MUTED }} />
                 <input
+                  id="hero-search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="cth. pipa bocor, saluran mampet…"
-                  className="bg-transparent text-[15px] text-[#172E4D] placeholder-[#7890AA] outline-none w-full font-medium"
+                  aria-label="Cari jenis pekerjaan"
+                  className="bg-transparent text-[15px] text-[#172E4D] outline-none w-full font-medium placeholder:text-[#627A95]"
                 />
               </div>
               <Link
@@ -254,13 +257,13 @@ export default function Home() {
                           <p className="font-bold text-[13px] text-[#172E4D] leading-snug truncate">{card.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className={`text-[11px] font-bold ${card.tagColor}`}>{card.tag}</span>
-                            <span className="text-[10px] text-[#7890AA]">· {card.offers}</span>
+                            <span className="text-[10px]" style={{ color: TEXT_MUTED }}>· {card.offers}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-black text-[15px] text-[#1D4196]">{card.price}</p>
-                        <p className="text-[10px] text-[#7890AA]">{card.area}</p>
+                        <p className="text-[10px]" style={{ color: TEXT_MUTED }}>{card.area}</p>
                       </div>
                     </div>
                   </div>
@@ -296,8 +299,9 @@ export default function Home() {
               className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all ${
                 taskTab === tab.id
                   ? "bg-[#172E4D] text-white"
-                  : "bg-[#EEF3FB] text-[#58708D] hover:bg-[#EEF3FB] hover:text-[#1D4196]"
+                  : "bg-[#EEF3FB] hover:bg-[#EEF3FB] hover:text-[#1D4196]"
               }`}
+              style={taskTab !== tab.id ? { color: TEXT_MUTED_ON_TINT } : undefined}
             >
               {tab.label}
             </button>
@@ -361,7 +365,7 @@ export default function Home() {
                 <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px]">RK</div>
                 <div>
                   <p className="font-bold text-[13px] text-white">Kran bocor – dapur</p>
-                  <p className="text-[11px] text-white/75">Dipasang 5 menit lalu · Jakarta Selatan</p>
+                  <p className="text-[11px]" style={{ color: TEXT_ON_DARK }}>Dipasang 5 menit lalu · Jakarta Selatan</p>
                 </div>
                 <div className="ml-auto">
                   <span className="text-[11px] font-black text-[#20bf6f] bg-[#20bf6f]/20 px-2.5 py-1 rounded-full">Terbuka</span>
@@ -370,7 +374,7 @@ export default function Home() {
 
               {/* Offers */}
               <div className="px-5 py-4">
-                <p className="text-[11px] font-bold text-[#7890AA] uppercase tracking-wider mb-3">3 penawaran masuk</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider mb-3" style={{ color: TEXT_MUTED }}>3 penawaran masuk</p>
                 {[
                   { name: "Andi S.", color: "#1D4196", price: "Rp 130rb", time: "Bisa dalam 30 menit", stars: 5 },
                   { name: "Reza M.", color: "#e85d26", price: "Rp 150rb", time: "Bisa hari ini",       stars: 5 },
@@ -448,7 +452,7 @@ export default function Home() {
               </p>
             </div>
             <div className="bg-white border border-[#D8E2F0] rounded-2xl px-5 py-4 max-w-[280px]">
-              <p className="text-[12px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">Layanan populer</p>
+              <p className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: TEXT_MUTED }}>Layanan populer</p>
               <p className="font-black text-[28px] text-[#172E4D] leading-none">50+</p>
               <p className="text-[13px] text-[#58708D] mt-1">kategori pekerjaan yang bisa kamu pilih</p>
             </div>
