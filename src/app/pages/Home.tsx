@@ -196,7 +196,7 @@ export default function Home() {
               <span className="block text-[64px] sm:text-[84px] text-white">Sekarang.</span>
             </h1>
 
-            <p className="text-white/60 text-[17px] mb-8 max-w-lg leading-relaxed">
+            <p className="text-white/80 text-[17px] mb-8 max-w-lg leading-relaxed">
               Ceritakan masalahnya, tentukan harga, lalu pilih tukang yang cocok.
             </p>
 
@@ -289,7 +289,10 @@ export default function Home() {
           {TASK_TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setTaskTab(tab.id)}
+              aria-pressed={taskTab === tab.id}
+              aria-label={`Filter kategori ${tab.label}`}
               className={`px-5 py-2 rounded-full text-[13px] font-bold transition-all ${
                 taskTab === tab.id
                   ? "bg-[#172E4D] text-white"
@@ -358,7 +361,7 @@ export default function Home() {
                 <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px]">RK</div>
                 <div>
                   <p className="font-bold text-[13px] text-white">Kran bocor – dapur</p>
-                  <p className="text-[11px] text-white/50">Dipasang 5 menit lalu · Jakarta Selatan</p>
+                  <p className="text-[11px] text-white/75">Dipasang 5 menit lalu · Jakarta Selatan</p>
                 </div>
                 <div className="ml-auto">
                   <span className="text-[11px] font-black text-[#20bf6f] bg-[#20bf6f]/20 px-2.5 py-1 rounded-full">Terbuka</span>

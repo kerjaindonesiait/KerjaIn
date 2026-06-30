@@ -37,6 +37,21 @@ const POPULAR_LOCATIONS = [
   "Depok", "Tangerang", "Bekasi", "Bogor",
 ];
 
+const SOCIAL_LINKS = [
+  {
+    href: "https://www.facebook.com/profile.php?id=61591091918607",
+    label: "KerjaIn di Facebook",
+  },
+  {
+    href: "https://www.instagram.com/kerjain.indonesia",
+    label: "KerjaIn di Instagram",
+  },
+  {
+    href: "https://www.tiktok.com/@kerjaindonesia",
+    label: "KerjaIn di TikTok",
+  },
+] as const;
+
 export default function Root() {
   const location = useLocation();
   const { user, loading } = useAuth();
@@ -147,7 +162,13 @@ export default function Root() {
             >
               Post Kerjaan
             </Link>
-            <button className="p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+            <button
+              type="button"
+              className="p-2"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
+              aria-expanded={mobileOpen}
+            >
               {mobileOpen ? <X size={22} className="text-[#294566]" /> : <Menu size={22} className="text-[#294566]" />}
             </button>
           </div>
@@ -214,7 +235,7 @@ export default function Root() {
           <div className="px-6 py-12 max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
             {FOOTER_COLS.map((col) => (
               <div key={col.heading}>
-                <h4 className="text-[12px] font-bold uppercase tracking-widest text-white/50 mb-4">{col.heading}</h4>
+                <p className="text-[12px] font-semibold text-white/50 uppercase tracking-widest mb-4">{col.heading}</p>
                 <ul className={col.heading === "Layanan Kami" ? "grid grid-cols-2 gap-x-6 gap-y-2" : "flex flex-col gap-2"}>
                   {col.links.map((link) => (
                     <li key={link}>
@@ -229,17 +250,28 @@ export default function Root() {
           {/* Bottom bar */}
           <div className="border-t border-white/10 px-6 py-6 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <BrandLogo variant="dark" imgClassName="h-9" />
-            <p className="text-[12px] text-white/40">KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
+            <p className="text-[12px] text-white/60">KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
             <div className="flex gap-4">
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-                <svg width="13" height="13" fill="white" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.87a8.18 8.18 0 0 0 4.78 1.52V6.95a4.85 4.85 0 0 1-1.01-.26z"/></svg>
-              </a>
+              {SOCIAL_LINKS.map((social, index) => (
+                <a
+                  key={social.href}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  {index === 0 && (
+                    <svg width="14" height="14" fill="white" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                  )}
+                  {index === 1 && (
+                    <svg width="14" height="14" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                  )}
+                  {index === 2 && (
+                    <svg width="13" height="13" fill="white" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.87a8.18 8.18 0 0 0 4.78 1.52V6.95a4.85 4.85 0 0 1-1.01-.26z"/></svg>
+                  )}
+                </a>
+              ))}
             </div>
           </div>
         </footer>
