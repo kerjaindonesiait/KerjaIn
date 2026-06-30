@@ -178,9 +178,10 @@ export const api = {
   },
 
   createJob(data: PostJobFormData) {
+    const { photoUrls: _photoUrls, photosUploading: _uploading, ...payload } = data;
     return request<{ job: Job }>("/api/jobs", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 
