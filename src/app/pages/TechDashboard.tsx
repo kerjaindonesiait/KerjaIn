@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 import {
   MapPin, Calendar, Clock, Shield, CheckCircle,
@@ -731,10 +731,25 @@ export default function TechDashboard() {
   const [loadingTab, setLoadingTab] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [techStats, setTechStats] = useState<TechnicianStats | null>(null);
+  const [penawaranCount, setPenawaranCount] = useState(0);
+  const [activeJobCount, setActiveJobCount] = useState(0);
   const canQuote = techStats?.verified ?? false;
+
+  const refreshTabCounts = useCallback(() => {
+    Promise.all([
+      api.getOffersMine(),
+      api.getAssignedJobs({ status: "in_progress" }),
+    ])
+      .then(([{ offers }, { jobs }]) => {
+        setPenawaranCount(offers.filter(isPenawaranTabOffer).length);
+        setActiveJobCount(jobs.length);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     api.getTechnicianStats().then(({ stats }) => setTechStats(stats)).catch(() => setTechStats(null));
+    refreshTabCounts();
     api
       .getOffersMine()
       .then(({ offers }) => {
@@ -747,7 +762,7 @@ export default function TechDashboard() {
         setQuotedJobs(q);
       })
       .catch(() => {});
-  }, []);
+  }, [refreshTabCounts]);
 
   useEffect(() => {
     if (navTab === "lowongan") return;
@@ -755,13 +770,20 @@ export default function TechDashboard() {
     if (navTab === "penawaran") {
       api
         .getOffersMine()
-        .then(({ offers }) => setMyOffers(offers.filter(isPenawaranTabOffer)))
+        .then(({ offers }) => {
+          const list = offers.filter(isPenawaranTabOffer);
+          setMyOffers(list);
+          setPenawaranCount(list.length);
+        })
         .catch(() => setMyOffers([]))
         .finally(() => setLoadingTab(false));
     } else if (navTab === "aktif") {
       api
         .getAssignedJobs({ status: "in_progress" })
-        .then(({ jobs }) => setActiveJobs(jobs))
+        .then(({ jobs }) => {
+          setActiveJobs(jobs);
+          setActiveJobCount(jobs.length);
+        })
         .catch(() => setActiveJobs([]))
         .finally(() => setLoadingTab(false));
     } else if (navTab === "selesai") {
@@ -783,6 +805,7 @@ export default function TechDashboard() {
           j.id === jobId ? { ...j, technicianCompletedAt: new Date().toISOString() } : j,
         ),
       );
+      refreshTabCounts();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Gagal menandai pekerjaan selesai");
     } finally {
@@ -938,20 +961,33 @@ export default function TechDashboard() {
       <div className="bg-white border-b border-[#f5eded] shrink-0">
         <div className="max-w-[1400px] mx-auto px-6">
           <HorizontalScrollRow fadeEdge="light" innerClassName="pb-0.5">
-            <div className="flex flex-nowrap min-w-max">
-          {NAV_TABS.map((t) => (
+            <div className="flex flex-nowrap min-w-max items-stretch">
+          {NAV_TABS.map((t, i) => {
+            const badgeCount =
+              t.id === "penawaran" ? penawaranCount : t.id === "aktif" ? activeJobCount : 0;
+            return (
+            <Fragment key={t.id}>
+              {i > 0 && (
+                <div className="w-px bg-[#E0E8F2] self-center h-5 shrink-0" aria-hidden />
+              )}
             <button
-              key={t.id}
               onClick={() => setNavTab(t.id as NavTab)}
-              className={`flex shrink-0 items-center gap-1.5 px-4 py-3.5 text-[13px] font-bold transition-all relative border-b-2 whitespace-nowrap ${
+              className={`relative flex shrink-0 items-center gap-1.5 px-4 py-3.5 text-[13px] font-bold transition-all border-b-2 whitespace-nowrap ${
                 navTab === t.id
                   ? "text-[#1D4196] border-[#1D4196]"
                   : "text-[#7890AA] border-transparent hover:text-[#58708D]"
               }`}
             >
+              {badgeCount > 0 && (
+                <span className="absolute top-1.5 left-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full bg-[#FFE8E8] text-[#FD6665] text-[9px] font-bold flex items-center justify-center leading-none">
+                  {badgeCount > 99 ? "99+" : badgeCount}
+                </span>
+              )}
               {t.icon} {t.label}
             </button>
-          ))}
+            </Fragment>
+            );
+          })}
             </div>
           </HorizontalScrollRow>
         </div>
@@ -1001,7 +1037,10 @@ export default function TechDashboard() {
                       quoted={selectedJob.id in quotedJobs}
                       quotedPrice={quotedJobs[selectedJob.id] ?? 0}
                       canQuote={canQuote}
-                      onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
+                      onQuote={(price) => {
+                        setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }));
+                        refreshTabCounts();
+                      }}
                       onClose={handleJobBack}
                       tab={jobDetailTab}
                       onTabChange={setJobDetailTab}
@@ -1018,7 +1057,10 @@ export default function TechDashboard() {
                   quoted={selectedJob.id in quotedJobs}
                   quotedPrice={quotedJobs[selectedJob.id] ?? 0}
                   canQuote={canQuote}
-                  onQuote={(price) => setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }))}
+                  onQuote={(price) => {
+                    setQuotedJobs((prev) => ({ ...prev, [selectedJob.id]: price }));
+                    refreshTabCounts();
+                  }}
                   onClose={handleJobBack}
                   tab={jobDetailTab}
                   onTabChange={setJobDetailTab}
