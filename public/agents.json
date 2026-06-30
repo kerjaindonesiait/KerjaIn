@@ -1,0 +1,28 @@
+{
+  "name": "KerjaIn",
+  "description": "Platform Indonesia untuk menghubungkan pelanggan dengan tukang terpercaya di Jakarta.",
+  "actions": [
+    {
+      "name": "browse_open_tasks",
+      "description": "Lihat daftar pekerjaan terbuka yang dapat diambil tukang.",
+      "url": "https://kerjaindonesia.com/tasks",
+      "method": "GET",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "view_how_it_works",
+      "description": "Pelajari alur memposting pekerjaan dan memilih penawaran tukang.",
+      "url": "https://kerjaindonesia.com/how-it-works",
+      "method": "GET",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ]
+}

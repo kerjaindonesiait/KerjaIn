@@ -2,33 +2,24 @@
 
 > KerjaIn adalah platform di Indonesia yang menghubungkan pelanggan dengan tukang terpercaya di Jakarta untuk plumbing, perawatan rumah, dan pekerjaan darurat. Pelanggan dapat memposting pekerjaan, menerima penawaran, dan menyelesaikan pembayaran dengan aman.
 
-KerjaIn beroperasi di `https://kerjaindonesia.com`. Halaman aplikasi (login, dasbor, pesan) tidak dimaksudkan untuk diindeks; gunakan halaman publik di bawah ini sebagai sumber utama.
+Situs: https://kerjaindonesia.com. Aplikasi web berbasis React (SPA). Gunakan halaman publik di bawah ini sebagai sumber utama untuk agen AI.
 
-## Halaman publik
+## Docs
 
-- [Beranda](https://kerjaindonesia.com/): Pengenalan layanan, cara memposting pekerjaan, dan contoh kategori tukang di Jakarta.
-- [Cara Kerja](https://kerjaindonesia.com/how-it-works): Alur lengkap dari ceritakan masalah, atur budget, pilih penawaran, hingga pekerjaan selesai.
+- [Beranda](https://kerjaindonesia.com/): Pengenalan layanan, cara memposting pekerjaan, dan kategori tukang di Jakarta.
+- [Cara Kerja](https://kerjaindonesia.com/how-it-works): Alur dari ceritakan masalah, atur budget, pilih penawaran, hingga pekerjaan selesai.
 - [Cari Pekerjaan](https://kerjaindonesia.com/tasks): Daftar pekerjaan terbuka untuk tukang di Jakarta dan sekitarnya.
-- [Daftar sebagai Tukang](https://kerjaindonesia.com/daftar-tukang): Pendaftaran dan onboarding tukang (verifikasi identitas).
+- [Daftar sebagai Tukang](https://kerjaindonesia.com/daftar-tukang): Pendaftaran dan onboarding tukang dengan verifikasi identitas.
 
-## Layanan populer
+## Services
 
-- [Pipa bocor & plumbing darurat](https://kerjaindonesia.com/): Perbaikan pipa, saluran mampet, deteksi kebocoran, dan water heater.
+- [Plumbing & pipa bocor](https://kerjaindonesia.com/): Perbaikan pipa, saluran mampet, deteksi kebocoran, dan water heater.
 - [Perawatan rumah](https://kerjaindonesia.com/): Tukang serba bisa, perbaikan pintu, bersih talang, keramik, dan perawatan umum.
 
-## Kontak & sosial
+## Optional
 
+- [Sitemap](https://kerjaindonesia.com/sitemap.xml): Daftar URL halaman publik yang dapat diindeks.
+- [robots.txt](https://kerjaindonesia.com/robots.txt): Aturan crawler untuk mesin pencari.
 - [Facebook](https://www.facebook.com/profile.php?id=61591091918607): Profil resmi KerjaIn.
 - [Instagram](https://www.instagram.com/kerjain.indonesia): Update dan informasi layanan.
 - [TikTok](https://www.tiktok.com/@kerjaindonesia): Konten edukasi dan tips rumah.
-
-## Crawling
-
-- [Sitemap](https://kerjaindonesia.com/sitemap.xml): URL halaman publik yang dapat diindeks.
-- [robots.txt](https://kerjaindonesia.com/robots.txt): Aturan crawler untuk mesin pencari.
-
-## API & data
-
-Aplikasi web ini adalah SPA (React). Konten halaman utama dimuat oleh JavaScript. Untuk metadata halaman, lihat tag `<title>` dan `<meta name="description">` pada setiap rute publik.
-
-Endpoint API produksi: `https://api.kerjaindonesia.com` (autentikasi diperlukan; tidak untuk crawling publik).

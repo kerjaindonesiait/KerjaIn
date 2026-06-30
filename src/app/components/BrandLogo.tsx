@@ -2,6 +2,10 @@ import logoSrc from "../../../logo/KerjaIn.png";
 import logoDarkSrc from "../../../logo/Kerjain White Pink.png";
 import { cn } from "./ui/utils";
 
+/** Intrinsic logo dimensions — used for layout-stable width/height attrs. */
+const LOGO_WIDTH = 1524;
+const LOGO_HEIGHT = 537;
+
 type BrandLogoProps = {
   className?: string;
   imgClassName?: string;
@@ -28,6 +32,9 @@ export function BrandLogo({
       <img
         src={src}
         alt="KerjaIn"
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        decoding="async"
         className={cn("h-8 w-auto object-contain", imgClassName)}
       />
     </span>

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { defaultRouteForUser } from "../../lib/defaultRoute";
 import { TEXT_MUTED } from "../../lib/accessibleText";
+import { HomeBelowFoldSkeleton } from "../components/HomeBelowFoldSkeleton";
 
 const HomeBelowFold = lazy(() => import("./HomeBelowFold"));
 
@@ -26,10 +27,10 @@ export default function Home() {
 
         <div className="relative max-w-[1400px] mx-auto px-6 pt-16 pb-20 flex flex-col lg:flex-row items-center gap-12">
           <div className="flex-1 min-w-0">
-            <h1 className="font-[1000] leading-[0.9] tracking-tight uppercase mb-6">
-              <span className="block text-[64px] sm:text-[84px] text-white">Atasi</span>
-              <span className="block text-[64px] sm:text-[84px] text-[#FD6665]">Masalah.</span>
-              <span className="block text-[64px] sm:text-[84px] text-white">Sekarang.</span>
+            <h1 className="font-extrabold leading-[0.9] tracking-tight uppercase mb-6 min-h-[10.8rem] sm:min-h-[14.4rem]">
+              <span className="block text-[64px] sm:text-[84px] text-white min-h-[3.6rem] sm:min-h-[4.7rem]">Atasi</span>
+              <span className="block text-[64px] sm:text-[84px] text-[#FD6665] min-h-[3.6rem] sm:min-h-[4.7rem]">Masalah.</span>
+              <span className="block text-[64px] sm:text-[84px] text-white min-h-[3.6rem] sm:min-h-[4.7rem]">Sekarang.</span>
             </h1>
 
             <p className="text-white/80 text-[17px] mb-8 max-w-lg leading-relaxed">
@@ -45,7 +46,7 @@ export default function Home() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="cth. pipa bocor, saluran mampet…"
                   aria-label="Cari jenis pekerjaan"
-                  className="bg-transparent text-[15px] text-[#172E4D] outline-none w-full font-medium placeholder:text-[#627A95]"
+                  className="bg-transparent text-[15px] text-[#172E4D] outline-none w-full font-semibold placeholder:text-[#627A95]"
                 />
               </div>
               <Link
@@ -109,7 +110,7 @@ export default function Home() {
         </div>
       </section>
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<HomeBelowFoldSkeleton />}>
         <HomeBelowFold />
       </Suspense>
     </div>

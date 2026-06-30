@@ -17,20 +17,6 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
-  plugins: [
-    figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
-    react(),
-    tailwindcss(),
-  ],
-  resolve: {
-    alias: {
-      // Alias @ to the src directory
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-
   build: {
     rollupOptions: {
       output: {
@@ -48,6 +34,54 @@ export default defineConfig({
           return 'vendor';
         },
       },
+    },
+  },
+
+  plugins: [
+    figmaAssetResolver(),
+    react(),
+    tailwindcss(),
+    {
+      name: 'font-display-optional',
+      transform(code, id) {
+        if (id.includes('@fontsource/manrope') && id.endsWith('.css')) {
+          return code.replace(/font-display:\s*swap/g, 'font-display: optional');
+        }
+      },
+      generateBundle(_options, bundle) {
+        for (const chunk of Object.values(bundle)) {
+          if (chunk.type === 'asset' && chunk.fileName.endsWith('.css')) {
+            chunk.source = String(chunk.source).replace(
+              /font-display:\s*swap/g,
+              'font-display: optional',
+            );
+          }
+        }
+      },
+    },
+    {
+      name: 'preload-hero-font',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html, ctx) {
+          const bundle = ctx.bundle;
+          if (!bundle) return html;
+
+          const fontFile = Object.keys(bundle).find((file) =>
+            /manrope-latin-700-normal-.*\.woff2$/.test(file),
+          );
+          if (!fontFile) return html;
+
+          const preload = `  <link rel="preload" href="/${fontFile}" as="font" type="font/woff2" crossorigin />\n`;
+          return html.replace('</head>', `${preload}</head>`);
+        },
+      },
+    },
+  ],
+
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
 

@@ -6,6 +6,9 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
       <link rel="apple-touch-icon" href="/favicon.png" />
+      <link rel="alternate" type="application/json" title="Agent Action Map" href="/agents.json" />
+      <link rel="alternate" type="text/plain" title="LLM Context" href="/llms.txt" />
+      <link rel="alternate" type="text/markdown" title="Agent Runbook" href="/agent-instructions.md" />
       <title>KerjaIn — Cari Tukang &amp; Jasa Rumah di Jakarta</title>
       <meta name="description" content="KerjaIn menghubungkan kamu dengan tukang terpercaya di Jakarta untuk plumbing, perbaikan rumah, dan pekerjaan darurat. Post kerjaan gratis, bandingkan penawaran, bayar aman." />
       <meta name="robots" content="index, follow" />
@@ -17,14 +20,128 @@
         html, body { height: 100%; margin: 0; }
         #root { min-height: 100%; }
         body {
-          font-family: Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          background: #f7f9fc;
+        }
+        #kj-static-shell {
+          display: flex;
+          flex-direction: column;
+          min-height: 100vh;
+          background: #f7f9fc;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        #kj-static-shell header {
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          height: 72px;
+          padding: 0 24px;
+          background: #fff;
+          border-bottom: 1px solid #d8e2f0;
+        }
+        #kj-static-shell .kj-logo-slot {
+          width: 136px;
+          height: 48px;
+          flex-shrink: 0;
+        }
+        #kj-static-shell .kj-nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-left: auto;
+        }
+        #kj-static-shell .kj-cta-pill {
+          width: 108px;
+          height: 32px;
+          border-radius: 999px;
+          background: #1d4196;
+        }
+        #kj-static-shell .kj-menu-slot {
+          width: 38px;
+          height: 38px;
+        }
+        #kj-static-shell .kj-hero {
           background: #172e4d;
+          padding: 64px 24px 80px;
+        }
+        #kj-static-shell h1 {
+          margin: 0 0 24px;
+          font-size: 64px;
+          line-height: 0.9;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          text-transform: uppercase;
+          min-height: 10.8rem;
+        }
+        #kj-static-shell h1 span {
+          display: block;
+          min-height: 3.6rem;
+        }
+        #kj-static-shell .kj-hero-lead {
+          margin: 0 0 32px;
+          max-width: 32rem;
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 17px;
+          line-height: 1.6;
+        }
+        #kj-static-shell .kj-search-slot {
+          height: 56px;
+          max-width: 520px;
+          margin-bottom: 40px;
+          border-radius: 16px;
+          background: #fff;
+        }
+        #kj-static-shell .kj-hero-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          min-height: 48px;
+        }
+        #kj-static-shell .kj-btn-primary {
+          width: 140px;
+          height: 48px;
+          border-radius: 999px;
+          background: #1d4196;
+        }
+        #kj-static-shell .kj-btn-secondary {
+          width: 168px;
+          height: 48px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        #kj-static-shell .kj-below-fold-slot {
+          min-height: min(720px, 85vh);
+          background: #fff;
         }
       </style>
     </head>
 
     <body>
-      <div id="root"></div>
+      <div id="root">
+        <div id="kj-static-shell" aria-hidden="true">
+          <header>
+            <div class="kj-logo-slot"></div>
+            <div class="kj-nav-actions">
+              <div class="kj-cta-pill"></div>
+              <div class="kj-menu-slot"></div>
+            </div>
+          </header>
+          <section class="kj-hero">
+            <h1>
+              <span style="color:#fff">Atasi</span>
+              <span style="color:#fd6665">Masalah.</span>
+              <span style="color:#fff">Sekarang.</span>
+            </h1>
+            <p class="kj-hero-lead">Ceritakan masalahnya, tentukan harga, lalu pilih tukang yang cocok.</p>
+            <div class="kj-search-slot"></div>
+            <div class="kj-hero-actions">
+              <div class="kj-btn-primary"></div>
+              <div class="kj-btn-secondary"></div>
+            </div>
+          </section>
+          <div class="kj-below-fold-slot"></div>
+        </div>
+      </div>
       <script type="module" src="/src/main.tsx"></script>
     </body>
   </html>

@@ -131,8 +131,13 @@ export default function Root() {
           </nav>
 
           {/* Right nav */}
-          <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto">
-            {loading ? null : user ? (
+          <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto min-h-[36px] min-w-[180px] justify-end">
+            {loading ? (
+              <span className="invisible flex items-center gap-2 text-[13px] font-semibold" aria-hidden="true">
+                <span className="w-7 h-7 rounded-full bg-[#D8E2F0]" />
+                <span>Placeholder</span>
+              </span>
+            ) : user ? (
               <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#D8E2F0]" />

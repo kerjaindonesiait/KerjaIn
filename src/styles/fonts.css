@@ -1,4 +1,5 @@
-@import "@fontsource/manrope/latin-500.css";
 @import "@fontsource/manrope/latin-600.css";
 @import "@fontsource/manrope/latin-700.css";
 @import "@fontsource/manrope/latin-800.css";
+
+/* Manrope uses font-display: optional (see vite font-display-optional plugin) to avoid CLS from swap. */
