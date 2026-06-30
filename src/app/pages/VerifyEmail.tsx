@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
@@ -12,6 +12,7 @@ export default function VerifyEmail() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [verifiedRole, setVerifiedRole] = useState<"user" | "technician" | null>(null);
+  const verificationTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -19,9 +20,12 @@ export default function VerifyEmail() {
       setMessage("Tautan verifikasi tidak valid.");
       return;
     }
+    if (verificationTokenRef.current === token) return;
+
+    verificationTokenRef.current = token;
     api.verifyEmail(token)
       .then(async ({ user }) => {
-        const me = await refreshUser();
+        const me = await refreshUser().catch(() => null);
         const role = user?.role ?? me?.role ?? null;
         if (role === "technician" || role === "user") {
           setVerifiedRole(role);
@@ -33,6 +37,7 @@ export default function VerifyEmail() {
         setStatus("success");
       })
       .catch((err) => {
+        verificationTokenRef.current = null;
         setStatus("error");
         setMessage(err instanceof Error ? err.message : "Verifikasi gagal");
       });
