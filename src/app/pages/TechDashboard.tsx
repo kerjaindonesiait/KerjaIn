@@ -942,8 +942,15 @@ export default function TechDashboard() {
             </Link>
           </div>
 
-          {/* Profile */}
-          <div className="flex items-center">
+          {/* Profile + messages */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/pesan"
+              className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors"
+              aria-label="Pesan"
+            >
+              <MessageCircle size={18} className="text-white" />
+            </Link>
             <Link to="/akun" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-white/20" />

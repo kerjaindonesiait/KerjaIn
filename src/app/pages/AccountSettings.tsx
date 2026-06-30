@@ -92,6 +92,14 @@ export default function AccountSettings() {
           )}
 
           <Link
+            to="/pesan"
+            className="flex items-center justify-between px-6 py-4 border-t border-[#D8E2F0] hover:bg-[#F7F9FC] transition-colors"
+          >
+            <p className="font-bold text-[14px] text-[#172E4D]">Pesan</p>
+            <ChevronRight size={18} className="text-[#7890AA] shrink-0" />
+          </Link>
+
+          <Link
             to="/akun/ubah-sandi"
             className="flex items-center justify-between px-6 py-4 border-t border-[#D8E2F0] hover:bg-[#F7F9FC] transition-colors"
           >
@@ -104,12 +112,6 @@ export default function AccountSettings() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Link
-            to="/pesan"
-            className="w-full text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566] transition-colors"
-          >
-            Pesan
-          </Link>
           {user.role === "user" && (
             <Link
               to="/pekerjaan-saya"

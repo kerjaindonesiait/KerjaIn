@@ -41,6 +41,7 @@ import {
   type JobCategoryFilter,
 } from "../../lib/jobFilters";
 import type { Job, Offer } from "../../types";
+import { BrandLogo } from "../components/BrandLogo";
 import { appShellClass, appShellClassMobileFlush } from "../../lib/layout";
 import { useShowTasksMap } from "../../lib/useShowTasksMap";
 import { FilterPopover, FilterScrollContainerContext } from "../components/FilterPopover";
@@ -990,8 +991,57 @@ export default function Tasks() {
     return <Navigate to="/dasbor-tukang" replace />;
   }
 
+  const userDisplayName = user?.fullName ?? user?.email?.split("@")[0] ?? "Akun";
+  const userInitials = userDisplayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      {user?.role === "user" && (
+        <header className="bg-[#172E4D] text-white shrink-0 sticky top-0 z-50">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+            <Link to="/tasks" className="hover:opacity-90 transition-opacity shrink-0">
+              <BrandLogo variant="dark" imgClassName="h-9" />
+            </Link>
+            <div className="flex items-center gap-2 min-w-0">
+              <Link
+                to="/post-job"
+                className="shrink-0 bg-[#1D4196] hover:bg-[#173577] text-white text-[12px] font-semibold px-3.5 py-[7px] rounded-full transition-colors whitespace-nowrap"
+              >
+                Post Kerjaan
+              </Link>
+              <Link
+                to="/pesan"
+                className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
+                aria-label="Pesan"
+              >
+                <MessageCircle size={18} className="text-white" />
+              </Link>
+              <Link to="/akun" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    className="w-8 h-8 rounded-full object-cover border border-white/20 shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#1D4196] flex items-center justify-center text-white font-black text-[12px] shrink-0">
+                    {userInitials}
+                  </div>
+                )}
+                <p className="font-bold text-[13px] text-white leading-none truncate max-w-[100px] sm:max-w-[160px]">
+                  {userDisplayName}
+                </p>
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
+
       {/* Filter bar — hidden on portrait phone when viewing job detail */}
       <div
         className={`bg-white border-b border-[#f5eded] shrink-0 shadow-sm${

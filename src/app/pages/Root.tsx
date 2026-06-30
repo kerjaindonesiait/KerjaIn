@@ -42,7 +42,8 @@ export default function Root() {
   const isTasksPage = location.pathname === "/tasks";
   const isTechDashboard = location.pathname === "/dasbor-tukang";
   const isChatPage = /^\/pesan\/[^/]+/.test(location.pathname);
-  const hideSiteHeader = isTechDashboard;
+  const hideSiteHeader =
+    isTechDashboard || (isTasksPage && user?.role === "user");
   const hideSiteFooter = isTasksPage || isTechDashboard || location.pathname.startsWith("/pesan");
   const fullHeightPage = isTasksPage || isTechDashboard || isChatPage;
   const browseJobsHref = user?.role === "technician" ? "/dasbor-tukang" : "/tasks";
