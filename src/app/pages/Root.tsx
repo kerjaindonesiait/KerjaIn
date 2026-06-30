@@ -1,6 +1,6 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import { Outlet, Link, useLocation } from "react-router";
 import { useState } from "react";
-import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
 import { ScrollToTop } from "../components/ScrollToTop";
@@ -37,8 +37,7 @@ const POPULAR_LOCATIONS = [
 
 export default function Root() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isTasksPage = location.pathname === "/tasks";
   const isTechDashboard = location.pathname === "/dasbor-tukang";
@@ -58,12 +57,6 @@ export default function Root() {
         : location.pathname === "/tasks";
     }
     return location.pathname === item.href;
-  };
-
-  const handleLogout = async () => {
-    setMobileOpen(false);
-    await logout();
-    navigate("/");
   };
 
   const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "Akun";
@@ -120,37 +113,16 @@ export default function Root() {
           {/* Right nav */}
           <div className="hidden md:flex items-center gap-3 shrink-0 ml-auto">
             {loading ? null : user ? (
-              <>
-                {user.role === "technician" && (
-                  <Link to="/dasbor-tukang" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
-                    Dasbor Tukang
-                  </Link>
+              <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#D8E2F0]" />
+                ) : (
+                  <span className="w-7 h-7 rounded-full bg-[#1D4196] text-white text-[11px] font-bold flex items-center justify-center">
+                    {initials}
+                  </span>
                 )}
-                {user.role === "user" && (
-                  <Link to="/pekerjaan-saya" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
-                    Pekerjaan Saya
-                  </Link>
-                )}
-                <Link to="/pesan" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
-                  Pesan
-                </Link>
-                <Link to="/akun" className="flex items-center gap-2 text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#D8E2F0]" />
-                  ) : (
-                    <span className="w-7 h-7 rounded-full bg-[#1D4196] text-white text-[11px] font-bold flex items-center justify-center">
-                      {initials}
-                    </span>
-                  )}
-                  <span className="max-w-[120px] truncate">{displayName}</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 text-[13px] font-semibold text-[#294566] hover:text-red-600 transition-colors px-2"
-                >
-                  <LogOut size={15} /> Keluar
-                </button>
-              </>
+                <span className="max-w-[120px] truncate">{displayName}</span>
+              </Link>
             ) : (
               <>
                 <Link to="/daftar" className="text-[13px] font-semibold text-[#294566] hover:text-[#1D4196] transition-colors whitespace-nowrap px-2">
@@ -189,37 +161,19 @@ export default function Root() {
             ))}
             <div className="flex flex-col gap-3 pt-2 border-t border-[#EEF3FB]">
               {user ? (
-                <>
-                  <Link to="/akun" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
-                    ) : (
-                      <span className="w-9 h-9 rounded-full bg-[#1D4196] text-white text-[12px] font-bold flex items-center justify-center">
-                        {initials}
-                      </span>
-                    )}
-                    <div>
-                      <p className="text-[14px] font-bold text-[#172E4D]">{displayName}</p>
-                      <p className="text-[12px] text-[#7890AA]">{user.email}</p>
-                    </div>
-                  </Link>
-                  {user.role === "technician" && (
-                    <Link to="/dasbor-tukang" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#294566] py-2 flex items-center gap-2">
-                      <UserIcon size={16} /> Dasbor Tukang
-                    </Link>
+                <Link to="/akun" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="w-9 h-9 rounded-full bg-[#1D4196] text-white text-[12px] font-bold flex items-center justify-center">
+                      {initials}
+                    </span>
                   )}
-                  {user.role === "user" && (
-                    <Link to="/pekerjaan-saya" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#294566] py-2 flex items-center gap-2">
-                      <UserIcon size={16} /> Pekerjaan Saya
-                    </Link>
-                  )}
-                  <Link to="/pesan" onClick={() => setMobileOpen(false)} className="text-[14px] font-semibold text-[#294566] py-2">
-                    Pesan
-                  </Link>
-                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 border border-red-200 text-red-600 font-semibold text-[13px] py-2.5 rounded-full">
-                    <LogOut size={15} /> Keluar
-                  </button>
-                </>
+                  <div>
+                    <p className="text-[14px] font-bold text-[#172E4D]">{displayName}</p>
+                    <p className="text-[12px] text-[#7890AA]">{user.email}</p>
+                  </div>
+                </Link>
               ) : (
                 <div className="flex gap-3">
                   <Link to="/daftar" onClick={() => setMobileOpen(false)} className="flex-1 text-center border border-[#D8E2F0] text-[#294566] font-semibold text-[13px] py-2 rounded-full hover:border-[#1D4196] hover:text-[#1D4196] transition-all">Daftar</Link>

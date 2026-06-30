@@ -1226,11 +1226,6 @@ export default function Tasks() {
             showMap && selectedTask ? " hidden md:flex" : ""
           }`}
         >
-          <div className="px-4 py-2.5 border-b border-[#D8E2F0] bg-white">
-            <p className="text-[12px] text-[#7890AA] font-semibold">
-              {filtered.length} pekerjaan tersedia
-            </p>
-          </div>
           <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
             {loading ? (
               <p className="text-center py-16 text-[#7890AA] text-[14px]">

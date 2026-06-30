@@ -103,20 +103,39 @@ export default function AccountSettings() {
           </Link>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
+          <Link
+            to="/pesan"
+            className="w-full text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566] transition-colors"
+          >
+            Pesan
+          </Link>
           {user.role === "user" && (
-            <Link to="/ulasan-saya" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
-              Ulasan saya
+            <Link
+              to="/pekerjaan-saya"
+              className="w-full text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566] transition-colors"
+            >
+              Pekerjaan saya
             </Link>
           )}
-          {user.role === "technician" && (
-            <Link to="/akun/ulasan" className="flex-1 text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566]">
+          {user.role === "user" ? (
+            <Link
+              to="/ulasan-saya"
+              className="w-full text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566] transition-colors"
+            >
+              Ulasan saya
+            </Link>
+          ) : (
+            <Link
+              to="/akun/ulasan"
+              className="w-full text-center border-2 border-[#D8E2F0] font-bold text-[14px] py-3 rounded-2xl hover:border-[#1D4196] text-[#294566] transition-colors"
+            >
               Ulasan saya
             </Link>
           )}
           <button
             onClick={handleLogout}
-            className="flex-1 bg-white border-2 border-red-200 text-red-600 font-bold text-[14px] py-3 rounded-2xl hover:bg-red-50"
+            className="w-full bg-white border-2 border-red-200 text-red-600 font-bold text-[14px] py-3 rounded-2xl hover:bg-red-50 transition-colors"
           >
             Keluar
           </button>
