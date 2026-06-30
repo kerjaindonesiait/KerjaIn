@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
+import { PageSEO } from "../components/PageSEO";
 import { ScrollToTop } from "../components/ScrollToTop";
 import { appShellClass } from "../../lib/layout";
 
@@ -70,6 +71,7 @@ export default function Root() {
 
   return (
     <div className={`flex flex-col bg-[#F7F9FC] ${fullHeightPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
+      <PageSEO />
       <ScrollToTop />
       {/* NAV — hidden on tukang dashboard (uses its own blue header) */}
       {!hideSiteHeader && (

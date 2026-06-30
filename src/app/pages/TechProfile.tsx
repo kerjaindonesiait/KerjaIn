@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { MapPin, CheckCircle, Star, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { usePageSEO } from "../../lib/seo";
 import type { Review, TechnicianPublic } from "../../types";
 
 function StarDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
@@ -36,6 +37,17 @@ export default function TechProfile() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const keahlianLabel = tech?.keahlian?.length ? tech.keahlian.slice(0, 3).join(", ") : "tukang rumah";
+  usePageSEO(
+    tech && id
+      ? {
+          title: `${tech.name} — Tukang ${keahlianLabel} | KerjaIn`,
+          description: `Profil ${tech.name}: keahlian ${keahlianLabel}, ulasan pelanggan, dan area layanan di Jakarta. Tukang terpercaya di KerjaIn.`,
+          canonicalPath: `/tukang/${id}`,
+        }
+      : null,
+  );
 
   if (loading) {
     return (

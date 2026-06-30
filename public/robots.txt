@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /how-it-works
+Allow: /tasks
+Allow: /tukang/
+
+Disallow: /masuk
+Disallow: /daftar
+Disallow: /daftar-tukang
+Disallow: /post-job
+Disallow: /dasbor-tukang
+Disallow: /akun
+Disallow: /pesan
+Disallow: /pekerjaan-saya
+Disallow: /ulasan-saya
+Disallow: /bayar
+Disallow: /lupa-sandi
+Disallow: /atur-ulang-sandi
+Disallow: /verifikasi-email
+Disallow: /auth/
+Disallow: /admin
+
+Sitemap: https://kerjaindonesia.com/sitemap.xml
