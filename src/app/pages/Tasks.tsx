@@ -1004,16 +1004,18 @@ export default function Tasks() {
       {user?.role === "user" && (
         <header className="bg-[#172E4D] text-white shrink-0 sticky top-0 z-50">
           <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-            <Link to="/tasks" className="hover:opacity-90 transition-opacity shrink-0">
-              <BrandLogo variant="dark" imgClassName="h-9" />
-            </Link>
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Link to="/tasks" className="hover:opacity-90 transition-opacity shrink-0">
+                <BrandLogo variant="dark" imgClassName="h-9" />
+              </Link>
               <Link
                 to="/post-job"
-                className="shrink-0 bg-[#1D4196] hover:bg-[#173577] text-white text-[12px] font-semibold px-3.5 py-[7px] rounded-full transition-colors whitespace-nowrap"
+                className="shrink-0 bg-[#1D4196] hover:bg-[#173577] text-white text-[11px] sm:text-[12px] font-semibold px-2.5 sm:px-3.5 py-[7px] rounded-full transition-colors whitespace-nowrap"
               >
                 Post Kerjaan
               </Link>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <Link
                 to="/pesan"
                 className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/10 transition-colors shrink-0"
@@ -1033,9 +1035,11 @@ export default function Tasks() {
                     {userInitials}
                   </div>
                 )}
-                <p className="font-bold text-[13px] text-white leading-none truncate max-w-[100px] sm:max-w-[160px]">
-                  {userDisplayName}
-                </p>
+                <div className="min-w-0">
+                  <p className="font-bold text-[13px] text-white leading-none truncate max-w-[72px] sm:max-w-[160px]">
+                    {userDisplayName}
+                  </p>
+                </div>
               </Link>
             </div>
           </div>
