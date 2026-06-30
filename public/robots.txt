@@ -21,3 +21,7 @@ Disallow: /auth/
 Disallow: /admin
 
 Sitemap: https://kerjaindonesia.com/sitemap.xml
+
+# Panduan untuk agen AI / LLM
+# https://llmstxt.org/
+# LLMs-Txt: https://kerjaindonesia.com/llms.txt
