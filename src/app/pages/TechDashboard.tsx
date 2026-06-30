@@ -10,6 +10,7 @@ import { useAuth } from "../../lib/auth";
 import { releaseMobileZoom } from "../../lib/scrollToTop";
 import type { Job, MineOffer, TechnicianStats } from "../../types";
 import { BrandLogo } from "../components/BrandLogo";
+import { JobPhotoGallery } from "../components/JobPhotoGallery";
 import { JobsMap } from "../components/JobsMap";
 import { JobBrowseFilterBar } from "../components/JobBrowseFilterBar";
 import { HorizontalScrollRow } from "../components/HorizontalScrollRow";
@@ -31,6 +32,7 @@ type ApiJob = {
   posterRating: number | null;
   offers: number;
   description: string;
+  photos: string[];
 };
 
 function mapJob(j: Job): ApiJob {
@@ -48,6 +50,7 @@ function mapJob(j: Job): ApiJob {
     posterRating: null,
     offers: j.offers,
     description: j.description,
+    photos: j.photos ?? [],
   };
 }
 
@@ -632,6 +635,8 @@ function JobDetail({ job, quoted, quotedPrice, canQuote, onQuote, onClose, tab, 
                 <p className="font-bold text-[12px] text-[#7890AA] uppercase tracking-wider mb-3">Deskripsi pekerjaan</p>
                 <p className="text-[14px] text-[#294566] leading-relaxed whitespace-pre-line">{job.description}</p>
               </div>
+
+              <JobPhotoGallery photos={job.photos} className="mb-1" />
 
               <div className="flex items-start gap-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4">
                 <Shield size={16} className="text-[#20bf6f] shrink-0 mt-0.5" />

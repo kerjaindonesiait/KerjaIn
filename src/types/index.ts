@@ -83,7 +83,11 @@ export interface MineOffer {
 export interface PostJobFormData {
   layanan: string;
   deskripsi: string;
+  /** Supabase storage paths (draft/{userId}/…), sent to POST /api/jobs. */
   photos: string[];
+  /** Public URLs for local preview only — not sent to the API. */
+  photoUrls?: string[];
+  photosUploading?: boolean;
   lokasiType: "lokasi" | "remote";
   area: string;
   alamat: string;

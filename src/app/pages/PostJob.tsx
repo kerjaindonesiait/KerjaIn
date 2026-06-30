@@ -10,6 +10,7 @@ import type { PostJobFormData } from "../../types";
 import { useScrollToTop } from "../../lib/useScrollToTop";
 import { compressImageForUpload, blobToBase64 } from "../../lib/compressImage";
 import { BrandLogo } from "../components/BrandLogo";
+import { JobPhotoGallery } from "../components/JobPhotoGallery";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -56,10 +57,11 @@ type PhotoSlot = {
 function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Partial<FormData>) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(() =>
-    data.photos.map((url, i) => ({
+    (data.photoUrls ?? []).map((url, i) => ({
       id: `saved-${i}-${url.slice(-8)}`,
       preview: url,
       url,
+      path: data.photos[i],
       uploading: false,
     })),
   );
@@ -74,7 +76,11 @@ function StepDeskripsi({ data, onChange }: { data: FormData; onChange: (d: Parti
   }, []);
 
   const syncPhotos = (slots: PhotoSlot[]) => {
-    onChange({ photos: slots.filter((s) => s.url).map((s) => s.url!) });
+    onChange({
+      photos: slots.filter((s) => s.path).map((s) => s.path!),
+      photoUrls: slots.filter((s) => s.url).map((s) => s.url!),
+      photosUploading: slots.some((s) => s.uploading),
+    });
   };
 
   const handleFile = async (file: File) => {
@@ -490,15 +496,11 @@ function StepReview({ data, onEdit }: { data: FormData; onEdit: (step: number) =
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-bold text-[#7890AA] uppercase tracking-wider mb-1">Foto</p>
-            {data.photos.length > 0 ? (
+            {(data.photoUrls?.length ?? 0) > 0 ? (
               <div className="flex gap-2 flex-wrap">
-                {data.photos.map((p, i) => (
+                {data.photoUrls!.map((p, i) => (
                   <div key={i} className="w-12 h-12 rounded-lg bg-[#EEF3FB] border border-[#FD6665] overflow-hidden shrink-0">
-                    {p.startsWith("http") ? (
-                      <img src={p} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[18px]">{p}</div>
-                    )}
+                    <img src={p} alt="" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -529,7 +531,7 @@ function StepReview({ data, onEdit }: { data: FormData; onEdit: (step: number) =
 
 // ─── Job Ticket ───────────────────────────────────────────────────────────────
 
-function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
+function JobTicket({ data, jobId, photos }: { data: FormData; jobId: string; photos: string[] }) {
   const [copied, setCopied] = useState(false);
   const layanan = LAYANAN.find((l) => l.id === data.layanan);
   const waktu = WAKTU_OPTIONS.find((w) => w.id === data.waktuType);
@@ -627,6 +629,8 @@ function JobTicket({ data, jobId }: { data: FormData; jobId: string }) {
               </p>
             </div>
           </div>
+
+          <JobPhotoGallery photos={photos} className="pt-1" thumbClassName="w-16 h-16" />
 
           {/* Posted at */}
           <div className="flex items-center justify-between text-[12px] text-[#7890AA]">
@@ -740,6 +744,8 @@ const INITIAL_DATA: FormData = {
   layanan: "handyman",
   deskripsi: "",
   photos: [],
+  photoUrls: [],
+  photosUploading: false,
   lokasiType: "lokasi",
   area: "",
   alamat: "",
@@ -758,6 +764,7 @@ function generateJobId() {
 const REVIEW_STEP = STEPS.length - 1;
 
 function canProceed(step: number, data: FormData): boolean {
+  if (data.photosUploading) return false;
   if (step === 0) return data.deskripsi.length >= 30;
   if (step === 1) return !!data.area;
   if (step === 2) return !!data.waktuType;
@@ -770,6 +777,7 @@ export default function PostJob() {
   const [editingFromReview, setEditingFromReview] = useState(false);
   const [data, setData] = useState<FormData>(INITIAL_DATA);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedPhotos, setSubmittedPhotos] = useState<string[]>([]);
   const [jobId, setJobId] = useState(generateJobId());
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -802,6 +810,7 @@ export default function PostJob() {
     try {
       const { job } = await api.createJob(data);
       setJobId(job.jobNumber);
+      setSubmittedPhotos(job.photos?.length ? job.photos : data.photoUrls ?? []);
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Gagal memposting pekerjaan");
@@ -821,7 +830,7 @@ export default function PostJob() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#F7F9FC] py-10 px-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-        <JobTicket data={data} jobId={jobId} />
+        <JobTicket data={data} jobId={jobId} photos={submittedPhotos} />
       </div>
     );
   }

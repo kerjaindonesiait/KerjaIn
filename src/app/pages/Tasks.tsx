@@ -45,6 +45,7 @@ import { appShellClass, appShellClassMobileFlush } from "../../lib/layout";
 import { useShowTasksMap } from "../../lib/useShowTasksMap";
 import { FilterPopover, FilterScrollContainerContext } from "../components/FilterPopover";
 import { HorizontalScrollRow } from "../components/HorizontalScrollRow";
+import { JobPhotoGallery } from "../components/JobPhotoGallery";
 
 type Task = Job & { status: string };
 
@@ -397,6 +398,8 @@ function TaskDetail({
             <div className="text-[14px] text-[#294566] leading-relaxed whitespace-pre-line mb-6">
               {task.description}
             </div>
+
+            <JobPhotoGallery photos={task.photos ?? []} className="mb-6" />
 
             <div className="flex items-start gap-3 bg-[#F7F9FC] rounded-xl p-4">
               <Shield size={16} className="text-[#1D4196] shrink-0 mt-0.5" />
