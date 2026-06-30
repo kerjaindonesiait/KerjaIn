@@ -10,6 +10,12 @@ import { useScrollToTop } from "../../lib/useScrollToTop";
 import { releaseMobileZoom } from "../../lib/scrollToTop";
 import { TermsAcceptance } from "../components/TermsAcceptance";
 import { KEAHLIAN } from "../../lib/keahlian";
+import {
+  blobToBase64,
+  compressImageForUpload,
+  MAX_UPLOAD_BYTES,
+  validatePhotoFile,
+} from "../../lib/compressImage";
 
 // ─── Shared social logos (same as Auth.tsx) ───────────────────────────────────
 
@@ -278,17 +284,7 @@ function StepProfil({
   );
 }
 
-// ─── Upload helpers ───────────────────────────────────────────────────────────
-
-async function fileToBase64(file: File): Promise<{ base64: string; contentType: string }> {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Gagal membaca file"));
-    reader.readAsDataURL(file);
-  });
-  return { base64: dataUrl.split(",")[1], contentType: file.type || "image/jpeg" };
-}
+const KTP_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic";
 
 // ─── Step 2 — KTP Verification ───────────────────────────────────────────────
 
@@ -354,10 +350,25 @@ function StepKTP({
       onUploadError("Silakan verifikasi email dan masuk terlebih dahulu sebelum mengunggah KTP.");
       return;
     }
+
+    const formatError = validatePhotoFile(file);
+    if (formatError) {
+      onUploadError(formatError);
+      return;
+    }
+
     onUploadError(null);
     setUploadingField(field);
     try {
-      const { base64, contentType } = await fileToBase64(file);
+      const { blob, contentType } = await compressImageForUpload(file);
+      if (blob.size > MAX_UPLOAD_BYTES) {
+        onUploadError(
+          "Foto terlalu besar. Coba ambil ulang dengan resolusi lebih rendah atau pilih foto lain.",
+        );
+        return;
+      }
+
+      const base64 = await blobToBase64(blob);
       const { path } = await api.uploadKtpDocument(base64, contentType, field);
       onChange(field === "ktp" ? { ktpPhoto: path } : { selfiePhoto: path });
     } catch (e) {
@@ -443,7 +454,7 @@ function StepKTP({
       <input
         ref={ktpRef}
         type="file"
-        accept="image/*"
+        accept={KTP_PHOTO_ACCEPT}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -454,7 +465,7 @@ function StepKTP({
       <input
         ref={selfieRef}
         type="file"
-        accept="image/*"
+        accept={KTP_PHOTO_ACCEPT}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
