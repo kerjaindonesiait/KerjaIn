@@ -16,10 +16,10 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import step1Image from "../../assets/cara-kerja/step-1-ceritakan.png";
-import step2Image from "../../assets/cara-kerja/step-2-budget.png";
-import step3Image from "../../assets/cara-kerja/step-3-penawaran.png";
-import step4Image from "../../assets/cara-kerja/step-4-dikerjain.png";
+import step1Image from "../../assets/cara-kerja/step-1-ceritakan.webp";
+import step2Image from "../../assets/cara-kerja/step-2-budget.webp";
+import step3Image from "../../assets/cara-kerja/step-3-penawaran.webp";
+import step4Image from "../../assets/cara-kerja/step-4-dikerjain.webp";
 
 type Step = {
   id: number;
@@ -156,9 +156,10 @@ function StepCard({ step }: { step: Step }) {
     >
       <img
         src={step.image}
-        alt=""
+        alt={step.title}
         className="absolute inset-0 h-full w-full object-cover"
         loading="lazy"
+        decoding="async"
       />
       <div className="absolute left-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[17px] font-extrabold text-[#172E4D] shadow-sm backdrop-blur">
         {step.id}

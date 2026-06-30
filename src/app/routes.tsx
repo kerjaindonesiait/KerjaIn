@@ -1,27 +1,29 @@
+import { lazy } from "react";
 import { createBrowserRouter } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Root from "./pages/Root";
 import Home from "./pages/Home";
-import Tasks from "./pages/Tasks";
-import HowItWorks from "./pages/HowItWorks";
-import PostJob from "./pages/PostJob";
-import Auth from "./pages/Auth";
-import AuthCallback from "./pages/AuthCallback";
-import Payment from "./pages/Payment";
-import TechAuth from "./pages/TechAuth";
-import TechDashboard from "./pages/TechDashboard";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import VerifyEmail from "./pages/VerifyEmail";
-import AccountSettings from "./pages/AccountSettings";
-import AccountProfileView from "./pages/AccountProfileView";
-import ChangePassword from "./pages/ChangePassword";
-import TechnicianMyReviews from "./pages/TechnicianMyReviews";
-import MyJobs from "./pages/MyJobs";
-import MyReviews from "./pages/MyReviews";
-import TechProfile from "./pages/TechProfile";
-import AdminPanel from "./pages/AdminPanel";
-import Messages from "./pages/Messages";
+
+const Tasks = lazy(() => import("./pages/Tasks"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const PostJob = lazy(() => import("./pages/PostJob"));
+const Auth = lazy(() => import("./pages/Auth"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const Payment = lazy(() => import("./pages/Payment"));
+const TechAuth = lazy(() => import("./pages/TechAuth"));
+const TechDashboard = lazy(() => import("./pages/TechDashboard"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const AccountProfileView = lazy(() => import("./pages/AccountProfileView"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
+const TechnicianMyReviews = lazy(() => import("./pages/TechnicianMyReviews"));
+const MyJobs = lazy(() => import("./pages/MyJobs"));
+const MyReviews = lazy(() => import("./pages/MyReviews"));
+const TechProfile = lazy(() => import("./pages/TechProfile"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Messages = lazy(() => import("./pages/Messages"));
 
 export const router = createBrowserRouter([
   {

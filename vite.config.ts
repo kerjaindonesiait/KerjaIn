@@ -31,6 +31,26 @@ export default defineConfig({
     },
   },
 
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          if (id.includes('@vis.gl') || id.includes('@googlemaps') || id.includes('google.maps')) {
+            return 'google-maps';
+          }
+          if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('react-dom') || id.includes('react-router')) return 'react-vendor';
+          if (id.includes('@radix-ui') || id.includes('@mui') || id.includes('@emotion')) {
+            return 'ui-vendor';
+          }
+          return 'vendor';
+        },
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })

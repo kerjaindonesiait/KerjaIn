@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { RouteFallback } from "../components/RouteFallback";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
@@ -191,7 +192,9 @@ export default function Root() {
 
       {/* PAGE CONTENT */}
       <main className={`flex-1 min-h-0 ${fullHeightPage ? "flex flex-col overflow-hidden" : ""}`}>
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* FOOTER */}

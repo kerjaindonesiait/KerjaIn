@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, clearLegacyTokens, refreshAccessToken } from "./api";
+import { shouldDeferAuthCheck } from "./authPaths";
 import type { User } from "../types";
 
 interface AuthContextValue {
@@ -30,8 +31,9 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const deferAuth = shouldDeferAuthCheck();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!deferAuth);
 
   const loadUser = useCallback(async () => {
     clearLegacyTokens();
@@ -41,12 +43,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    if (!deferAuth) {
+      void loadUser();
+      return;
+    }
+
+    const run = () => void loadUser();
+    if ("requestIdleCallback" in window) {
+      const id = requestIdleCallback(run, { timeout: 2500 });
+      return () => cancelIdleCallback(id);
+    }
+
+    const id = window.setTimeout(run, 100);
+    return () => clearTimeout(id);
+  }, [deferAuth, loadUser]);
 
   const login = async (email: string, password: string) => {
     const { user: loggedIn } = await api.login(email, password);
     setUser(loggedIn);
+    setLoading(false);
     return loggedIn;
   };
 
@@ -67,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     const me = await fetchCurrentUser();
     setUser(me);
+    setLoading(false);
     return me;
   };
 

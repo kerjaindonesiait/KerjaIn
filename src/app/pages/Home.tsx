@@ -163,11 +163,11 @@ function ServiceDirectoryMarquee() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [taskTab, setTaskTab] = useState("plumbing");
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (!loading && user) {
+  if (user) {
     return <Navigate to={defaultRouteForUser(user)} replace />;
   }
 
