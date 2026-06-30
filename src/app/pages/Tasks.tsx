@@ -26,6 +26,7 @@ import { useAuth } from "../../lib/auth";
 import { JobsMap } from "../components/JobsMap";
 import {
   filterAndSortJobs,
+  isJobUnresolved,
   JAKARTA_AREAS,
   SORT_LABELS,
   JOB_CATEGORY_FILTERS,
@@ -160,6 +161,11 @@ function TaskCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
+          {task.isOwner && (
+            <span className="inline-block mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[#1D4196] bg-[#EEF3FB] px-2 py-0.5 rounded-full">
+              Pekerjaan Anda
+            </span>
+          )}
           <h3 className="font-bold text-[14px] leading-snug text-[#172E4D] mb-2">
             {task.title}
           </h3>
@@ -863,24 +869,41 @@ export default function Tasks() {
   }, [selectedId]);
 
   useEffect(() => {
+    setLoading(true);
     api
       .getJobs()
       .then(({ jobs }) => setTasks(jobs))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.id]);
 
-  const filtered = useMemo(
-    () =>
-      filterAndSortJobs(tasks, {
-        search: searchQuery,
-        area: areaFilter,
-        priceRange,
-        sort: sortOption,
-        category: categoryFilter,
-      }),
-    [tasks, searchQuery, areaFilter, priceRange, sortOption, categoryFilter],
-  );
+  const filtered = useMemo(() => {
+    const ownActive: Task[] = [];
+    const browse: Task[] = [];
+
+    for (const task of tasks) {
+      const isOwn = user?.id && (task.isOwner || task.ownerId === user.id);
+      if (isOwn && isJobUnresolved(task)) {
+        ownActive.push(task);
+      } else {
+        browse.push(task);
+      }
+    }
+
+    ownActive.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    const filteredBrowse = filterAndSortJobs(browse, {
+      search: searchQuery,
+      area: areaFilter,
+      priceRange,
+      sort: sortOption,
+      category: categoryFilter,
+    });
+
+    return [...ownActive, ...filteredBrowse];
+  }, [tasks, user?.id, searchQuery, areaFilter, priceRange, sortOption, categoryFilter]);
 
   useEffect(() => {
     if (selectedId && !filtered.some((t) => t.id === selectedId)) {

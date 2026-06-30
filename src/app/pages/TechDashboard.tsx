@@ -699,7 +699,16 @@ function jobStatusFromOffer(o: MineOffer) {
 }
 
 function isPenawaranTabOffer(o: MineOffer) {
-  return jobStatusFromOffer(o) !== "completed";
+  if (o.status === "pending") return true;
+  if (o.status === "accepted") {
+    const jobStatus = jobStatusFromOffer(o);
+    return jobStatus === "open" || jobStatus === "assigned";
+  }
+  return false;
+}
+
+function isPenawaranBadgeOffer(o: MineOffer) {
+  return o.status === "pending";
 }
 
 function canMessageOnJob(status: string) {
@@ -746,7 +755,7 @@ export default function TechDashboard() {
       api.getAssignedJobs({ status: "in_progress" }),
     ])
       .then(([{ offers }, { jobs }]) => {
-        setPenawaranCount(offers.filter(isPenawaranTabOffer).length);
+        setPenawaranCount(offers.filter(isPenawaranBadgeOffer).length);
         setActiveJobCount(jobs.length);
       })
       .catch(() => {});
@@ -778,7 +787,7 @@ export default function TechDashboard() {
         .then(({ offers }) => {
           const list = offers.filter(isPenawaranTabOffer);
           setMyOffers(list);
-          setPenawaranCount(list.length);
+          setPenawaranCount(offers.filter(isPenawaranBadgeOffer).length);
         })
         .catch(() => setMyOffers([]))
         .finally(() => setLoadingTab(false));

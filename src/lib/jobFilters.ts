@@ -194,6 +194,35 @@ function matchesPriceRange(job: Job, range: PriceRange): boolean {
   return job.budgetRaw >= range.min && job.budgetRaw <= range.max;
 }
 
+const RESOLVED_JOB_STATUSES = new Set(["completed", "cancelled"]);
+
+export function isJobUnresolved(job: Job): boolean {
+  return !RESOLVED_JOB_STATUSES.has(job.status);
+}
+
+/** Poster's active jobs stay above browse results until completed or cancelled. */
+export function pinOwnerActiveJobsToTop(jobs: Job[], viewerUserId?: string): Job[] {
+  if (!viewerUserId) return jobs;
+
+  const ownActive: Job[] = [];
+  const rest: Job[] = [];
+
+  for (const job of jobs) {
+    const isOwn = job.isOwner || job.ownerId === viewerUserId;
+    if (isOwn && isJobUnresolved(job)) {
+      ownActive.push(job);
+    } else {
+      rest.push(job);
+    }
+  }
+
+  ownActive.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
+  return [...ownActive, ...rest];
+}
+
 export function filterAndSortJobs(
   jobs: Job[],
   opts: {
