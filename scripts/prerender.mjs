@@ -92,15 +92,16 @@ for (const route of PRERENDER_ROUTES) {
   fs.writeFileSync(path.join(outDir, "index.html"), html);
 
   const title = (html.match(/<title>(.*?)<\/title>/i)?.[1] || "").toLowerCase();
+  const ogTitleCount = (html.match(/property=["']og:title["']/gi) || []).length;
   const hasTitle = title.includes(route.expect);
-  const hasOg = /property=["']og:title["']/i.test(html);
+  const hasOg = ogTitleCount === 1;
   const ok = hasTitle && hasOg;
   console.log(
-    `${ok ? "✓" : "✗"} ${route.path.padEnd(26)} <title>${title}</title>${hasOg ? "" : "  [no og:title!]"}`,
+    `${ok ? "✓" : "✗"} ${route.path.padEnd(26)} <title>${title}</title>${hasOg ? "" : `  [og:title count=${ogTitleCount}, want 1]`}`,
   );
   if (!ok) {
     failures.push(
-      `${route.path}: ${!hasTitle ? `title missing "${route.expect}" (got "${title}") ` : ""}${!hasOg ? "og:title absent — un-rendered shell" : ""}`,
+      `${route.path}: ${!hasTitle ? `title missing "${route.expect}" (got "${title}") ` : ""}${!hasOg ? `og:title count=${ogTitleCount} (want exactly 1) ` : ""}`,
     );
   }
 }
