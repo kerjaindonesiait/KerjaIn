@@ -8,8 +8,11 @@ export const SITE_URL =
 
 export const SITE_NAME = "KerjaIn";
 
-/** Default OG image — replace public/og-default.jpg with a 1200×630 branded asset. */
 export const DEFAULT_OG_IMAGE = "/og-default.jpg";
+export const DEFAULT_OG_IMAGE_URL = `${SITE_URL}${DEFAULT_OG_IMAGE}`;
+export const DEFAULT_OG_IMAGE_WIDTH = 1200;
+export const DEFAULT_OG_IMAGE_HEIGHT = 630;
+export const DEFAULT_OG_IMAGE_TYPE = "image/jpeg";
 
 export type PageSeo = {
   title: string;
@@ -240,11 +243,14 @@ export function applyPageSeo(seo: PageSeo) {
   upsertMeta('meta[property="og:url"]', { property: "og:url" }, canonicalUrl);
   upsertMeta('meta[property="og:site_name"]', { property: "og:site_name" }, SITE_NAME);
   upsertMeta('meta[property="og:type"]', { property: "og:type" }, "website");
-  upsertMeta('meta[property="og:image"]', { property: "og:image" }, `${SITE_URL}${DEFAULT_OG_IMAGE}`);
+  upsertMeta('meta[property="og:image"]', { property: "og:image" }, DEFAULT_OG_IMAGE_URL);
+  upsertMeta('meta[property="og:image:width"]', { property: "og:image:width" }, String(DEFAULT_OG_IMAGE_WIDTH));
+  upsertMeta('meta[property="og:image:height"]', { property: "og:image:height" }, String(DEFAULT_OG_IMAGE_HEIGHT));
+  upsertMeta('meta[property="og:image:type"]', { property: "og:image:type" }, DEFAULT_OG_IMAGE_TYPE);
   upsertMeta('meta[name="twitter:card"]', { name: "twitter:card" }, "summary_large_image");
   upsertMeta('meta[name="twitter:title"]', { name: "twitter:title" }, seo.title);
   upsertMeta('meta[name="twitter:description"]', { name: "twitter:description" }, seo.description);
-  upsertMeta('meta[name="twitter:image"]', { name: "twitter:image" }, `${SITE_URL}${DEFAULT_OG_IMAGE}`);
+  upsertMeta('meta[name="twitter:image"]', { name: "twitter:image" }, DEFAULT_OG_IMAGE_URL);
   upsertLink("canonical", canonicalUrl);
 }
 

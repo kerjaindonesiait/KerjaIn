@@ -1,6 +1,12 @@
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "../../lib/publicRoutes";
-import { DEFAULT_OG_IMAGE } from "../../lib/seo";
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_OG_IMAGE_HEIGHT,
+  DEFAULT_OG_IMAGE_TYPE,
+  DEFAULT_OG_IMAGE_URL,
+  DEFAULT_OG_IMAGE_WIDTH,
+} from "../../lib/seo";
 
 type SeoProps = {
   title: string;
@@ -14,12 +20,12 @@ export function Seo({
   title,
   description,
   path,
-  // TODO: add public/og-default.jpg (1200×630) — favicon is too small for link previews
   image = DEFAULT_OG_IMAGE,
   noindex = false,
 }: SeoProps) {
   const url = `${SITE_URL}${path}`;
-  const img = image.startsWith("http") ? image : `${SITE_URL}${image}`;
+  const isDefaultImage = image === DEFAULT_OG_IMAGE;
+  const img = isDefaultImage ? DEFAULT_OG_IMAGE_URL : image.startsWith("http") ? image : `${SITE_URL}${image}`;
 
   return (
     <Helmet>
@@ -36,6 +42,13 @@ export function Seo({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       <meta property="og:image" content={img} />
+      {isDefaultImage && (
+        <>
+          <meta property="og:image:width" content={String(DEFAULT_OG_IMAGE_WIDTH)} />
+          <meta property="og:image:height" content={String(DEFAULT_OG_IMAGE_HEIGHT)} />
+          <meta property="og:image:type" content={DEFAULT_OG_IMAGE_TYPE} />
+        </>
+      )}
       <meta property="og:site_name" content="KerjaIn" />
       <meta property="og:locale" content="id_ID" />
       <meta name="twitter:card" content="summary_large_image" />

@@ -8,12 +8,22 @@ import { Seo } from "../components/Seo";
 import { ScrollToTop } from "../components/ScrollToTop";
 import { appShellClass } from "../../lib/layout";
 import { resolveSeoForPath } from "../../lib/seo";
+import { AREA_LABELS, SERVICE_AREAS } from "../../lib/publicRoutes";
 import { TEXT_MUTED, TEXT_ON_DARK_MUTED, TEXT_ON_DARK } from "../../lib/accessibleText";
 
 const NAV_LINKS = [
   { label: "Cari Pekerjaan", href: "/tasks" },
   { label: "Cara Kerja", href: "/how-it-works" },
 ];
+
+const FOOTER_LINK_HREF: Record<string, string> = {
+  "Cara Kerja": "/how-it-works",
+  "Cari Pekerjaan": "/tasks",
+  "Servis AC": "/servis-ac",
+  "Jasa Tukang": "/jasa-tukang",
+  "Post Kerjaan": "/post-job",
+  "Masuk": "/masuk",
+};
 
 const FOOTER_COLS = [
   {
@@ -30,13 +40,31 @@ const FOOTER_COLS = [
   },
   {
     heading: "Layanan Kami",
-    links: ["Pipa Bocor Darurat", "Deteksi Kebocoran", "Ganti Pipa", "Saluran Mampet", "Pemanas Air", "Pasang Kamar Mandi", "Perawatan Umum", "Tukang Serba Bisa", "Perbaikan Pintu & Kunci", "Bersih Talang", "Perbaikan Keramik", "Semua Layanan"],
+    links: [
+      "Servis AC",
+      "Jasa Tukang",
+      "Pipa Bocor Darurat",
+      "Deteksi Kebocoran",
+      "Ganti Pipa",
+      "Saluran Mampet",
+      "Pemanas Air",
+      "Pasang Kamar Mandi",
+      "Perawatan Umum",
+      "Tukang Serba Bisa",
+      "Perbaikan Pintu & Kunci",
+      "Bersih Talang",
+      "Perbaikan Keramik",
+      "Semua Layanan",
+    ],
   },
 ];
 
 const POPULAR_LOCATIONS = [
-  "Jakarta Pusat", "Jakarta Selatan", "Jakarta Barat", "Jakarta Timur", "Jakarta Utara",
-  "Depok", "Tangerang", "Bekasi", "Bogor",
+  ...SERVICE_AREAS.map((area) => ({
+    label: AREA_LABELS[area],
+    href: `/servis-ac/${area}` as const,
+  })),
+  { label: "Jakarta — segera hadir", muted: true as const },
 ];
 
 const SOCIAL_LINKS = [
@@ -87,6 +115,25 @@ export default function Root() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const footerLinkClass = "text-[13px] hover:text-white transition-colors";
+  const footerLinkStyle = { color: TEXT_ON_DARK };
+
+  const renderFooterLink = (label: string) => {
+    const href = FOOTER_LINK_HREF[label];
+    if (href) {
+      return (
+        <Link to={href} className={footerLinkClass} style={footerLinkStyle}>
+          {label}
+        </Link>
+      );
+    }
+    return (
+      <span className="text-[13px]" style={footerLinkStyle}>
+        {label}
+      </span>
+    );
+  };
 
   return (
     <div className={`flex flex-col bg-[#F7F9FC] ${fullHeightPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
@@ -236,11 +283,19 @@ export default function Root() {
         <footer className="bg-[#172E4D] text-white">
           {/* Popular locations */}
           <div className="border-b border-white/10 px-6 py-8 max-w-[1400px] mx-auto">
-            <p className="text-[12px] font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_ON_DARK_MUTED }}>Lokasi Populer di Jakarta</p>
+            <p className="text-[12px] font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_ON_DARK_MUTED }}>Lokasi Populer di Tangerang Selatan</p>
             <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {POPULAR_LOCATIONS.map((loc) => (
-                <a key={loc} href="#" className="text-[13px] hover:text-white transition-colors" style={{ color: TEXT_ON_DARK }}>{loc}</a>
-              ))}
+              {POPULAR_LOCATIONS.map((loc) =>
+                "href" in loc && loc.href ? (
+                  <Link key={loc.label} to={loc.href} className={footerLinkClass} style={footerLinkStyle}>
+                    {loc.label}
+                  </Link>
+                ) : (
+                  <span key={loc.label} className="text-[13px]" style={{ color: TEXT_ON_DARK_MUTED }}>
+                    {loc.label}
+                  </span>
+                ),
+              )}
             </div>
           </div>
 
@@ -251,9 +306,7 @@ export default function Root() {
                 <p className="text-[12px] font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_ON_DARK_MUTED }}>{col.heading}</p>
                 <ul className={col.heading === "Layanan Kami" ? "grid grid-cols-2 gap-x-6 gap-y-2" : "flex flex-col gap-2"}>
                   {col.links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="text-[13px] hover:text-white transition-colors" style={{ color: TEXT_ON_DARK }}>{link}</a>
-                    </li>
+                    <li key={link}>{renderFooterLink(link)}</li>
                   ))}
                 </ul>
               </div>
@@ -263,7 +316,7 @@ export default function Root() {
           {/* Bottom bar */}
           <div className="border-t border-white/10 px-6 py-6 max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <BrandLogo variant="dark" imgClassName="h-9" />
-            <p className="text-[12px]" style={{ color: TEXT_ON_DARK_MUTED }}>KerjaIn 2024 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
+            <p className="text-[12px]" style={{ color: TEXT_ON_DARK_MUTED }}>KerjaIn 2026 ©, Semua hak dilindungi · Jakarta, Indonesia</p>
             <div className="flex gap-4">
               {SOCIAL_LINKS.map((social, index) => (
                 <a
