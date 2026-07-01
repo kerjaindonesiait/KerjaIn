@@ -1,6 +1,5 @@
 // Run AFTER `vite build`. Serves dist/, renders each public route in headless Chromium,
 // writes nested static HTML, and HARD-FAILS (exit 1) on any un-rendered shell.
-import { chromium } from "playwright";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -29,6 +28,10 @@ const MIME = {
   ".pdf": "application/pdf",
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function startServer(port) {
   const shell = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -49,11 +52,30 @@ function startServer(port) {
   });
 }
 
+/** Vercel has no apt-get — bundled @sparticuz/chromium works; local dev uses Playwright. */
+async function launchBrowser() {
+  if (process.env.VERCEL === "1") {
+    console.log("Prerender: @sparticuz/chromium (Vercel)");
+    const chromium = (await import("@sparticuz/chromium")).default;
+    const puppeteer = await import("puppeteer-core");
+    return puppeteer.default.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+  }
+
+  console.log("Prerender: Playwright Chromium (local)");
+  const { chromium } = await import("playwright");
+  return chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+}
+
 const server = await startServer(PORT);
-const browser = await chromium.launch({
-  headless: true,
-  args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-});
+const browser = await launchBrowser();
 const page = await browser.newPage();
 page.setDefaultTimeout(30000);
 
@@ -62,7 +84,7 @@ for (const route of PRERENDER_ROUTES) {
   const url = `http://127.0.0.1:${PORT}${route.path}`;
   await page.goto(url, { waitUntil: "load" });
   await page.waitForSelector("#root h1, main h1, h1", { timeout: 15000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await sleep(300);
 
   const html = await page.content();
   const outDir = route.path === "/" ? DIST : path.join(DIST, route.path);

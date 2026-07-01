@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
-    "vercel-build": "npx playwright install chromium && npm run build",
+    "vercel-build": "npm run build",
     "dev": "vite",
     "dev:api": "npm run dev --prefix backend",
     "dev:all": "npm run dev:api & npm run dev"
@@ -74,9 +74,11 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@sparticuz/chromium": "^148.0.0",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "playwright": "^1.61.1",
+    "puppeteer-core": "^25.2.1",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   }
