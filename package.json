@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
     "vercel-build": "npm run build",
+    "verify:deploy": "node scripts/verify-deploy.mjs",
     "dev": "vite",
     "dev:api": "npm run dev --prefix backend",
     "dev:all": "npm run dev:api & npm run dev"

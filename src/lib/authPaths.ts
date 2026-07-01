@@ -14,7 +14,8 @@ export function shouldDeferAuthCheck(): boolean {
     path === "/daftar-tukang" ||
     path === "/lupa-sandi" ||
     path === "/atur-ulang-sandi" ||
-    path === "/verifikasi-email"
+    path === "/verifikasi-email" ||
+    path === "/auth/callback"
   ) {
     return true;
   }
