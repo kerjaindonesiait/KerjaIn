@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
+    "vercel-build": "npx playwright install chromium && npm run build",
     "dev": "vite",
     "dev:api": "npm run dev --prefix backend",
     "dev:all": "npm run dev:api & npm run dev"
