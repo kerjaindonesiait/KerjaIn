@@ -1,20 +1,23 @@
 # KerjaIn
 
-> KerjaIn adalah platform di Indonesia yang menghubungkan pelanggan dengan tukang terpercaya di Jakarta untuk plumbing, perawatan rumah, dan pekerjaan darurat. Pelanggan dapat memposting pekerjaan, menerima penawaran, dan menyelesaikan pembayaran dengan aman.
+> KerjaIn adalah platform di Indonesia yang menghubungkan pelanggan dengan tukang terpercaya di Jakarta dan Tangerang untuk plumbing, perawatan rumah, servis AC, dan pekerjaan darurat.
 
-Situs: https://kerjaindonesia.com. Aplikasi web berbasis React (SPA). Gunakan halaman publik di bawah ini sebagai sumber utama untuk agen AI.
+Situs: https://kerjaindonesia.com. Aplikasi web berbasis React. Gunakan halaman publik di bawah ini sebagai sumber utama untuk agen AI.
 
 ## Docs
 
-- [Beranda](https://kerjaindonesia.com/): Pengenalan layanan, cara memposting pekerjaan, dan kategori tukang di Jakarta.
+- [Beranda](https://kerjaindonesia.com/): Pengenalan layanan, cara memposting pekerjaan, dan kategori tukang.
 - [Cara Kerja](https://kerjaindonesia.com/how-it-works): Alur dari ceritakan masalah, atur budget, pilih penawaran, hingga pekerjaan selesai.
-- [Cari Pekerjaan](https://kerjaindonesia.com/tasks): Daftar pekerjaan terbuka untuk tukang di Jakarta dan sekitarnya.
+- [Servis AC Tangerang](https://kerjaindonesia.com/servis-ac): Servis, cuci AC, isi freon, perbaikan AC bocor di Tangerang.
+- [Jasa Tukang](https://kerjaindonesia.com/jasa-tukang): Marketplace jasa tukang plumbing, perawatan rumah, dan darurat.
 - [Daftar sebagai Tukang](https://kerjaindonesia.com/daftar-tukang): Pendaftaran dan onboarding tukang dengan verifikasi identitas.
 
 ## Services
 
-- [Plumbing & pipa bocor](https://kerjaindonesia.com/): Perbaikan pipa, saluran mampet, deteksi kebocoran, dan water heater.
-- [Perawatan rumah](https://kerjaindonesia.com/): Tukang serba bisa, perbaikan pintu, bersih talang, keramik, dan perawatan umum.
+- [Servis AC BSD](https://kerjaindonesia.com/servis-ac/bsd): Servis AC di BSD, Tangerang Selatan.
+- [Servis AC Serpong](https://kerjaindonesia.com/servis-ac/serpong): Servis AC di Serpong.
+- [Servis AC Bintaro](https://kerjaindonesia.com/servis-ac/bintaro): Servis AC di Bintaro.
+- [Plumbing & pipa bocor](https://kerjaindonesia.com/jasa-tukang): Perbaikan pipa, saluran mampet, dan water heater.
 
 ## Optional
 

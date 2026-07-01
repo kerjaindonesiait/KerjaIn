@@ -6,6 +6,9 @@ import Home from "./pages/Home";
 
 const Tasks = lazy(() => import("./pages/Tasks"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const ServisAc = lazy(() => import("./pages/ServisAc"));
+const JasaTukang = lazy(() => import("./pages/JasaTukang"));
+const ServisAcArea = lazy(() => import("./pages/ServisAcArea"));
 const PostJob = lazy(() => import("./pages/PostJob"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
@@ -31,9 +34,12 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: Home },
+      { path: "how-it-works", Component: HowItWorks },
+      { path: "servis-ac", Component: ServisAc },
+      { path: "jasa-tukang", Component: JasaTukang },
+      { path: "servis-ac/:area", Component: ServisAcArea },
       { path: "tasks", Component: Tasks },
       { path: "tukang/:id", Component: TechProfile },
-      { path: "how-it-works", Component: HowItWorks },
       {
         path: "post-job",
         element: (

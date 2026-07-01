@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
 Allow: /how-it-works
-Allow: /tasks
-Allow: /tukang/
+Allow: /servis-ac
+Allow: /jasa-tukang
 
 Disallow: /masuk
 Disallow: /daftar
@@ -19,6 +19,7 @@ Disallow: /atur-ulang-sandi
 Disallow: /verifikasi-email
 Disallow: /auth/
 Disallow: /admin
+Disallow: /tasks
 
 Sitemap: https://kerjaindonesia.com/sitemap.xml
 

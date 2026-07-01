@@ -5,6 +5,8 @@ export function shouldDeferAuthCheck(): boolean {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
 
   if (path === "/" || path === "/how-it-works" || path === "/tasks") return true;
+  if (path === "/servis-ac" || path === "/jasa-tukang") return true;
+  if (path.startsWith("/servis-ac/")) return true;
   if (path.startsWith("/tukang/")) return true;
   if (
     path === "/masuk" ||

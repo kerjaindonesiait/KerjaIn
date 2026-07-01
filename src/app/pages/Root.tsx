@@ -4,9 +4,10 @@ import { RouteFallback } from "../components/RouteFallback";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { BrandLogo } from "../components/BrandLogo";
-import { PageSEO } from "../components/PageSEO";
+import { Seo } from "../components/Seo";
 import { ScrollToTop } from "../components/ScrollToTop";
 import { appShellClass } from "../../lib/layout";
+import { resolveSeoForPath } from "../../lib/seo";
 import { TEXT_MUTED, TEXT_ON_DARK_MUTED, TEXT_ON_DARK } from "../../lib/accessibleText";
 
 const NAV_LINKS = [
@@ -79,6 +80,7 @@ export default function Root() {
   };
 
   const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "Akun";
+  const seo = resolveSeoForPath(location.pathname);
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -88,7 +90,12 @@ export default function Root() {
 
   return (
     <div className={`flex flex-col bg-[#F7F9FC] ${fullHeightPage ? "h-screen overflow-hidden" : "min-h-screen"}`} style={{ fontFamily: "Manrope, sans-serif" }}>
-      <PageSEO />
+      <Seo
+        title={seo.title}
+        description={seo.description}
+        path={seo.canonicalPath}
+        noindex={seo.robots.includes("noindex")}
+      />
       <ScrollToTop />
       {/* NAV — hidden on tukang dashboard (uses its own blue header) */}
       {!hideSiteHeader && (

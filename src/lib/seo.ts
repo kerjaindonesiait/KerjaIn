@@ -1,11 +1,15 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { AREA_LABELS, type ServiceArea } from "./publicRoutes";
 
 export const SITE_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, "") ??
   "https://kerjaindonesia.com";
 
 export const SITE_NAME = "KerjaIn";
+
+/** Default OG image — replace public/og-default.jpg with a 1200×630 branded asset. */
+export const DEFAULT_OG_IMAGE = "/og-default.jpg";
 
 export type PageSeo = {
   title: string;
@@ -15,18 +19,18 @@ export type PageSeo = {
 };
 
 const DEFAULT_SEO: PageSeo = {
-  title: `${SITE_NAME} — Cari Tukang & Jasa Rumah di Jakarta`,
+  title: `${SITE_NAME} — Cari Tukang & Jasa Rumah di Tangerang`,
   description:
-    "KerjaIn menghubungkan kamu dengan tukang terpercaya di Jakarta untuk plumbing, perbaikan rumah, dan pekerjaan darurat. Post kerjaan gratis, bandingkan penawaran, bayar aman.",
+    "KerjaIn menghubungkan kamu dengan tukang terpercaya di Tangerang untuk plumbing, perbaikan rumah, dan pekerjaan darurat. Post kerjaan gratis, bandingkan penawaran, bayar aman.",
   robots: "index, follow",
   canonicalPath: "/",
 };
 
 const EXACT_SEO: Record<string, PageSeo> = {
   "/": {
-    title: `${SITE_NAME} — Cari Tukang & Jasa Rumah di Jakarta`,
+    title: `${SITE_NAME} — Cari Tukang & Jasa Rumah di Tangerang`,
     description:
-      "Temukan tukang plumbing, perawatan rumah, dan jasa darurat di Jakarta. Post pekerjaan gratis, terima penawaran, dan bayar dengan aman lewat KerjaIn.",
+      "Temukan tukang plumbing, perawatan rumah, dan jasa darurat di Tangerang. Post pekerjaan gratis, terima penawaran, dan bayar dengan aman lewat KerjaIn.",
     robots: "index, follow",
     canonicalPath: "/",
   },
@@ -43,6 +47,20 @@ const EXACT_SEO: Record<string, PageSeo> = {
       "Jelajahi pekerjaan terbuka untuk tukang di Jakarta dan sekitarnya. Plumbing, perbaikan rumah, dan layanan darurat.",
     robots: "index, follow",
     canonicalPath: "/tasks",
+  },
+  "/servis-ac": {
+    title: "Servis AC Tangerang — Teknisi Terpercaya, Datang Hari Ini | KerjaIn",
+    description:
+      "Panggil teknisi AC terverifikasi di Tangerang lewat KerjaIn. Servis, cuci AC, isi freon, perbaikan AC bocor. Post pekerjaan gratis dan bandingkan penawaran.",
+    robots: "index, follow",
+    canonicalPath: "/servis-ac",
+  },
+  "/jasa-tukang": {
+    title: `Jasa Tukang Terpercaya di Tangerang & Jakarta | ${SITE_NAME}`,
+    description:
+      "Cari jasa tukang plumbing, perawatan rumah, dan pekerjaan darurat lewat KerjaIn. Post pekerjaan gratis, bandingkan penawaran, bayar aman.",
+    robots: "index, follow",
+    canonicalPath: "/jasa-tukang",
   },
   "/masuk": {
     title: `Masuk — ${SITE_NAME}`,
@@ -162,6 +180,19 @@ export function resolveSeoForPath(pathname: string): PageSeo {
     };
   }
 
+  const servisAcAreaMatch = path.match(/^\/servis-ac\/([^/]+)$/);
+  if (servisAcAreaMatch) {
+    const areaSlug = servisAcAreaMatch[1];
+    const label =
+      areaSlug in AREA_LABELS ? AREA_LABELS[areaSlug as ServiceArea] : areaSlug;
+    return {
+      title: `Servis AC ${label} — Teknisi Datang Hari Ini | ${SITE_NAME}`,
+      description: `Servis AC di ${label}, Tangerang. Cuci AC, isi freon, perbaikan bocor. Post pekerjaan gratis di KerjaIn dan bandingkan penawaran teknisi terverifikasi.`,
+      robots: "index, follow",
+      canonicalPath: path,
+    };
+  }
+
   if (PRIVATE_PREFIXES.some((prefix) => path.startsWith(prefix))) {
     return {
       title: `${SITE_NAME}`,
@@ -209,9 +240,11 @@ export function applyPageSeo(seo: PageSeo) {
   upsertMeta('meta[property="og:url"]', { property: "og:url" }, canonicalUrl);
   upsertMeta('meta[property="og:site_name"]', { property: "og:site_name" }, SITE_NAME);
   upsertMeta('meta[property="og:type"]', { property: "og:type" }, "website");
+  upsertMeta('meta[property="og:image"]', { property: "og:image" }, `${SITE_URL}${DEFAULT_OG_IMAGE}`);
   upsertMeta('meta[name="twitter:card"]', { name: "twitter:card" }, "summary_large_image");
   upsertMeta('meta[name="twitter:title"]', { name: "twitter:title" }, seo.title);
   upsertMeta('meta[name="twitter:description"]', { name: "twitter:description" }, seo.description);
+  upsertMeta('meta[name="twitter:image"]', { name: "twitter:image" }, `${SITE_URL}${DEFAULT_OG_IMAGE}`);
   upsertLink("canonical", canonicalUrl);
 }
 

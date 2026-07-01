@@ -1,23 +1,31 @@
 {
   "variant": "light",
-  "monochrome": true,
   "backgroundColor": "#fafafa",
   "metadata": {
     "name": "KerjaIn Minimal",
-    "description": "Two-tone gray map so KerjaIn pins stand out. Political and road labels left at default. Set Map settings: Landmarks=minimum."
+    "description": "Airtasker-style map: gray land/roads, blue water, road names + suburb/district/state/country labels only. Set Map settings: Labels=medium, Landmarks=minimum."
   },
   "styles": [
     {
       "id": "natural.land",
-      "geometry": { "fillColor": "#f5f5f5" }
+      "geometry": { "fillColor": "#f5f5f5" },
+      "label": { "visible": false }
     },
     {
       "id": "natural.water",
-      "geometry": { "fillColor": "#ececec" }
+      "label": { "visible": false }
     },
     {
       "id": "natural.land.landCover.forest",
       "geometry": { "fillColor": "#f0f0f0" }
+    },
+    {
+      "id": "natural.island",
+      "label": { "visible": false }
+    },
+    {
+      "id": "natural.continent",
+      "label": { "visible": false }
     },
     {
       "id": "pointOfInterest",
@@ -28,33 +36,153 @@
       "label": { "visible": false }
     },
     {
+      "id": "pointOfInterest.transit",
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.transit.airport",
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.recreation",
+      "geometry": { "fillColor": "#f2f2f2" },
+      "label": { "visible": false }
+    },
+    {
       "id": "pointOfInterest.recreation.park",
       "geometry": { "fillColor": "#f2f2f2" },
       "label": { "visible": false }
     },
     {
+      "id": "pointOfInterest.recreation.natureReserve",
+      "geometry": { "fillColor": "#f2f2f2" },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.recreation.golfCourse",
+      "geometry": { "fillColor": "#f2f2f2" },
+      "label": { "visible": false }
+    },
+    {
+      "id": "pointOfInterest.recreation.sportsField",
+      "geometry": { "fillColor": "#f2f2f2" },
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.city",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.neighborhood",
+      "label": {
+        "visible": true,
+        "textFillColor": "#616161",
+        "textStrokeColor": "#f5f5f5"
+      }
+    },
+    {
+      "id": "political.sublocality",
+      "label": {
+        "visible": true,
+        "textFillColor": "#616161",
+        "textStrokeColor": "#f5f5f5"
+      }
+    },
+    {
+      "id": "political.border",
+      "label": { "visible": false }
+    },
+    {
+      "id": "political.reservation",
+      "label": { "visible": false }
+    },
+    {
       "id": "infrastructure.building",
-      "geometry": { "fillColor": "#eeeeee" }
+      "geometry": { "fillColor": "#eeeeee" },
+      "label": { "visible": false }
     },
     {
       "id": "infrastructure.railwayTrack",
       "geometry": { "strokeColor": "#dddddd" }
     },
     {
+      "id": "infrastructure.transitStation",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation.busStation",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation.railStation",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation.railStation.subwayStation",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation.railStation.tramStation",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.transitStation.ferryTerminal",
+      "label": { "visible": false }
+    },
+    {
       "id": "infrastructure.roadNetwork",
       "geometry": { "strokeColor": "#e0e0e0" }
     },
     {
+      "id": "infrastructure.roadNetwork.road",
+      "label": {
+        "visible": true,
+        "textFillColor": "#757575",
+        "textStrokeColor": "#ffffff"
+      }
+    },
+    {
       "id": "infrastructure.roadNetwork.road.local",
-      "geometry": { "strokeColor": "#e8e8e8" }
+      "geometry": { "strokeColor": "#e8e8e8" },
+      "label": {
+        "visible": true,
+        "textFillColor": "#757575",
+        "textStrokeColor": "#ffffff"
+      }
     },
     {
       "id": "infrastructure.roadNetwork.road.arterial",
-      "geometry": { "strokeColor": "#dcdcdc" }
+      "geometry": { "strokeColor": "#dcdcdc" },
+      "label": {
+        "visible": true,
+        "textFillColor": "#757575",
+        "textStrokeColor": "#ffffff"
+      }
     },
     {
       "id": "infrastructure.roadNetwork.road.highway",
-      "geometry": { "strokeColor": "#d4d4d4" }
+      "geometry": { "strokeColor": "#d4d4d4" },
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.roadShield",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.roadSign",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.ramp",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.parkingAisle",
+      "label": { "visible": false }
+    },
+    {
+      "id": "infrastructure.roadNetwork.noTraffic",
+      "label": { "visible": false }
     }
   ]
 }

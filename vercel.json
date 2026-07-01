@@ -1,4 +1,6 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": false,
   "headers": [
     {
       "source": "/llms.txt",
@@ -41,9 +43,24 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/((?!assets/|favicon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|agents\\.json|agent-instructions\\.md|google-map-style-kerjain\\.json).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/masuk", "destination": "/index.html" },
+    { "source": "/daftar", "destination": "/index.html" },
+    { "source": "/daftar-tukang", "destination": "/index.html" },
+    { "source": "/post-job", "destination": "/index.html" },
+    { "source": "/bayar", "destination": "/index.html" },
+    { "source": "/dasbor-tukang", "destination": "/index.html" },
+    { "source": "/tasks", "destination": "/index.html" },
+    { "source": "/pekerjaan-saya", "destination": "/index.html" },
+    { "source": "/ulasan-saya", "destination": "/index.html" },
+    { "source": "/lupa-sandi", "destination": "/index.html" },
+    { "source": "/atur-ulang-sandi", "destination": "/index.html" },
+    { "source": "/verifikasi-email", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/akun", "destination": "/index.html" },
+    { "source": "/akun/:path*", "destination": "/index.html" },
+    { "source": "/pesan", "destination": "/index.html" },
+    { "source": "/pesan/:path*", "destination": "/index.html" },
+    { "source": "/auth/:path*", "destination": "/index.html" },
+    { "source": "/tukang/:path*", "destination": "/index.html" }
   ]
 }
